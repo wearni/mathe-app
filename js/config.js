@@ -13,14 +13,14 @@
    ============================================================ */
 window.APP_CONFIG = {
   /* z. B. 'https://abcdefghijkl.supabase.co'  */
-  supabaseUrl: 'https://xpaibmumgdjhfhmfettb.supabase.co',
+  supabaseUrl: '',
 
   /* der lange "anon public"-Schlüssel */
-  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwYWlibXVtZ2RqaGZobWZldHRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1NzkyMzAsImV4cCI6MjEwNTE1NTIzMH0.a8xaLtka7QMrVREl3I12Cz2c013xd7xyROMmWUyMack',
+  supabaseKey: '',
 
   /* Name der Tabelle - muss zum SQL im README passen */
   table: 'highscores',
 
   /* Wie viele Einträge die Online-Liste zeigt */
-  topCount: 40
+  topCount: 20
 };

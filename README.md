@@ -18,7 +18,7 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | ⏱ **10-Minuten-Limit** | jede Runde dauert höchstens 10 Minuten reine Spielzeit; Pausen und Menüs zählen nicht mit |
 | ❤️ **3 Leben als Herzchen** | bis zu 8 Herzen möglich – im 3er- und 5er-Paket günstiger |
 | ⭐ **Sternchen** | für jede richtig gelöste Aufgabe (mehr bei Combo und goldenen Aufgaben) |
-| 🎁 **Bonus-Station** | nach **jeder 15. Aufgabe** – egal ob richtig oder daneben |
+| 🎁 **Bonus-Station** | nach **je 10 richtig gelösten** Aufgaben – Danebenschießen bringt einen keinen Schritt näher |
 | 🎮 **Drei Bonusspiele** | Alien-Jagd, Zielschießen mit einstellbarem Winkel und Dosenwerfen mit echter Physik |
 | ⚖️ **Ehrliche Wirtschaft** | ein Bonusspiel kostet 8 ★ und gibt höchstens 5 ★ zurück – Sternchen gibt es nur fürs Rechnen |
 | ⏩ **Steigendes Tempo** | vom eingestellten Start-Tempo aus fallen die Aufgaben mit jedem Level und jeder Spielminute schneller – höchstens bis auf ein Drittel der Startzeit |
@@ -53,16 +53,23 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
   Linie zeigt die Flugbahn. Ein angetippter Ballon wird zum Ziel und zählt doppelt
 * *Dosenwerfen*: vom Ball aus in Wurfrichtung ziehen und loslassen – 3 Bälle, 6 Dosen
 
-`Esc` pausiert das Spiel. Während der Pause läuft die Rundenzeit nicht weiter – dafür
-stehen beim Weiterspielen **andere Aufgaben** auf dem Feld, an derselben Stelle und in
-derselben Höhe. Eine Pause bringt also keinen Vorteil beim Nachdenken.
+**Pause und Zurück**
+
+`Esc` oder der Pause-Knopf halten das Spiel an. Der Zurück-Knopf des Geräts (Android,
+Browser, Wischgeste) verlässt die App nicht, sondern fragt erst nach: weiterspielen oder
+zum Menü? Ein zweites Mal Zurück geht dann wirklich ins Menü.
+
+Während der Pause läuft die Rundenzeit nicht weiter – dafür stehen beim Weiterspielen
+**andere Aufgaben** auf dem Feld, an derselben Stelle und in derselben Höhe. Eine Pause
+bringt also keinen Vorteil beim Nachdenken.
 
 ---
 
 ## Sternchen, Herzen und Bonusspiele
 
 Für jede richtig gelöste Aufgabe gibt es mindestens ein ⭐ (mehr bei Combo und goldenen
-Aufgaben). Nach jeder 15. Aufgabe öffnet die Bonus-Station.
+Aufgaben). Nach je 10 **richtig** gelösten Aufgaben öffnet die Bonus-Station. Verrechnet oder
+durchgerutscht zählt nicht mit – Bonusspiele muss man sich erarbeiten.
 
 **Herzen** – je größer das Paket, desto günstiger:
 
@@ -258,7 +265,7 @@ direkt bearbeiten: Datei anklicken → Stift-Symbol → ändern → **Commit cha
 
 1. Im Repository auf `sw.js` klicken
 2. Stift-Symbol (✏️ *Edit this file*)
-3. In der Zeile `const VERSION = '1.4.1';` die letzte Zahl erhöhen, z. B. auf `'1.4.1'`
+3. In der Zeile `const VERSION = '1.4.2';` die letzte Zahl erhöhen, z. B. auf `'1.4.2'`
 4. **Commit changes**
 
 > Wer lieber auf dem Rechner arbeitet: `./bump.sh "Was geändert wurde"` erledigt
@@ -312,7 +319,7 @@ mathe-app/
 * **Maximale Sternchen aus Bonusspielen:** `MAX_STARS` in `js/minigames.js`
 * **Neues Bonusspiel:** in `js/minigames.js` eine Funktion nach dem Muster der drei
   vorhandenen ergänzen und in `GAMES` und `LIST` eintragen
-* **Bonus seltener/öfter:** `CONFIG.bonusEvery` in `js/game.js`
+* **Bonus seltener/öfter:** `CONFIG.bonusEvery` in `js/game.js` (zählt nur richtige Antworten)
 * **Neue Aufgabentypen:** in `js/mathgen.js` bei der passenden Klassenfunktion (`k1` … `k6`) eine
   Funktion ergänzen, die `{ text, answer }` zurückgibt
 * **Musikstücke:** die Tabelle `TRACKS` in `js/audio.js` – `melody`, `chords` und `drums`

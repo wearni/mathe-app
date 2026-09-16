@@ -22,7 +22,7 @@
       { n: 3, cost: 12 },  /* 4,0 Sternchen pro Herz */
       { n: 5, cost: 18 }   /* 3,6 Sternchen pro Herz */
     ],
-    bonusEvery: 15,      /* nach jeder 15. Aufgabe (egal ob richtig oder falsch) */
+    bonusEvery: 10,      /* nach je 10 RICHTIG gelösten Aufgaben */
     levelEvery: 10,      /* Level-Up nach je 10 richtigen Aufgaben */
     sessionLimit: 600    /* Sekunden reine Spielzeit pro Runde (10 Minuten) */
   };
@@ -255,7 +255,7 @@
       float(G.W / 2, G.H * 0.4, 'COMBO x' + (G.combo >= 15 ? 4 : G.combo >= 10 ? 3 : 2) + '!', '#FFD166', 34);
     }
 
-    resolveOne();
+    resolveOne(true);
     if (G.correct % CONFIG.levelEvery === 0) levelUp();
     pushHud();
   }
@@ -269,13 +269,17 @@
     ring(e.x, groundY(), '#FF5D73', 150);
     float(e.x, groundY() - 50, '= ' + MathGen.sgn(e.answer), '#FFD1D1', 26);
     Sound.play('life');
-    resolveOne();
+    resolveOne(false);
     pushHud();
     if (G.lives <= 0) { gameOver(); return; }
   }
 
-  function resolveOne() {
+  /* Für die Bonus-Station zählen ausschließlich richtig gelöste Aufgaben.
+     Danebengeschossene oder durchgerutschte Aufgaben bringen einen der
+     Bonus-Station keinen Schritt näher. */
+  function resolveOne(correct) {
     G.resolved++;
+    if (!correct) return;
     G.sinceBonus++;
     if (G.sinceBonus >= CONFIG.bonusEvery) {
       G.sinceBonus = 0;
@@ -716,15 +720,28 @@
       const t = ev.touches ? ev.touches[0] : ev;
       return { x: t.clientX - r.left, y: t.clientY - r.top };
     };
-    /* Berührungen gehen direkt an das laufende Bonusspiel */
+    /* Berührungen gehen direkt an das laufende Bonusspiel.
+
+       Wichtig: Nur Berührungen weiterreichen, die auch wirklich auf der
+       Spielfläche begonnen haben, und beim Loslassen niemals
+       preventDefault aufrufen. Genau das hat auf Touchgeräten sonst den
+       Klick auf den FEUER-Knopf verschluckt. */
     const send = (phase, ev) => {
       if (G.state !== 'mini' || !G.mini) return;
+
+      if (phase === 'down') {
+        if (ev && ev.target !== canvas) return;   /* galt einem Knopf oder Regler */
+        G.pointer.active = true;
+      } else if (!G.pointer.active) {
+        return;
+      }
+
       if (phase !== 'up' && ev) { const p = pos(ev); G.pointer.x = p.x; G.pointer.y = p.y; }
-      if (phase === 'down') G.pointer.active = true;
-      if (phase === 'move' && !G.pointer.active) return;
-      if (phase === 'up') G.pointer.active = false;
       G.mini.pointer(phase, G.pointer.x, G.pointer.y);
-      if (ev && ev.cancelable) ev.preventDefault();
+
+      /* Nur beim Ziehen das Scrollen der Seite unterbinden */
+      if (ev && ev.cancelable && phase !== 'up') ev.preventDefault();
+      if (phase === 'up') G.pointer.active = false;
     };
     const down = ev => send('down', ev);
     const move = ev => send('move', ev);

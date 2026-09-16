@@ -36,7 +36,7 @@
     </div>
     <div class="hud-right">
       <div class="score-box"><span id="hudScore">0</span></div>
-      <div class="bonus-meter" title="Aufgaben bis zur Bonus-Station">
+      <div class="bonus-meter" title="Richtige Aufgaben bis zur Bonus-Station">
         <div class="bonus-fill" id="bonusFill"></div>
         <span id="bonusText">10</span>
       </div>
@@ -179,8 +179,8 @@
   <!-- ================= Pause ================= -->
   <section id="pause" class="overlay">
     <div class="panel">
-      <h2>Pause</h2>
-      <p class="hint">Kurz durchatmen – die Aufgaben warten.</p>
+      <h2 id="pauseTitle">Pause</h2>
+      <p class="hint" id="pauseHint">Kurz durchatmen – die Aufgaben warten.</p>
       <button id="btnResume" class="big-btn">Weiterspielen</button>
       <button id="btnQuit" class="mini-btn wide">Zurück zum Menü</button>
     </div>
@@ -190,7 +190,7 @@
   <section id="bonus" class="overlay">
     <div class="panel bonus-panel">
       <h2>★ Bonus-Station ★</h2>
-      <p class="hint">Alle 10 Aufgaben darfst du deine Sternchen eintauschen.</p>
+      <p class="hint">Für 10 richtig gelöste Aufgaben darfst du deine Sternchen eintauschen.</p>
       <div class="star-bank"><span id="bonusStars">0</span> <em>★</em></div>
 
       <h3>Herzen auffüllen</h3>

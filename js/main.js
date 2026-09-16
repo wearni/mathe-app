@@ -95,6 +95,9 @@
     $$('.overlay').forEach(o => o.classList.remove('show'));
     if (id) { $('#' + id).classList.add('show'); }
     openScreen = id || '';
+    /* Jeder Unterbildschirm bekommt einen Verlaufseintrag, damit der
+       Zurück-Knopf ihn schließt statt die App zu verlassen. */
+    if (id && id !== 'menu') armBack();
     /* Zurück im Menü ist ein guter Moment für ein wartendes Update */
     if (id === 'menu') setTimeout(maybeApplyUpdate, 300);
   }
@@ -147,6 +150,7 @@
     const done = Game.config.bonusEvery - s.untilBonus;
     $('#bonusFill').style.width = (done / Game.config.bonusEvery * 100) + '%';
     $('#bonusText').textContent = 'BONUS in ' + s.untilBonus;
+    $('.bonus-meter').title = 'Noch ' + s.untilBonus + ' richtige Aufgaben bis zur Bonus-Station';
 
     const left = Math.max(0, Math.ceil(s.timeLeft || 0));
     $('#hudTime').textContent = mmss(left);
@@ -223,6 +227,59 @@
     });
   }
 
+  /* ===================== Pause und Zurück-Knopf ===================== */
+  function openPause(asked) {
+    $('#pauseTitle').textContent = asked ? 'Zurück?' : 'Pause';
+    $('#pauseHint').textContent = asked
+      ? 'Möchtest du weiterspielen oder zum Menü zurück?'
+      : 'Kurz durchatmen – die Aufgaben warten.';
+    show('pause');
+  }
+
+  function quitToMenu() {
+    Game.quit();
+    inGameChrome(false);
+    show('menu');
+    renderMenuInfo();
+  }
+
+  /* Der Zurück-Knopf (Android, Browser, Wischgeste) soll nicht mitten im
+     Spiel die App verlassen, sondern erst nachfragen. Dafür liegt während
+     einer Runde ein zusätzlicher Eintrag im Verlauf, der abgefangen wird. */
+  let backArmed = false;
+  function armBack() {
+    if (backArmed) return;
+    try { history.pushState({ matheApp: 1 }, ''); backArmed = true; } catch (e) { /* egal */ }
+  }
+
+  window.addEventListener('popstate', () => {
+    backArmed = false;
+    const st = Game.state;
+    if (st === 'playing' || st === 'mini') {
+      Game.pause();
+      Sound.play('back');
+      openPause(true);
+      armBack();
+      return;
+    }
+    if (st === 'paused') {          /* noch einmal zurück = wirklich zum Menü */
+      Sound.play('back');
+      quitToMenu();
+      return;
+    }
+    if (st === 'bonus') {           /* Bonus-Station nicht aus Versehen überspringen */
+      armBack();
+      return;
+    }
+    if (openScreen && openScreen !== 'menu') {
+      Sound.play('back');
+      show('menu');
+      renderMenuInfo();
+      return;
+    }
+    /* Im Menü darf der Zurück-Knopf ganz normal wirken. */
+  });
+
   /* ===================== Spielstart ===================== */
   function countdown(done) {
     const el = $('#countdown');
@@ -250,6 +307,7 @@
     heartSlots = 3;
     $('#hearts').innerHTML = '';
     Game.setTheme(DB.settings.theme);
+    armBack();
     countdown(() => {
       Game.start({
         grade: DB.settings.grade, theme: DB.settings.theme,
@@ -683,16 +741,14 @@
     $('#btnFire').addEventListener('click', fireAnswer);
 
     /* Pause */
-    $('#btnPause').addEventListener('click', () => { Game.pause(); Sound.play('back'); show('pause'); });
+    $('#btnPause').addEventListener('click', () => { Game.pause(); Sound.play('back'); openPause(false); });
     $('#btnResume').addEventListener('click', () => {
       Sound.play('click');
       show(null);
       /* kurzer Countdown, danach stehen neue Aufgaben da */
       countdown(() => Game.resume());
     });
-    $('#btnQuit').addEventListener('click', () => {
-      Sound.play('back'); Game.quit(); inGameChrome(false); show('menu'); renderMenuInfo();
-    });
+    $('#btnQuit').addEventListener('click', () => { Sound.play('back'); quitToMenu(); });
 
     /* Bonus-Station */
     wireCannon();
