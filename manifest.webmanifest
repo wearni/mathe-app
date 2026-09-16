@@ -1,0 +1,20 @@
+{
+  "name": "Mathe App",
+  "short_name": "Mathe App",
+  "description": "Mathe-Arcade für Klasse 1 bis 6: Löse die herabfallenden Aufgaben, bevor sie den Boden erreichen.",
+  "lang": "de",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#0b0f28",
+  "theme_color": "#0d1030",
+  "categories": ["education", "games", "kids"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Mathe App</title>
+<meta name="description" content="Mathe App – Mathe-Arcade für Klasse 1 bis 6. Löse die herabfallenden Aufgaben, bevor sie den Boden erreichen!">
+<meta name="theme-color" content="#0d1030">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mathe App">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="app">
+  <canvas id="stage"></canvas>
+
+  <!-- ================= HUD ================= -->
+  <header id="hud" hidden>
+    <div class="hud-left">
+      <div id="hearts" class="hearts" aria-label="Leben"></div>
+      <div class="hud-chips">
+        <span class="chip chip-star"><span id="hudStars">0</span> ★</span>
+        <span class="chip chip-lvl">LVL <span id="hudLevel">1</span></span>
+        <span class="chip chip-time" id="hudTimeWrap">⏱ <span id="hudTime">10:00</span></span>
+        <span class="chip chip-combo" id="hudComboWrap" hidden>x<span id="hudCombo">1</span></span>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="score-box"><span id="hudScore">0</span></div>
+      <div class="bonus-meter" title="Aufgaben bis zur Bonus-Station">
+        <div class="bonus-fill" id="bonusFill"></div>
+        <span id="bonusText">10</span>
+      </div>
+      <button id="btnPause" class="icon-btn" aria-label="Pause">II</button>
+    </div>
+  </header>
+
+  <!-- ================= Steuerung ================= -->
+  <footer id="controls" hidden>
+    <div id="padWrap">
+      <div id="answerRow">
+        <div id="answerDisplay">?</div>
+        <button id="btnFire" class="fire-btn">ABSCHIESSEN 🚀</button>
+      </div>
+      <div id="keypad">
+        <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+        <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+        <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+        <button data-k="neg" class="k-alt">±</button><button data-k="0">0</button><button data-k="del" class="k-alt">⌫</button>
+      </div>
+    </div>
+    <div id="choiceWrap" hidden>
+      <p class="choice-hint">Tippe die richtige Lösung an!</p>
+      <div id="choices"></div>
+    </div>
+    <div id="miniHint" hidden>
+      <p>🚀 Ziehe mit dem Finger (oder ◀ ▶) – geschossen wird automatisch!</p>
+    </div>
+  </footer>
+
+  <!-- ================= Startmenü ================= -->
+  <section id="menu" class="overlay show">
+    <div class="panel menu-panel">
+      <div class="logo">
+        <div class="logo-rocket">🚀</div>
+        <h1>MATHE <span>APP</span></h1>
+        <p class="tagline">Rechnen im Weltraum-Tempo</p>
+      </div>
+      <div class="rank-strip">
+        <span id="rankIcon">🐣</span>
+        <div>
+          <strong id="rankName">Rechen-Küken</strong>
+          <div class="rank-bar"><div id="rankFill"></div></div>
+          <small id="rankNext">Noch 50 richtige Aufgaben bis zum nächsten Rang</small>
+        </div>
+      </div>
+      <button id="btnPlay" class="big-btn">SPIELEN</button>
+      <div class="menu-row">
+        <button id="btnSettings" class="mini-btn">⚙️ Einstellungen</button>
+        <button id="btnBadges" class="mini-btn">🏅 Abzeichen</button>
+        <button id="btnScores" class="mini-btn">🏆 Bestenliste</button>
+      </div>
+      <div class="menu-chips">
+        <span class="chip" id="chipGrade">Klasse 1</span>
+        <span class="chip" id="chipSpeed">🚶 Normal</span>
+        <span class="chip" id="chipTheme">🏙️ Stadt am Tag</span>
+        <span class="chip" id="chipMode">Zahlenfeld</span>
+      </div>
+      <button id="btnInstall" class="link-btn" hidden>📲 App auf dem Gerät installieren</button>
+      <p class="version-line">Version <span id="appVersion">…</span> · max. 10 Minuten pro Runde</p>
+    </div>
+  </section>
+
+  <!-- ================= Einstellungen ================= -->
+  <section id="settings" class="overlay">
+    <div class="panel">
+      <h2>Einstellungen</h2>
+
+      <h3>Klassenstufe</h3>
+      <div id="gradeGrid" class="grade-grid"></div>
+      <p class="hint" id="gradeDesc"></p>
+
+      <h3>Start-Tempo <span id="speedForGrade"></span></h3>
+      <div id="speedGrid" class="speed-grid"></div>
+      <p class="hint" id="speedDesc"></p>
+
+      <h3>Hintergrund</h3>
+      <div id="themeGrid" class="theme-grid"></div>
+
+      <h3>Eingabe</h3>
+      <div class="seg" id="modeSeg">
+        <button data-mode="keypad" class="active">🔢 Zahlenfeld</button>
+        <button data-mode="choice">🎯 Auswahl</button>
+      </div>
+
+      <h3>Ton</h3>
+      <div class="switch-row">
+        <label class="switch"><input type="checkbox" id="swSfx" checked><span></span> 8-Bit Soundeffekte</label>
+        <label class="switch"><input type="checkbox" id="swMusic" checked><span></span> Hintergrundmusik</label>
+      </div>
+
+      <button class="big-btn" data-close="settings">Fertig</button>
+      <button id="btnReset" class="link-btn danger">Alle Fortschritte löschen</button>
+    </div>
+  </section>
+
+  <!-- ================= Abzeichen ================= -->
+  <section id="badges" class="overlay">
+    <div class="panel">
+      <h2>Abzeichen</h2>
+      <div id="badgeList" class="badge-list"></div>
+      <button class="big-btn" data-close="badges">Zurück</button>
+    </div>
+  </section>
+
+  <!-- ================= Bestenliste ================= -->
+  <section id="scores" class="overlay">
+    <div class="panel">
+      <h2>Bestenliste</h2>
+      <div id="scoreList" class="score-list"></div>
+      <div id="statList" class="stat-list"></div>
+      <button class="big-btn" data-close="scores">Zurück</button>
+    </div>
+  </section>
+
+  <!-- ================= Pause ================= -->
+  <section id="pause" class="overlay">
+    <div class="panel">
+      <h2>Pause</h2>
+      <p class="hint">Kurz durchatmen – die Aufgaben warten.</p>
+      <button id="btnResume" class="big-btn">Weiterspielen</button>
+      <button id="btnQuit" class="mini-btn wide">Zurück zum Menü</button>
+    </div>
+  </section>
+
+  <!-- ================= Bonus-Station ================= -->
+  <section id="bonus" class="overlay">
+    <div class="panel bonus-panel">
+      <h2>★ Bonus-Station ★</h2>
+      <p class="hint">Alle 10 Aufgaben darfst du deine Sternchen eintauschen.</p>
+      <div class="star-bank"><span id="bonusStars">0</span> <em>★</em></div>
+
+      <div class="shop">
+        <button id="buyHeart" class="shop-card">
+          <div class="shop-icon">❤️</div>
+          <strong>Extra-Herz</strong>
+          <small>Ein Leben mehr</small>
+          <span class="price"><b id="priceHeart">5</b> ★</span>
+        </button>
+        <button id="buyMini" class="shop-card">
+          <div class="shop-icon">👾</div>
+          <strong>Raumschiff-Bonus</strong>
+          <small>30 Sek. Aliens abschießen</small>
+          <span class="price"><b id="priceMini">8</b> ★</span>
+        </button>
+      </div>
+
+      <button id="bonusContinue" class="big-btn">Weiterrechnen</button>
+      <p class="hint small" id="bonusNote"></p>
+    </div>
+  </section>
+
+  <!-- ================= Bonus-Ergebnis ================= -->
+  <section id="miniresult" class="overlay">
+    <div class="panel">
+      <h2>Bonus geschafft!</h2>
+      <div class="result-grid" id="miniStats"></div>
+      <button id="miniOk" class="big-btn">Weiter</button>
+    </div>
+  </section>
+
+  <!-- ================= Game Over ================= -->
+  <section id="gameover" class="overlay">
+    <div class="panel">
+      <h2 id="goTitle">Game Over</h2>
+      <p class="hint" id="goHint" hidden></p>
+      <div class="final-score" id="goScore">0</div>
+      <div class="result-grid" id="goStats"></div>
+      <div id="goBadges" class="new-badges"></div>
+      <button id="btnAgain" class="big-btn">Nochmal!</button>
+      <button id="btnMenu" class="mini-btn wide">Zum Menü</button>
+    </div>
+  </section>
+
+  <div id="toast"></div>
+  <div id="countdown" hidden><span></span></div>
+</div>
+
+<script src="js/mathgen.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/backgrounds.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
