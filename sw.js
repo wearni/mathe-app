@@ -14,7 +14,7 @@
       dem Gerät, wenn das Hochzählen der VERSION mal vergessen wurde.
    ============================================================ */
 
-const VERSION = '1.2.0';
+const VERSION = '1.4.1';
 const CACHE = 'mathe-app-v' + VERSION;
 const NET_TIMEOUT = 2500;   /* ms, danach wird der Cache benutzt */
 
@@ -23,7 +23,11 @@ const ASSETS = [
   './index.html',
   './manifest.webmanifest',
   './css/style.css',
+  './js/config.js',
+  './js/pixel.js',
+  './js/leaderboard.js',
   './js/mathgen.js',
+  './js/minigames.js',
   './js/audio.js',
   './js/backgrounds.js',
   './js/game.js',

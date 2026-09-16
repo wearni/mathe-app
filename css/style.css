@@ -58,7 +58,11 @@ html, body {
 .hud-left, .hud-right { display: flex; flex-direction: column; gap: 6px; }
 .hud-right { align-items: flex-end; }
 
-.hearts { display: flex; gap: 3px; font-size: 22px; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+.hearts {
+  display: flex; gap: 2px; font-size: 20px; line-height: 1.15;
+  flex-wrap: wrap; max-width: 190px;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.5));
+}
 .hearts span { transition: transform .25s, opacity .25s; }
 .hearts span.gone { opacity: .25; filter: grayscale(1); transform: scale(.75); }
 .hearts span.pop { animation: pop .45s ease; }
@@ -158,6 +162,41 @@ html, body {
 #choices button:nth-child(2) { background: linear-gradient(180deg, #a8e7ff, #3cc4ff); border-color: #0d78ab; box-shadow: 0 5px 0 #0a5a80; }
 #choices button:nth-child(3) { background: linear-gradient(180deg, #ffc0cf, #ff6b8a); border-color: #b2304b; box-shadow: 0 5px 0 #7d2135; }
 #choices button:nth-child(4) { background: linear-gradient(180deg, #c9ffb8, #6ee45a); border-color: #33832a; box-shadow: 0 5px 0 #24601a; }
+
+/* Kanonen-Steuerung */
+#cannonPad { display: grid; gap: 7px; }
+.slider-row {
+  background: rgba(10,14,40,.8); border: 2px solid rgba(255,255,255,.18);
+  border-radius: 12px; padding: 7px 12px 4px;
+}
+.slider-row label {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 13px; color: var(--muted); margin-bottom: 2px;
+}
+.slider-row label b { font-family: var(--pixel); font-size: 13px; color: var(--accent); }
+.slider-row input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 26px; background: transparent; margin: 0;
+}
+.slider-row input[type=range]::-webkit-slider-runnable-track {
+  height: 10px; border-radius: 5px;
+  background: linear-gradient(90deg, var(--blue), var(--accent));
+}
+.slider-row input[type=range]::-moz-range-track {
+  height: 10px; border-radius: 5px;
+  background: linear-gradient(90deg, var(--blue), var(--accent));
+}
+.slider-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 26px; height: 26px; margin-top: -8px;
+  border-radius: 50%; background: #fff; border: 3px solid var(--panel-2);
+  box-shadow: 0 2px 6px rgba(0,0,0,.5); cursor: pointer;
+}
+.slider-row input[type=range]::-moz-range-thumb {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; border: 3px solid var(--panel-2); cursor: pointer;
+}
+.fire-btn.wide { flex: none; width: 100%; padding: 13px 0; }
 
 #miniHint p {
   margin: 0; text-align: center; font-size: 15px; color: var(--accent);
@@ -332,7 +371,51 @@ html, body {
 .badge strong { display: block; font-size: 15px; }
 .badge small { color: var(--muted); font-size: 12px; }
 
+/* Eintrag in die Bestenliste */
+#entryBox {
+  background: rgba(0,0,0,.26); border: 2px solid rgba(255,255,255,.12);
+  border-radius: 14px; padding: 4px 12px 12px; margin: 12px 0 6px;
+}
+#entryBox h3 { margin: 10px 0 10px; }
+.entry-row { display: flex; gap: 12px; align-items: center; }
+#avatarCanvas {
+  width: 64px; height: 64px; flex: 0 0 auto;
+  image-rendering: pixelated;
+  background: #0a0e26; border: 3px solid rgba(255,255,255,.2); border-radius: 10px;
+}
+.entry-fields { flex: 1; display: grid; gap: 7px; }
+#nickInput {
+  width: 100%; font-family: var(--body); font-weight: 700; font-size: 17px;
+  color: var(--accent); text-align: center;
+  background: #0a0e26; border: 3px solid rgba(255,209,102,.5);
+  border-radius: 10px; padding: 10px 8px;
+}
+#nickInput::placeholder { color: #4a5490; }
+#nickInput:focus { outline: none; border-color: var(--accent); }
+.entry-fields .mini-btn { font-size: 12px; padding: 8px 4px; }
+#entryBox .big-btn { margin-bottom: 2px; }
+
 /* Bestenliste */
+.online-list { display: grid; gap: 6px; text-align: left; margin-bottom: 10px; }
+.online-row {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(0,0,0,.26); border: 2px solid rgba(255,255,255,.1);
+  border-radius: 10px; padding: 7px 10px;
+}
+.online-row.mine { border-color: var(--accent); background: rgba(255,209,102,.12); }
+.online-row .rank {
+  font-family: var(--pixel); font-size: 11px; color: var(--muted);
+  min-width: 26px; text-align: right;
+}
+.online-row img { width: 34px; height: 34px; image-rendering: pixelated; border-radius: 7px; background: #0a0e26; }
+.online-row .who { flex: 1; min-width: 0; }
+.online-row .who b { display: block; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.online-row .who small { color: var(--muted); font-size: 11px; }
+.online-row .pts { font-family: var(--pixel); font-size: 12px; color: var(--accent); }
+.online-row:nth-child(1) .rank { color: #FFD166; }
+.online-row:nth-child(2) .rank { color: #d7dcf2; }
+.online-row:nth-child(3) .rank { color: #e0a06a; }
+
 .score-list, .stat-list { display: grid; gap: 6px; text-align: left; margin-bottom: 12px; }
 .score-row, .stat-row {
   display: flex; justify-content: space-between; align-items: center;
@@ -348,9 +431,18 @@ html, body {
   margin: 4px 0 14px; text-shadow: 0 0 18px rgba(255,209,102,.6);
 }
 .star-bank em { font-style: normal; }
+.h3-note { font-family: var(--body); font-size: 11px; color: #6f78ad; letter-spacing: 0; }
 .shop { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.shop-3 { grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.shop-3 .shop-card { padding: 10px 4px; }
+.shop-3 .shop-card .shop-icon { font-size: 26px; }
+.shop-3 .shop-card strong { font-size: 12.5px; line-height: 1.2; margin: 3px 0 2px; }
+.shop-3 .shop-card small { font-size: 10px; min-height: 30px; line-height: 1.25; }
+.shop-3 .shop-card .price { font-size: 10px; padding: 4px 6px; }
+.hearts-row { font-size: 20px; letter-spacing: -2px; }
 .shop-card {
   cursor: pointer; text-align: center; color: #fff;
+  display: flex; flex-direction: column; align-items: center;
   background: linear-gradient(180deg, var(--panel-2), #131845);
   border: 3px solid rgba(255,255,255,.16); border-radius: 15px;
   padding: 13px 8px; box-shadow: 0 5px 0 rgba(0,0,0,.42);
@@ -361,7 +453,7 @@ html, body {
 .shop-card strong { display: block; font-size: 14px; line-height: 1.25; margin-top: 4px; hyphens: auto; }
 .shop-card small { display: block; color: var(--muted); font-size: 11px; line-height: 1.3; min-height: 28px; }
 .shop-card .price {
-  display: inline-block; margin-top: 6px; font-family: var(--pixel); font-size: 11px;
+  display: inline-block; margin-top: auto; padding-top: 6px; font-family: var(--pixel); font-size: 11px;
   color: var(--accent); background: rgba(0,0,0,.35); border-radius: 8px; padding: 5px 8px;
 }
 .shop-card:disabled { filter: grayscale(.85) brightness(.65); cursor: not-allowed; }

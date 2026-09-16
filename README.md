@@ -16,13 +16,16 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | 🎯 **Klasse 1–6** | Aufgabentypen passen sich der gewählten Klassenstufe an – von „3 + 4“ bis „3/4 von 24“ und „(−7) · (−4)“ |
 | 🐌 **Start-Tempo** | fünf Stufen von *Schnecke* bis *Rakete*, **pro Klassenstufe** gespeichert – Klasse 1 startet automatisch auf *Schnecke* |
 | ⏱ **10-Minuten-Limit** | jede Runde dauert höchstens 10 Minuten reine Spielzeit; Pausen und Menüs zählen nicht mit |
-| ❤️ **3 Leben als Herzchen** | bis zu 5 Herzen sind möglich, verdient über die Bonus-Station |
+| ❤️ **3 Leben als Herzchen** | bis zu 8 Herzen möglich – im 3er- und 5er-Paket günstiger |
 | ⭐ **Sternchen** | für jede richtig gelöste Aufgabe (mehr bei Combo und goldenen Aufgaben) |
-| 🎁 **Bonus-Station** | nach **jeder 10. Aufgabe** – egal ob richtig oder daneben |
-| 👾 **Raumschiff-Bonuslevel** | 30 Sekunden Aliens abschießen, bringt Extra-Punkte, Sternchen und ab 20 Treffern ein Herz |
+| 🎁 **Bonus-Station** | nach **jeder 15. Aufgabe** – egal ob richtig oder daneben |
+| 🎮 **Drei Bonusspiele** | Alien-Jagd, Zielschießen mit einstellbarem Winkel und Dosenwerfen mit echter Physik |
+| ⚖️ **Ehrliche Wirtschaft** | ein Bonusspiel kostet 8 ★ und gibt höchstens 5 ★ zurück – Sternchen gibt es nur fürs Rechnen |
 | ⏩ **Steigendes Tempo** | vom eingestellten Start-Tempo aus fallen die Aufgaben mit jedem Level und jeder Spielminute schneller – höchstens bis auf ein Drittel der Startzeit |
 | 🖼️ **4 Hintergründe** | Stadt am Tag, Neon-Nacht, Weltraum, Unterwasser – alles live per Canvas gezeichnet |
-| 🔊 **8-Bit Sound** | Effekte und Chiptune-Musik werden per WebAudio erzeugt (keine Audiodateien) |
+| 🔊 **8-Bit Sound** | Effekte und **drei** Chiptune-Stücke mit Bass, Arpeggio, Melodie und Schlagzeug – alles per WebAudio erzeugt, keine Audiodateien |
+| 👾 **Pixel-Art** | Rakete und Ufos als echte Pixel-Sprites; die Aufgabenkästen bleiben bewusst rund und gut lesbar |
+| 🏆 **Online-Bestenliste** | mit Spitzname und selbst gewürfeltem Pixel-Avatar (optional, siehe unten) |
 | 🔢 **Zwei Eingabearten** | großes Zahlenfeld (Touch + Tastatur) oder Multiple-Choice – jederzeit umschaltbar |
 | 🏅 **Gamification** | Combo-Multiplikator bis x4, Level, XP-Ränge, 10 Abzeichen, Bestenliste pro Klasse |
 | 🔄 **Selbst-Update** | eine neue Fassung auf GitHub landet beim nächsten Öffnen automatisch auf dem Gerät |
@@ -43,11 +46,46 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 
 * Vier Antwortmöglichkeiten antippen – sie gehören immer zur untersten Aufgabe
 
-**Raumschiff-Bonuslevel**
+**Bonusspiele**
 
-* Finger über den Bildschirm ziehen oder `◀` `▶` – geschossen wird automatisch
+* *Alien-Jagd*: Finger über den Bildschirm ziehen oder `◀` `▶` – geschossen wird automatisch
+* *Zielschießen*: Winkel und Kraft mit den Reglern einstellen, **FEUER!** drücken. Die gestrichelte
+  Linie zeigt die Flugbahn. Ein angetippter Ballon wird zum Ziel und zählt doppelt
+* *Dosenwerfen*: vom Ball aus in Wurfrichtung ziehen und loslassen – 3 Bälle, 6 Dosen
 
-`Esc` pausiert das Spiel. Während der Pause läuft die Rundenzeit nicht weiter.
+`Esc` pausiert das Spiel. Während der Pause läuft die Rundenzeit nicht weiter – dafür
+stehen beim Weiterspielen **andere Aufgaben** auf dem Feld, an derselben Stelle und in
+derselben Höhe. Eine Pause bringt also keinen Vorteil beim Nachdenken.
+
+---
+
+## Sternchen, Herzen und Bonusspiele
+
+Für jede richtig gelöste Aufgabe gibt es mindestens ein ⭐ (mehr bei Combo und goldenen
+Aufgaben). Nach jeder 15. Aufgabe öffnet die Bonus-Station.
+
+**Herzen** – je größer das Paket, desto günstiger:
+
+| Paket | Preis | pro Herz |
+|---|---|---|
+| 1 Herz | 5 ★ | 5,0 ★ |
+| 3 Herzen | 12 ★ | 4,0 ★ |
+| 5 Herzen | 18 ★ | 3,6 ★ |
+
+Mehr als 8 Herzen gehen nicht; Pakete, die darüber hinausgehen würden, sind gesperrt.
+
+**Bonusspiele** kosten jeweils 8 ★ und geben **höchstens 5 ★** zurück:
+
+| Spiel | Dauer | volle 5 ★ ab |
+|---|---|---|
+| 👾 Alien-Jagd | 30 s | 35 Treffern |
+| 🎯 Zielschießen | 30 s | 15 Ballons |
+| 🥫 Dosenwerfen | 45 s | 6 Dosen |
+
+Unterm Strich kostet jedes Bonusspiel also Sternchen. Es ist eine Belohnung, keine
+Abkürzung – nachgefüllt wird nur durch Rechnen. Die Preise stehen in
+`CONFIG.heartPacks` (`js/game.js`) und in `MiniGames.LIST` (`js/minigames.js`), die
+Obergrenze in `MiniGames.MAX_STARS`.
 
 ---
 
@@ -64,6 +102,88 @@ Bonus-Station laufen nicht mit. Wenn für das 30-Sekunden-Bonuslevel nicht mehr
 genug Zeit übrig ist, lässt es sich nicht mehr kaufen.
 
 Das Limit steht in `js/game.js` bei `CONFIG.sessionLimit` (in Sekunden).
+
+---
+
+## Online-Bestenliste einrichten
+
+Ohne diesen Schritt funktioniert alles – die Bestenliste bleibt dann einfach auf dem Gerät.
+Für eine gemeinsame Liste braucht es einen kleinen Datenspeicher; **Supabase** ist dafür
+kostenlos und passt zu einer rein statischen Seite.
+
+**1. Projekt anlegen**
+
+* Auf [supabase.com](https://supabase.com) mit dem GitHub-Konto anmelden
+* **New project**, Name z. B. `mathe-app`, Region *Frankfurt (eu-central-1)*,
+  das Datenbank-Passwort irgendwo notieren
+* Ein bis zwei Minuten warten, bis das Projekt bereit ist
+
+**2. Tabelle anlegen**
+
+Links auf **SQL Editor → New query**, das Folgende einfügen und **Run** drücken:
+
+```sql
+create table public.highscores (
+  id         bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  name       text not null,
+  avatar     text not null default '0000',
+  score      int  not null,
+  grade      int  not null,
+  correct    int  not null default 0,
+  level      int  not null default 1
+);
+
+alter table public.highscores enable row level security;
+
+-- Lesen darf jeder
+create policy "lesen" on public.highscores
+  for select using (true);
+
+-- Eintragen darf jeder, aber nur mit vernünftigen Werten
+create policy "eintragen" on public.highscores
+  for insert with check (
+    char_length(name) between 1 and 12
+    and char_length(avatar) <= 8
+    and score between 0 and 999999
+    and grade between 1 and 6
+  );
+
+create index highscores_score_idx on public.highscores (score desc);
+```
+
+Es gibt bewusst **keine** Regel zum Ändern oder Löschen – über die App kann also niemand
+fremde Einträge anfassen. Aufräumen kannst du jederzeit selbst im **Table Editor**.
+
+**3. Zugangsdaten eintragen**
+
+* In Supabase: **Project Settings → API**
+* Dort stehen *Project URL* und der Schlüssel *anon public*
+* Im GitHub-Repository `js/config.js` anklicken → Stift-Symbol → beide Werte eintragen:
+
+```js
+window.APP_CONFIG = {
+  supabaseUrl: 'https://deinprojekt.supabase.co',
+  supabaseKey: 'eyJhbGciOi...',
+  table: 'highscores',
+  topCount: 20
+};
+```
+
+* **Commit changes**, danach wie üblich die Version in `sw.js` hochzählen
+
+Der *anon public*-Schlüssel darf offen in der Seite stehen – genau dafür ist er gedacht.
+Was erlaubt ist, entscheiden allein die Regeln aus Schritt 2.
+
+**Datenschutz:** Gespeichert werden nur Spitzname (max. 12 Zeichen), Avatar-Kennung,
+Punktzahl, Klassenstufe und ein Zeitstempel. Keine echten Namen, keine E-Mail, keine
+Geräte-Kennung, keine Zählpixel. Das Eingabefeld weist ausdrücklich darauf hin, keinen
+echten Nachnamen zu verwenden – die Liste ist öffentlich lesbar.
+
+**Gut zu wissen:** Kostenlose Supabase-Projekte werden nach etwa einer Woche ohne Zugriff
+pausiert. Ein Klick auf *Restore* im Dashboard weckt sie wieder. Ist der Dienst gerade
+nicht erreichbar, zeigt die App einen Hinweis und speichert den Eintrag trotzdem auf dem
+Gerät.
 
 ---
 
@@ -138,7 +258,7 @@ direkt bearbeiten: Datei anklicken → Stift-Symbol → ändern → **Commit cha
 
 1. Im Repository auf `sw.js` klicken
 2. Stift-Symbol (✏️ *Edit this file*)
-3. In der Zeile `const VERSION = '1.2.0';` die letzte Zahl erhöhen, z. B. auf `'1.2.1'`
+3. In der Zeile `const VERSION = '1.4.1';` die letzte Zahl erhöhen, z. B. auf `'1.4.1'`
 4. **Commit changes**
 
 > Wer lieber auf dem Rechner arbeitet: `./bump.sh "Was geändert wurde"` erledigt
@@ -169,10 +289,14 @@ mathe-app/
 ├── bump.sh                  Version hochzählen, committen, pushen
 ├── css/style.css            Arcade-Optik
 ├── js/
+│   ├── config.js            Zugangsdaten der Online-Bestenliste (leer = aus)
+│   ├── pixel.js             Pixel-Sprites, Pixelschrift, Avatare
+│   ├── leaderboard.js       Anbindung an Supabase
 │   ├── mathgen.js           Aufgaben-Generator Klasse 1–6
+│   ├── minigames.js         die drei Bonusspiele (inkl. Dosen-Physik)
 │   ├── audio.js             8-Bit Sound-Engine + Chiptune
 │   ├── backgrounds.js       vier animierte Hintergründe
-│   ├── game.js              Spiel-Engine + Raumschiff-Bonuslevel
+│   ├── game.js              Spiel-Engine und Bonus-Station
 │   └── main.js              Menüs, Fortschritt, PWA-Anbindung
 └── icons/                   App-Icons
 ```
@@ -184,10 +308,18 @@ mathe-app/
   Sekunden beim Start, `spawn` der Abstand zwischen zwei Aufgaben
 * **Standard-Tempo je Klasse:** `DEFAULTS.settings.speedByGrade` in `js/main.js`
 * **Wie stark es schneller wird:** die Faktoren in `speedNow()` / `spawnInterval()` in `js/game.js`
-* **Preise in der Bonus-Station:** `CONFIG.heartCost` / `CONFIG.miniCost` in `js/game.js`
+* **Preise in der Bonus-Station:** `CONFIG.heartPacks` in `js/game.js`, `cost` in `MiniGames.LIST`
+* **Maximale Sternchen aus Bonusspielen:** `MAX_STARS` in `js/minigames.js`
+* **Neues Bonusspiel:** in `js/minigames.js` eine Funktion nach dem Muster der drei
+  vorhandenen ergänzen und in `GAMES` und `LIST` eintragen
 * **Bonus seltener/öfter:** `CONFIG.bonusEvery` in `js/game.js`
 * **Neue Aufgabentypen:** in `js/mathgen.js` bei der passenden Klassenfunktion (`k1` … `k6`) eine
   Funktion ergänzen, die `{ text, answer }` zurückgibt
+* **Musikstücke:** die Tabelle `TRACKS` in `js/audio.js` – `melody`, `chords` und `drums`
+  sind je 64 Schritte lang
+* **Pixel-Sprites:** `SPRITES` in `js/pixel.js` (`FONT` liegt dort als fertige
+  5×7-Pixelschrift bereit, falls die Aufgaben doch einmal pixelig werden sollen)
+* **Aussehen der Aufgabenkästen:** der Block „Gleichungen“ in `render()` in `js/game.js`
 * **Neuer Hintergrund:** in `js/backgrounds.js` ein weiteres Objekt in `THEMES` mit `build()` und
   `draw()` ergänzen und die ID in `ORDER` eintragen
 

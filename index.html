@@ -63,7 +63,18 @@
       <div id="choices"></div>
     </div>
     <div id="miniHint" hidden>
-      <p>🚀 Ziehe mit dem Finger (oder ◀ ▶) – geschossen wird automatisch!</p>
+      <p id="miniHintText">🚀 Ziehe mit dem Finger (oder ◀ ▶) – geschossen wird automatisch!</p>
+    </div>
+    <div id="cannonPad" hidden>
+      <div class="slider-row">
+        <label for="angleSlider">Winkel <b id="angleVal">45°</b></label>
+        <input type="range" id="angleSlider" min="5" max="85" value="45" step="1">
+      </div>
+      <div class="slider-row">
+        <label for="powerSlider">Kraft <b id="powerVal">65</b></label>
+        <input type="range" id="powerSlider" min="20" max="100" value="65" step="1">
+      </div>
+      <button id="cannonFire" class="fire-btn wide">FEUER! 💥</button>
     </div>
   </footer>
 
@@ -146,8 +157,21 @@
   <section id="scores" class="overlay">
     <div class="panel">
       <h2>Bestenliste</h2>
-      <div id="scoreList" class="score-list"></div>
-      <div id="statList" class="stat-list"></div>
+      <div class="seg" id="scoreTabs">
+        <button data-tab="online" class="active">🌍 Online</button>
+        <button data-tab="local">📱 Dieses Gerät</button>
+      </div>
+      <div id="tabOnline">
+        <div id="onlineList" class="online-list"></div>
+        <p class="hint small" id="onlineNote"></p>
+        <button id="onlineReload" class="mini-btn wide">Neu laden</button>
+      </div>
+      <div id="tabLocal" hidden>
+        <div id="myList" class="online-list"></div>
+        <h3>Bestwert je Klasse</h3>
+        <div id="scoreList" class="score-list"></div>
+        <div id="statList" class="stat-list"></div>
+      </div>
       <button class="big-btn" data-close="scores">Zurück</button>
     </div>
   </section>
@@ -169,20 +193,11 @@
       <p class="hint">Alle 10 Aufgaben darfst du deine Sternchen eintauschen.</p>
       <div class="star-bank"><span id="bonusStars">0</span> <em>★</em></div>
 
-      <div class="shop">
-        <button id="buyHeart" class="shop-card">
-          <div class="shop-icon">❤️</div>
-          <strong>Extra-Herz</strong>
-          <small>Ein Leben mehr</small>
-          <span class="price"><b id="priceHeart">5</b> ★</span>
-        </button>
-        <button id="buyMini" class="shop-card">
-          <div class="shop-icon">👾</div>
-          <strong>Raumschiff-Bonus</strong>
-          <small>30 Sek. Aliens abschießen</small>
-          <span class="price"><b id="priceMini">8</b> ★</span>
-        </button>
-      </div>
+      <h3>Herzen auffüllen</h3>
+      <div class="shop shop-3" id="heartShop"></div>
+
+      <h3>Bonusspiel <span class="h3-note">(bringt höchstens 5 ★ zurück)</span></h3>
+      <div class="shop shop-3" id="gameShop"></div>
 
       <button id="bonusContinue" class="big-btn">Weiterrechnen</button>
       <p class="hint small" id="bonusNote"></p>
@@ -192,8 +207,9 @@
   <!-- ================= Bonus-Ergebnis ================= -->
   <section id="miniresult" class="overlay">
     <div class="panel">
-      <h2>Bonus geschafft!</h2>
+      <h2 id="miniTitle">Bonus geschafft!</h2>
       <div class="result-grid" id="miniStats"></div>
+      <p class="hint small" id="miniNet"></p>
       <button id="miniOk" class="big-btn">Weiter</button>
     </div>
   </section>
@@ -206,6 +222,22 @@
       <div class="final-score" id="goScore">0</div>
       <div class="result-grid" id="goStats"></div>
       <div id="goBadges" class="new-badges"></div>
+
+      <div id="entryBox">
+        <h3>In die Bestenliste eintragen</h3>
+        <div class="entry-row">
+          <canvas id="avatarCanvas" width="64" height="64" aria-label="Avatar"></canvas>
+          <div class="entry-fields">
+            <input id="nickInput" type="text" maxlength="12" placeholder="Spitzname"
+                   autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done">
+            <button id="avatarDice" class="mini-btn">🎲 Anderer Avatar</button>
+          </div>
+        </div>
+        <p class="hint small">Nur ein Spitzname, bitte kein echter Nachname – die Liste ist öffentlich.</p>
+        <button id="submitScore" class="big-btn">Eintragen</button>
+        <p class="hint small" id="entryNote"></p>
+      </div>
+
       <button id="btnAgain" class="big-btn">Nochmal!</button>
       <button id="btnMenu" class="mini-btn wide">Zum Menü</button>
     </div>
@@ -215,7 +247,11 @@
   <div id="countdown" hidden><span></span></div>
 </div>
 
+<script src="js/config.js"></script>
+<script src="js/pixel.js"></script>
+<script src="js/leaderboard.js"></script>
 <script src="js/mathgen.js"></script>
+<script src="js/minigames.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/backgrounds.js"></script>
 <script src="js/game.js"></script>

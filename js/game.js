@@ -14,13 +14,16 @@
   const rf = (a, b) => a + Math.random() * (b - a);
 
   const CONFIG = {
-    maxLives: 5,
+    maxLives: 8,
     startLives: 3,
-    heartCost: 5,
-    miniCost: 8,
-    bonusEvery: 10,      /* nach jeder 10. Aufgabe (egal ob richtig oder falsch) */
+    /* Herz-Pakete: je mehr auf einmal, desto günstiger pro Herz */
+    heartPacks: [
+      { n: 1, cost: 5 },   /* 5,0 Sternchen pro Herz */
+      { n: 3, cost: 12 },  /* 4,0 Sternchen pro Herz */
+      { n: 5, cost: 18 }   /* 3,6 Sternchen pro Herz */
+    ],
+    bonusEvery: 15,      /* nach jeder 15. Aufgabe (egal ob richtig oder falsch) */
     levelEvery: 10,      /* Level-Up nach je 10 richtigen Aufgaben */
-    miniDuration: 30,    /* Sekunden Bonuslevel */
     sessionLimit: 600    /* Sekunden reine Spielzeit pro Runde (10 Minuten) */
   };
 
@@ -41,7 +44,7 @@
     state: 'idle',        /* idle | playing | paused | bonus | mini | over */
     settings: { grade: 1, theme: 'stadt-tag', inputMode: 'keypad', speed: 3 },
 
-    lives: 3, maxLives: 5, stars: 0, score: 0, level: 1,
+    lives: 3, maxLives: 8, stars: 0, score: 0, level: 1,
     combo: 0, bestCombo: 0, correct: 0, wrongShots: 0, resolved: 0,
     elapsed: 0, sinceBonus: 0,
     session: 0, warned: {},   /* Spielzeit der Runde + schon gezeigte Warnungen */
@@ -140,15 +143,25 @@
     return clamp(2 + Math.floor(G.level / (slow ? 5 : 3)), 2, slow ? 3 : 4);
   }
 
-  function measureEq(text) {
-    const ctx = G.ctx;
-    ctx.font = '700 ' + eqFont() + 'px "Baloo 2", system-ui, sans-serif';
-    const w = ctx.measureText(text).width;
-    return { w: Math.max(w + 44, 92), h: eqFont() * 1.85 };
-  }
-
   function eqFont() {
     return clamp(Math.round(Math.min(G.W, G.H) * 0.055), 20, 34);
+  }
+
+  /* Die Schrift wird nur so weit verkleinert, dass auch lange Terme
+     aus Klasse 6 noch auf den Bildschirm passen. */
+  function measureEq(text) {
+    const ctx = G.ctx;
+    const maxBox = G.W - 20;
+    const font = size => '700 ' + size + 'px "Baloo 2", system-ui, sans-serif';
+    let fs = eqFont();
+    ctx.font = font(fs);
+    let w = ctx.measureText(text).width;
+    while (w + 44 > maxBox && fs > 14) {
+      fs--;
+      ctx.font = font(fs);
+      w = ctx.measureText(text).width;
+    }
+    return { w: Math.min(maxBox, Math.max(w + 44, 92)), h: Math.round(eqFont() * 1.85), fs };
   }
 
   function spawnEq() {
@@ -164,7 +177,7 @@
     }
     G.eqs.push({
       id: G.idc++, text: p.text, answer: p.answer,
-      x, y: spawnY(), w: m.w, h: m.h,
+      x, y: spawnY(), w: m.w, h: m.h, fs: m.fs,
       kind, locked: false, ph: Math.random() * TAU,
       choices: MathGen.choicesFor(p.answer, 4)
     });
@@ -346,19 +359,35 @@
     G.targetId = 0;
     G.state = 'bonus';
     Sound.play('badge');
-    if (G.cb.onBonus) G.cb.onBonus({
-      stars: G.stars, lives: G.lives, maxLives: G.maxLives,
-      heartCost: CONFIG.heartCost, miniCost: CONFIG.miniCost,
-      timeLeft: Math.max(0, CONFIG.sessionLimit - G.session),
-      canHeart: G.stars >= CONFIG.heartCost && G.lives < G.maxLives,
-      canMini: G.stars >= CONFIG.miniCost && enoughTimeForMini()
-    });
+    if (G.cb.onBonus) G.cb.onBonus(bonusInfo());
   }
 
-  function buyHeart() {
-    if (G.stars < CONFIG.heartCost || G.lives >= G.maxLives) return false;
-    G.stars -= CONFIG.heartCost;
-    G.lives++;
+  /* Alles, was die Bonus-Station zum Anzeigen braucht */
+  function bonusInfo() {
+    return {
+      stars: G.stars, lives: G.lives, maxLives: G.maxLives,
+      timeLeft: Math.max(0, CONFIG.sessionLimit - G.session),
+      packs: CONFIG.heartPacks.map(p => ({
+        n: p.n, cost: p.cost,
+        per: Math.round(p.cost / p.n * 10) / 10,
+        ok: G.stars >= p.cost && G.lives + p.n <= G.maxLives,
+        tooMany: G.lives + p.n > G.maxLives
+      })),
+      games: MiniGames.LIST.map(g => ({
+        id: g.id, icon: g.icon, name: g.name, desc: g.desc,
+        cost: g.cost, seconds: g.seconds,
+        ok: G.stars >= g.cost && enoughTimeForMini(g.id),
+        noTime: !enoughTimeForMini(g.id)
+      }))
+    };
+  }
+
+  function buyHearts(n) {
+    const pack = CONFIG.heartPacks.find(p => p.n === n);
+    if (!pack) return false;
+    if (G.stars < pack.cost || G.lives + pack.n > G.maxLives) return false;
+    G.stars -= pack.cost;
+    G.lives += pack.n;
     Sound.play('heart');
     pushHud();
     return true;
@@ -372,186 +401,78 @@
     pushHud();
   }
 
-  /* ================= Raumschiff-Bonuslevel ================= */
-  /* Das Bonuslevel lohnt sich nur, wenn die Rundenzeit noch dafür reicht. */
-  function enoughTimeForMini() {
-    return (CONFIG.sessionLimit - G.session) >= CONFIG.miniDuration + 5;
+  /* ================= Bonusspiele ================= */
+  /* Ein Bonusspiel lohnt sich nur, wenn die Rundenzeit noch dafür reicht. */
+  function enoughTimeForMini(id) {
+    const secs = id ? MiniGames.info(id).seconds : MiniGames.maxSeconds();
+    return (CONFIG.sessionLimit - G.session) >= secs + 5;
   }
 
-  function startMini(paid) {
+  /* Umgebung, die jedes Bonusspiel bekommt */
+  const MINI_ENV = {
+    get W() { return G.W; },
+    get H() { return G.H; },
+    get groundY() { return groundY(); },
+    get time() { return G.time; },
+    fx: {
+      burst, ring, float,
+      shake(v) { G.shake = Math.max(G.shake, v); }
+    },
+    sound(name) { Sound.play(name); },
+    drawShip(ctx, x, y, s, r) { drawShip(ctx, x, y, s, r); },
+    onAim(inst) { if (G.cb.onAim) G.cb.onAim(inst); }
+  };
+
+  function startMini(id, paid) {
+    const info = MiniGames.info(id);
     if (paid) {
-      if (G.stars < CONFIG.miniCost || !enoughTimeForMini()) return false;
-      G.stars -= CONFIG.miniCost;
+      if (G.stars < info.cost || !enoughTimeForMini(info.id)) return false;
+      G.stars -= info.cost;
     }
-    G.mini = {
-      t: CONFIG.miniDuration, ship: { x: G.W / 2, y: groundY() - 30 },
-      shots: [], foes: [], kills: 0, escaped: 0, cool: 0, spawn: 0, score: 0, stars: 0
-    };
+    G.miniId = info.id;
+    G.mini = MiniGames.create(info.id, MINI_ENV);
     G.state = 'mini';
     G.last = performance.now();
     Sound.play('start');
     pushHud();
-    if (G.cb.onMiniStart) G.cb.onMiniStart();
+    if (G.cb.onMiniStart) G.cb.onMiniStart(info, G.mini);
     return true;
   }
 
-  function updateMini(dt) {
-    const m = G.mini;
-    m.t -= dt;
-
-    /* Steuerung */
-    if (G.pointer.active) {
-      m.ship.x += (G.pointer.x - m.ship.x) * Math.min(1, dt * 14);
-    }
-    if (G.keys['ArrowLeft']) m.ship.x -= 420 * dt;
-    if (G.keys['ArrowRight']) m.ship.x += 420 * dt;
-    m.ship.x = clamp(m.ship.x, 30, G.W - 30);
-    m.ship.y = groundY() - 30;
-
-    /* Autofeuer */
-    m.cool -= dt;
-    if (m.cool <= 0) {
-      m.cool = 0.16;
-      m.shots.push({ x: m.ship.x, y: m.ship.y - 26 });
-      Sound.play('type');
-    }
-    for (let i = m.shots.length - 1; i >= 0; i--) {
-      const s = m.shots[i];
-      s.y -= 880 * dt;
-      if (s.y < -20) m.shots.splice(i, 1);
-    }
-
-    /* Gegner */
-    m.spawn -= dt;
-    if (m.spawn <= 0) {
-      m.spawn = rf(0.28, 0.62);
-      const n = ri(1, 2);
-      for (let k = 0; k < n; k++) {
-        m.foes.push({
-          x: rf(36, G.W - 36), y: -30, vy: rf(80, 170), vx: rf(-50, 50),
-          r: rf(15, 24), ph: Math.random() * TAU, hp: 1,
-          c: ['#FF5D73', '#B388FF', '#7CFF6B', '#FFD166', '#4FC3F7'][ri(0, 4)]
-        });
-      }
-    }
-    for (let i = m.foes.length - 1; i >= 0; i--) {
-      const f = m.foes[i];
-      f.y += f.vy * dt;
-      f.x += Math.sin(G.time * 2 + f.ph) * 40 * dt + f.vx * dt * 0.4;
-      if (f.x < 24 || f.x > G.W - 24) f.vx *= -1;
-      f.x = clamp(f.x, 24, G.W - 24);
-      if (f.y > G.H + 40) { m.foes.splice(i, 1); m.escaped++; continue; }
-      /* Treffer? */
-      for (let j = m.shots.length - 1; j >= 0; j--) {
-        const s = m.shots[j];
-        if (Math.hypot(s.x - f.x, s.y - f.y) < f.r + 6) {
-          m.shots.splice(j, 1);
-          m.foes.splice(i, 1);
-          m.kills++;
-          m.score += 15;
-          burst(f.x, f.y, [f.c, '#FFFFFF'], 16, 280);
-          ring(f.x, f.y, f.c, 70);
-          float(f.x, f.y, '+15', '#FFFFFF', 18);
-          Sound.play('hit');
-          G.shake = Math.max(G.shake, 3);
-          break;
-        }
-      }
-    }
-
-    if (m.t <= 0) endMini();
-  }
-
   function endMini() {
-    const m = G.mini;
-    const gainedStars = Math.floor(m.kills / 4);
-    const heart = m.kills >= 20 && G.lives < G.maxLives;
-    G.score += m.score;
-    G.stars += gainedStars;
-    if (heart) G.lives++;
+    if (!G.mini) return;
+    const info = MiniGames.info(G.miniId);
+    const r = G.mini.result();
+    /* Sicherheitsnetz: nie mehr Sternchen als erlaubt */
+    const gained = Math.max(0, Math.min(MiniGames.MAX_STARS, r.stars | 0));
+    G.score += r.score | 0;
+    G.stars += gained;
     G.mini = null;
     G.state = 'bonus';
-    Sound.play(m.kills > 0 ? 'badge' : 'back');
+    Sound.play(gained > 0 ? 'badge' : 'back');
     pushHud();
-    if (G.cb.onMiniEnd) G.cb.onMiniEnd({ kills: m.kills, score: m.score, stars: gainedStars, heart });
+    if (G.cb.onMiniEnd) G.cb.onMiniEnd({
+      game: info, score: r.score | 0, stars: gained, cost: info.cost, detail: r.detail || []
+    });
   }
 
-  function renderMini(ctx) {
-    const m = G.mini;
-    /* Schüsse */
-    ctx.fillStyle = '#7CFF6B';
-    m.shots.forEach(s => {
-      ctx.shadowColor = '#7CFF6B'; ctx.shadowBlur = 12;
-      rrect(ctx, s.x - 3, s.y - 12, 6, 18, 3); ctx.fill();
-    });
-    ctx.shadowBlur = 0;
-
-    /* Gegner */
-    m.foes.forEach(f => {
-      ctx.save();
-      ctx.translate(f.x, f.y);
-      ctx.rotate(Math.sin(G.time * 3 + f.ph) * 0.25);
-      ctx.fillStyle = f.c;
-      ctx.beginPath(); ctx.ellipse(0, 0, f.r, f.r * 0.62, 0, 0, TAU); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.beginPath(); ctx.arc(0, -f.r * 0.25, f.r * 0.42, Math.PI, 0); ctx.fill();
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';
-      ctx.beginPath(); ctx.arc(-f.r * 0.14, -f.r * 0.3, f.r * 0.1, 0, TAU); ctx.fill();
-      ctx.beginPath(); ctx.arc(f.r * 0.14, -f.r * 0.3, f.r * 0.1, 0, TAU); ctx.fill();
-      ctx.fillStyle = f.c;
-      ctx.globalAlpha = 0.5;
-      ctx.beginPath(); ctx.ellipse(0, f.r * 0.5, f.r * 0.5, f.r * 0.22, 0, 0, TAU); ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.restore();
-    });
-
-    drawShip(ctx, m.ship.x, m.ship.y, 1.15, 0);
-
-    /* Timer-Balken */
-    const p = clamp(m.t / CONFIG.miniDuration, 0, 1);
-    const bw = G.W * 0.7, bx = (G.W - bw) / 2, by = 88;
-    ctx.fillStyle = 'rgba(0,0,0,0.45)';
-    rrect(ctx, bx, by, bw, 16, 8); ctx.fill();
-    ctx.fillStyle = p > 0.3 ? '#7CFF6B' : '#FF5D73';
-    rrect(ctx, bx + 2, by + 2, Math.max(4, (bw - 4) * p), 12, 6); ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.font = '700 16px "Baloo 2", system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('BONUS  ' + Math.ceil(m.t) + 's   ·   ' + m.kills + ' Treffer', G.W / 2, by + 44);
-  }
-
-  /* ================= Raumschiff / Kanone ================= */
+  /* ================= Rakete (Pixel-Art) ================= */
   function drawShip(ctx, x, y, s, recoil) {
+    const sc = Math.max(2, Math.round(2.4 * (s || 1)));
+    const yy = Math.round(y + (recoil || 0) * 6);
+    const half = 8 * sc;   /* halbe Sprite-Höhe */
+
+    /* Antriebsflamme - flackert in ganzen Pixeln */
+    const fl = (2 + Math.floor((Math.sin(G.time * 19) * 0.5 + 0.5) * 3)) * sc;
     ctx.save();
-    ctx.translate(x, y + (recoil || 0) * 6);
-    ctx.scale(s, s);
-    /* Flamme */
-    const fl = 12 + Math.sin(G.time * 22) * 5;
-    const g = ctx.createLinearGradient(0, 18, 0, 18 + fl);
-    g.addColorStop(0, '#FFD166'); g.addColorStop(1, 'rgba(255,94,58,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.moveTo(-9, 18); ctx.lineTo(0, 18 + fl); ctx.lineTo(9, 18); ctx.closePath(); ctx.fill();
-    /* Flügel */
-    ctx.fillStyle = '#E63E62';
-    ctx.beginPath();
-    ctx.moveTo(-10, 4); ctx.lineTo(-26, 20); ctx.lineTo(-10, 18); ctx.closePath(); ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(10, 4); ctx.lineTo(26, 20); ctx.lineTo(10, 18); ctx.closePath(); ctx.fill();
-    /* Rumpf */
-    ctx.fillStyle = '#F4F7FF';
-    ctx.beginPath();
-    ctx.moveTo(0, -26);
-    ctx.quadraticCurveTo(13, -8, 12, 18);
-    ctx.lineTo(-12, 18);
-    ctx.quadraticCurveTo(-13, -8, 0, -26);
-    ctx.closePath(); ctx.fill();
-    /* Fenster */
-    ctx.fillStyle = '#4FC3F7';
-    ctx.beginPath(); ctx.arc(0, -4, 6.5, 0, TAU); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.75)';
-    ctx.beginPath(); ctx.arc(-2, -6, 2.4, 0, TAU); ctx.fill();
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#FF8C28';
+    ctx.fillRect(Math.round(x - 1.5 * sc), yy + half - sc, 3 * sc, fl);
+    ctx.fillStyle = '#FFD166';
+    ctx.fillRect(Math.round(x - 0.5 * sc), yy + half - sc, sc, Math.round(fl * 0.6));
     ctx.restore();
+
+    Pixel.draw(ctx, 'ship', x, yy, sc);
   }
 
   /* ================= Hauptschleife ================= */
@@ -587,7 +508,10 @@
       if (tickSession(dt)) return;
     }
 
-    if (G.state === 'mini') { updateMini(dt); return; }
+    if (G.state === 'mini') {
+      if (G.mini) { G.mini.update(dt); if (G.mini.done) endMini(); }
+      return;
+    }
     if (G.state !== 'playing') return;
 
     G.elapsed += dt;
@@ -647,7 +571,7 @@
     const ui = Backgrounds.ui();
 
     if (G.state === 'mini' && G.mini) {
-      renderMini(ctx);
+      G.mini.render(ctx);
     } else {
       /* Schutzlinie */
       const gy = groundY();
@@ -660,7 +584,6 @@
       ctx.restore();
 
       /* Gleichungen */
-      const fs = eqFont();
       G.eqs.forEach(e => {
         const isTarget = e.id === G.targetId;
         const bob = Math.sin(G.time * 2.2 + e.ph) * 3;
@@ -668,7 +591,7 @@
         const danger = clamp((e.y - (gy - G.H * 0.28)) / (G.H * 0.28), 0, 1);
 
         ctx.save();
-        /* Schatten / Glühen */
+        /* weicher Schatten */
         ctx.shadowColor = 'rgba(0,0,0,0.45)';
         ctx.shadowBlur = 12; ctx.shadowOffsetY = 5;
 
@@ -685,7 +608,7 @@
         rrect(ctx, x, y, e.w, e.h, 14); ctx.fill();
         ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-        /* Rahmen */
+        /* Rahmen - das Ziel bekommt einen kräftigen Rand */
         ctx.lineWidth = isTarget ? 4 : 2;
         ctx.strokeStyle = isTarget ? ui.accent : 'rgba(255,255,255,0.35)';
         rrect(ctx, x, y, e.w, e.h, 14); ctx.stroke();
@@ -700,7 +623,7 @@
         }
 
         ctx.fillStyle = e.kind === 'golden' ? '#4A2C00' : ui.eqText;
-        ctx.font = '700 ' + fs + 'px "Baloo 2", system-ui, sans-serif';
+        ctx.font = '700 ' + (e.fs || eqFont()) + 'px "Baloo 2", system-ui, sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(e.text, e.x, y + e.h / 2 + 1);
         ctx.restore();
@@ -793,17 +716,19 @@
       const t = ev.touches ? ev.touches[0] : ev;
       return { x: t.clientX - r.left, y: t.clientY - r.top };
     };
-    const down = ev => {
-      if (G.state !== 'mini') return;
-      const p = pos(ev); G.pointer.x = p.x; G.pointer.y = p.y; G.pointer.active = true;
-      ev.preventDefault();
+    /* Berührungen gehen direkt an das laufende Bonusspiel */
+    const send = (phase, ev) => {
+      if (G.state !== 'mini' || !G.mini) return;
+      if (phase !== 'up' && ev) { const p = pos(ev); G.pointer.x = p.x; G.pointer.y = p.y; }
+      if (phase === 'down') G.pointer.active = true;
+      if (phase === 'move' && !G.pointer.active) return;
+      if (phase === 'up') G.pointer.active = false;
+      G.mini.pointer(phase, G.pointer.x, G.pointer.y);
+      if (ev && ev.cancelable) ev.preventDefault();
     };
-    const move = ev => {
-      if (G.state !== 'mini' || !G.pointer.active) return;
-      const p = pos(ev); G.pointer.x = p.x; G.pointer.y = p.y;
-      ev.preventDefault();
-    };
-    const up = () => { G.pointer.active = false; };
+    const down = ev => send('down', ev);
+    const move = ev => send('move', ev);
+    const up = ev => send('up', ev);
 
     canvas.addEventListener('pointerdown', down);
     canvas.addEventListener('pointermove', move);
@@ -812,8 +737,15 @@
     canvas.addEventListener('touchmove', move, { passive: false });
     window.addEventListener('touchend', up);
 
-    window.addEventListener('keydown', e => { G.keys[e.key] = true; });
-    window.addEventListener('keyup', e => { G.keys[e.key] = false; });
+    const KEYMAP = { ArrowLeft: 'left', ArrowRight: 'right', ' ': 'fire', Enter: 'fire' };
+    window.addEventListener('keydown', e => {
+      G.keys[e.key] = true;
+      if (G.state === 'mini' && G.mini && KEYMAP[e.key]) { G.mini.key(KEYMAP[e.key], true); e.preventDefault(); }
+    });
+    window.addEventListener('keyup', e => {
+      G.keys[e.key] = false;
+      if (G.state === 'mini' && G.mini && KEYMAP[e.key]) G.mini.key(KEYMAP[e.key], false);
+    });
 
     G.last = performance.now();
     G.raf = requestAnimationFrame(loop);
@@ -853,7 +785,30 @@
   }
 
   function pause() { if (G.state === 'playing' || G.state === 'mini') { G.prevState = G.state; G.state = 'paused'; } }
-  function resume() { if (G.state === 'paused') { G.state = G.prevState || 'playing'; G.last = performance.now(); } }
+
+  /* Nach einer Pause stehen andere Aufgaben da - sonst wäre die Pause
+     eine bequeme Denkpause. Höhe und Position bleiben gleich, damit
+     dabei keine Zeit geschenkt wird. */
+  function refreshEquations() {
+    G.eqs.forEach(e => {
+      const p = MathGen.create(G.settings.grade, G.level);
+      const m = measureEq(p.text);
+      e.text = p.text; e.answer = p.answer;
+      e.w = m.w; e.h = m.h; e.fs = m.fs;
+      e.choices = MathGen.choicesFor(p.answer, 4);
+      e.locked = false;
+      e.x = clamp(e.x, e.w / 2 + 10, G.W - e.w / 2 - 10);
+    });
+    G.bullets.length = 0;
+    updateTarget(true);
+  }
+
+  function resume() {
+    if (G.state !== 'paused') return;
+    if (G.prevState !== 'mini') refreshEquations();
+    G.state = G.prevState || 'playing';
+    G.last = performance.now();
+  }
 
   function gameOver() {
     G.state = 'over';
@@ -875,7 +830,7 @@
 
   global.Game = {
     init, start, pause, resume, quit, fire, resize, setTheme, setBottomInset,
-    buyHeart, startMini, resumeFromBonus,
+    buyHearts, startMini, resumeFromBonus,
     get state() { return G.state; },
     get stars() { return G.stars; },
     get lives() { return G.lives; },
@@ -884,9 +839,12 @@
     get speeds() { return SPEEDS; },
     get timeLeft() { return Math.max(0, CONFIG.sessionLimit - G.session); },
     enoughTimeForMini,
+    get bonusInfo() { return bonusInfo(); },
     /* Vorschau zum Feinjustieren: wie lange fällt eine Aufgabe bei dieser
        Einstellung, in diesem Level, nach so vielen Sekunden Spielzeit? */
     fallTimeFor, spawnGapFor,
+    /* Nur für Tests/Debugging: laufendes Bonusspiel */
+    get miniState() { return G.mini; },
     /* Nur für Tests/Debugging: aktuelle Aufgaben auf dem Feld */
     get equations() { return G.eqs.map(e => ({ id: e.id, text: e.text, answer: e.answer, y: e.y })); },
     demoFrame() { render(); }

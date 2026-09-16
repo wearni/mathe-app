@@ -14,16 +14,19 @@
     settings: {
       grade: 1, theme: 'stadt-tag', inputMode: 'keypad', sfx: true, music: true,
       /* Start-Tempo je Klassenstufe - die Kleinen starten langsamer */
-      speedByGrade: { 1: 1, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3 }
+      speedByGrade: { 1: 1, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3 },
+      nick: '', avatar: ''
     },
+    scores: [],
     stats: {
       totalCorrect: 0, totalStars: 0, maxCombo: 0, maxLevel: 1, bestScore: 0,
-      bestKills: 0, games: 0, gradesPlayed: {}, bestByGrade: {}
+      bestKills: 0, bestMiniStars: 0, miniPlayed: 0, games: 0, gradesPlayed: {}, bestByGrade: {}
     },
     badges: {}
   };
 
   let DB = JSON.parse(JSON.stringify(DEFAULTS));
+  let lastEntryKey = '';   /* verhindert doppeltes Eintragen derselben Runde */
 
   function load() {
     try {
@@ -37,6 +40,7 @@
         DB.settings = Object.assign({}, DEFAULTS.settings, p.settings || {});
         DB.settings.speedByGrade = Object.assign({}, DEFAULTS.settings.speedByGrade, (p.settings || {}).speedByGrade || {});
         DB.stats = Object.assign({}, DEFAULTS.stats, p.stats || {});
+        DB.scores = Array.isArray(p.scores) ? p.scores : [];
         DB.badges = p.badges || {};
       }
     } catch (e) { /* Speicher nicht verfügbar - läuft trotzdem */ }
@@ -63,7 +67,7 @@
     { id: 'score2000', ic: '👑', name: 'Mathe-Profi', desc: '2000 Punkte in einer Runde', test: s => s.bestScore >= 2000 },
     { id: 'level5', ic: '🛸', name: 'Höhenflug', desc: 'Level 5 erreicht', test: s => s.maxLevel >= 5 },
     { id: 'stars100', ic: '⭐', name: 'Sternensammler', desc: '100 Sternchen gesammelt', test: s => s.totalStars >= 100 },
-    { id: 'alien', ic: '👾', name: 'Alien-Schreck', desc: '20 Treffer im Raumschiff-Bonus', test: s => s.bestKills >= 20 },
+    { id: 'alien', ic: '👾', name: 'Bonus-Meister', desc: '5 Sternchen in einem Bonusspiel', test: s => (s.bestMiniStars || 0) >= 5 },
     { id: 'klasse6', ic: '🎓', name: 'Klassenbester', desc: 'Eine Runde in Klasse 6 gespielt', test: s => !!s.gradesPlayed[6] },
     { id: 'marathon', ic: '🏅', name: 'Ausdauer-Ass', desc: '100 Aufgaben insgesamt richtig', test: s => s.totalCorrect >= 100 }
   ];
@@ -205,6 +209,7 @@
     $('#padWrap').hidden = choice;
     $('#choiceWrap').hidden = !choice;
     $('#miniHint').hidden = true;
+    $('#cannonPad').hidden = true;
     document.querySelector('.bonus-meter').hidden = false;
     lastChoices = '';
     syncInset();
@@ -254,28 +259,90 @@
   }
 
   /* ===================== Bonus-Station ===================== */
-  let bonusInfo = null;
-  function onBonus(info) {
-    bonusInfo = info;
+  function onBonus() {
     refreshBonus();
     show('bonus');
   }
 
   function refreshBonus() {
-    const stars = Game.stars, lives = Game.lives, max = Game.maxLives;
-    const c = Game.config;
-    $('#bonusStars').textContent = stars;
-    $('#priceHeart').textContent = c.heartCost;
-    $('#priceMini').textContent = c.miniCost;
-    const heartOk = stars >= c.heartCost && lives < max;
-    const timeOk = Game.enoughTimeForMini();
-    $('#buyHeart').disabled = !heartOk;
-    $('#buyMini').disabled = stars < c.miniCost || !timeOk;
+    const info = Game.bonusInfo;
+    $('#bonusStars').textContent = info.stars;
+
+    /* Herz-Pakete */
+    const hs = $('#heartShop');
+    hs.innerHTML = '';
+    info.packs.forEach(p => {
+      const b = document.createElement('button');
+      b.className = 'shop-card';
+      b.disabled = !p.ok;
+      b.innerHTML =
+        '<div class="shop-icon hearts-row">' + '❤️'.repeat(Math.min(p.n, 3)) + (p.n > 3 ? '<br>' + '❤️'.repeat(p.n - 3) : '') + '</div>' +
+        '<strong>' + p.n + (p.n === 1 ? ' Herz' : ' Herzen') + '</strong>' +
+        '<small>' + p.per.toString().replace('.', ',') + ' ★ pro Herz</small>' +
+        '<span class="price"><b>' + p.cost + '</b> ★</span>';
+      b.addEventListener('click', () => {
+        if (Game.buyHearts(p.n)) {
+          toast(p.n === 1 ? 'Extra-Herz gekauft! ❤️' : p.n + ' Herzen gekauft! ❤️');
+          refreshBonus();
+        }
+      });
+      hs.appendChild(b);
+    });
+
+    /* Bonusspiele */
+    const gs = $('#gameShop');
+    gs.innerHTML = '';
+    info.games.forEach(g => {
+      const b = document.createElement('button');
+      b.className = 'shop-card';
+      b.disabled = !g.ok;
+      b.innerHTML =
+        '<div class="shop-icon">' + g.icon + '</div>' +
+        '<strong>' + g.name + '</strong>' +
+        '<small>' + g.desc + '</small>' +
+        '<span class="price"><b>' + g.cost + '</b> ★</span>';
+      b.addEventListener('click', () => startMiniGame(g.id));
+      gs.appendChild(b);
+    });
+
     let note = '';
-    if (!timeOk) note = 'Für das Bonuslevel reicht die Rundenzeit nicht mehr – noch ' + mmss(Math.ceil(Game.timeLeft)) + '.';
-    else if (lives >= max) note = 'Deine Herzen sind schon voll! ❤️';
-    else if (stars < c.heartCost) note = 'Sammle weiter Sternchen – für jede richtige Aufgabe gibt es mindestens eines.';
+    const anyTime = info.games.some(g => !g.noTime);
+    const cheapest = Math.min.apply(null, info.packs.map(p => p.cost));
+    if (!anyTime) note = 'Für ein Bonusspiel reicht die Rundenzeit nicht mehr – noch ' + mmss(Math.ceil(info.timeLeft)) + '.';
+    else if (info.lives >= info.maxLives) note = 'Deine Herzen sind schon voll! ❤️';
+    else if (info.stars < cheapest) note = 'Sammle weiter Sternchen – für jede richtige Aufgabe gibt es mindestens eines.';
     $('#bonusNote').textContent = note;
+  }
+
+  /* Bonusspiel starten und die passende Steuerung unten einblenden */
+  function startMiniGame(id) {
+    if (!Game.startMini(id, true)) return;
+    show(null);
+    inGameChrome(true);
+    $('#padWrap').hidden = true;
+    $('#choiceWrap').hidden = true;
+    const cannon = id === 'kanone';
+    $('#cannonPad').hidden = !cannon;
+    $('#miniHint').hidden = cannon;
+    $('#miniHintText').textContent = id === 'dosen'
+      ? '🥫 Vom Ball aus in Wurfrichtung ziehen und loslassen!'
+      : '🚀 Ziehe mit dem Finger (oder ◀ ▶) – geschossen wird automatisch!';
+    syncInset();
+  }
+
+  /* Regler der Kanone */
+  let cannonInst = null;
+  function wireCannon() {
+    const a = $('#angleSlider'), p = $('#powerSlider');
+    const sync = () => {
+      $('#angleVal').textContent = a.value + '°';
+      $('#powerVal').textContent = p.value;
+      if (cannonInst) { cannonInst.setAngle(+a.value); cannonInst.setPower(+p.value); }
+    };
+    a.addEventListener('input', sync);
+    p.addEventListener('input', sync);
+    $('#cannonFire').addEventListener('click', () => { if (cannonInst) cannonInst.fire(); });
+    sync();
   }
 
   /* ===================== Game Over ===================== */
@@ -311,6 +378,7 @@
       ['⏱ ' + mmss(r.seconds), 'gespielt']
     ].map(x => '<div><b>' + x[0] + '</b><small>' + x[1] + '</small></div>').join('');
     $('#goBadges').innerHTML = fresh.map(b => '<div>' + b.ic + ' Neues Abzeichen: <b>' + b.name + '</b></div>').join('');
+    prepareEntry(r);
     if (fresh.length) setTimeout(() => Sound.play('badge'), 700);
     show('gameover');
     renderMenuInfo();
@@ -347,7 +415,57 @@
     ).join('');
   }
 
+  /* ---------- Bestenlisten ---------- */
+  function scoreRow(e, i, mine) {
+    return '<div class="online-row' + (mine ? ' mine' : '') + '">' +
+      '<span class="rank">' + (i + 1) + '.</span>' +
+      '<img alt="" src="' + Pixel.avatarDataUrl(e.avatar, 5) + '">' +
+      '<span class="who"><b>' + escapeHtml(e.name) + '</b><small>Klasse ' + (e.grade || '?') + '</small></span>' +
+      '<span class="pts">' + (e.score | 0) + '</span></div>';
+  }
+
+  function escapeHtml(t) {
+    return String(t).replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function renderMyList() {
+    const list = (DB.scores || []).slice(0, 15);
+    $('#myList').innerHTML = list.length
+      ? list.map((e, i) => scoreRow(e, i, true)).join('')
+      : '<p class="hint small">Noch kein Eintrag – spiel eine Runde und trag dich ein!</p>';
+  }
+
+  let onlineBusy = false;
+  async function renderOnline() {
+    const box = $('#onlineList'), note = $('#onlineNote');
+    if (!Leaderboard.configured()) {
+      box.innerHTML = '';
+      note.textContent = 'Die Online-Bestenliste ist noch nicht eingerichtet. '
+        + 'Wie das geht, steht in der README unter „Online-Bestenliste einrichten“.';
+      $('#onlineReload').hidden = true;
+      return;
+    }
+    $('#onlineReload').hidden = false;
+    if (onlineBusy) return;
+    onlineBusy = true;
+    box.innerHTML = '<p class="hint small">Wird geladen …</p>';
+    note.textContent = '';
+    try {
+      const rows = await Leaderboard.top(null);
+      box.innerHTML = rows.length
+        ? rows.map((e, i) => scoreRow(e, i, e.name === DB.settings.nick)).join('')
+        : '<p class="hint small">Noch keine Einträge – sei die Erste!</p>';
+    } catch (err) {
+      box.innerHTML = '';
+      note.textContent = 'Die Online-Liste ist gerade nicht erreichbar. Deine Punkte auf diesem Gerät sind trotzdem gespeichert.';
+    }
+    onlineBusy = false;
+  }
+
   function renderScores() {
+    renderMyList();
+    renderOnline();
     const rows = [];
     for (let g = 1; g <= 6; g++) {
       rows.push('<div class="score-row"><span>' + MathGen.GRADE_INFO[g].name + '</span><b>' +
@@ -359,9 +477,83 @@
       ['Gesammelte Sternchen', DB.stats.totalStars],
       ['Beste Combo', 'x' + DB.stats.maxCombo],
       ['Höchstes Level', DB.stats.maxLevel],
-      ['Beste Bonus-Treffer', DB.stats.bestKills],
+      ['Bestes Bonusspiel', (DB.stats.bestMiniStars || 0) + ' ★'],
+      ['Gespielte Bonusspiele', DB.stats.miniPlayed || 0],
       ['Gespielte Runden', DB.stats.games]
     ].map(x => '<div class="stat-row"><span>' + x[0] + '</span><b>' + x[1] + '</b></div>').join('');
+  }
+
+  /* ===================== Eintrag in die Bestenliste ===================== */
+  let currentAvatar = '';
+  let pendingEntry = null;
+
+  function drawAvatarBox() {
+    const cv = $('#avatarCanvas');
+    const c = cv.getContext('2d');
+    c.clearRect(0, 0, cv.width, cv.height);
+    /* 7 x 7 Pixel auf 64 x 64: Größe 8, oben links 4 Pixel Rand */
+    Pixel.drawAvatar(c, currentAvatar, 4, 4, 8);
+  }
+
+  function rollAvatar() {
+    currentAvatar = Pixel.randomAvatar();
+    DB.settings.avatar = currentAvatar;
+    save();
+    drawAvatarBox();
+  }
+
+  function prepareEntry(r) {
+    pendingEntry = r;
+    currentAvatar = DB.settings.avatar || Pixel.randomAvatar();
+    DB.settings.avatar = currentAvatar;
+    $('#nickInput').value = DB.settings.nick || '';
+    drawAvatarBox();
+    const key = r.score + '|' + r.seconds + '|' + r.correct;
+    const already = key === lastEntryKey;
+    $('#entryBox').hidden = r.score <= 0;
+    $('#submitScore').disabled = already;
+    $('#submitScore').textContent = already ? 'Schon eingetragen ✓' : 'Eintragen';
+    $('#entryNote').textContent = Leaderboard.configured()
+      ? '' : 'Ohne Online-Liste wird der Eintrag nur auf diesem Gerät gespeichert.';
+  }
+
+  async function submitEntry() {
+    if (!pendingEntry) return;
+    const nick = Leaderboard.cleanName($('#nickInput').value) || 'Anonym';
+    DB.settings.nick = nick;
+    DB.settings.avatar = currentAvatar;
+
+    const entry = {
+      name: nick, avatar: currentAvatar,
+      score: pendingEntry.score, grade: pendingEntry.grade,
+      correct: pendingEntry.correct, level: pendingEntry.level,
+      date: Date.now()
+    };
+
+    /* immer zuerst auf dem Gerät sichern */
+    DB.scores.push(entry);
+    DB.scores.sort((a, b) => b.score - a.score);
+    DB.scores = DB.scores.slice(0, 25);
+    save();
+
+    lastEntryKey = pendingEntry.score + '|' + pendingEntry.seconds + '|' + pendingEntry.correct;
+    $('#submitScore').disabled = true;
+    $('#submitScore').textContent = 'Eingetragen ✓';
+    Sound.play('badge');
+
+    if (!Leaderboard.configured()) {
+      $('#entryNote').textContent = 'Auf diesem Gerät gespeichert.';
+      toast('Eingetragen! 🏆');
+      return;
+    }
+    $('#entryNote').textContent = 'Wird hochgeladen …';
+    try {
+      await Leaderboard.submit(entry);
+      $('#entryNote').textContent = 'In der Online-Bestenliste eingetragen!';
+      toast('Online eingetragen! 🌍');
+    } catch (err) {
+      $('#entryNote').textContent = 'Online hat nicht geklappt – auf dem Gerät ist der Eintrag aber sicher.';
+    }
   }
 
   /* ===================== Einstellungen ===================== */
@@ -482,6 +674,7 @@
       DB.stats = JSON.parse(JSON.stringify(DEFAULTS.stats));
       DB.badges = {};
       DB.settings.speedByGrade = JSON.parse(JSON.stringify(DEFAULTS.settings.speedByGrade));
+      DB.scores = [];
       save(); syncSpeeds(); renderMenuInfo(); toast('Fortschritt gelöscht');
     });
 
@@ -491,33 +684,47 @@
 
     /* Pause */
     $('#btnPause').addEventListener('click', () => { Game.pause(); Sound.play('back'); show('pause'); });
-    $('#btnResume').addEventListener('click', () => { Sound.play('click'); show(null); Game.resume(); });
+    $('#btnResume').addEventListener('click', () => {
+      Sound.play('click');
+      show(null);
+      /* kurzer Countdown, danach stehen neue Aufgaben da */
+      countdown(() => Game.resume());
+    });
     $('#btnQuit').addEventListener('click', () => {
       Sound.play('back'); Game.quit(); inGameChrome(false); show('menu'); renderMenuInfo();
     });
 
     /* Bonus-Station */
-    $('#buyHeart').addEventListener('click', () => {
-      if (Game.buyHeart()) { toast('Extra-Herz gekauft! ❤️'); refreshBonus(); }
-    });
-    $('#buyMini').addEventListener('click', () => {
-      if (Game.startMini(true)) {
-        show(null);
-        inGameChrome(true);
-        $('#padWrap').hidden = true; $('#choiceWrap').hidden = true; $('#miniHint').hidden = false;
-        syncInset();
-      }
-    });
+    wireCannon();
     $('#bonusContinue').addEventListener('click', () => {
       Sound.play('click');
       show(null); inGameChrome(true);
       $('#miniHint').hidden = true;
+      $('#cannonPad').hidden = true;
       applyInputMode();
       Game.resumeFromBonus();
       if (DB.settings.music) Sound.startMusic();
     });
 
     $('#miniOk').addEventListener('click', () => { Sound.play('click'); refreshBonus(); show('bonus'); });
+
+    /* Eintrag in die Bestenliste */
+    $('#avatarDice').addEventListener('click', () => { Sound.play('click'); rollAvatar(); });
+    $('#submitScore').addEventListener('click', submitEntry);
+    $('#nickInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); submitEntry(); }
+    });
+
+    /* Ansichten der Bestenliste */
+    $$('#scoreTabs button').forEach(b => b.addEventListener('click', () => {
+      Sound.play('click');
+      $$('#scoreTabs button').forEach(x => x.classList.toggle('active', x === b));
+      const online = b.dataset.tab === 'online';
+      $('#tabOnline').hidden = !online;
+      $('#tabLocal').hidden = online;
+      if (online) renderOnline();
+    }));
+    $('#onlineReload').addEventListener('click', () => { Sound.play('click'); renderOnline(); });
 
     /* Game Over */
     $('#btnAgain').addEventListener('click', () => { Sound.play('start'); startGame(); });
@@ -657,19 +864,33 @@
       onBonus,
       onGameOver,
       onToast: toast,
-      onMiniStart: () => { document.querySelector('.bonus-meter').hidden = true; },
+      onMiniStart: (info, inst) => {
+        document.querySelector('.bonus-meter').hidden = true;
+        cannonInst = info.id === 'kanone' ? inst : null;
+        if (cannonInst) {
+          cannonInst.setAngle(+$('#angleSlider').value);
+          cannonInst.setPower(+$('#powerSlider').value);
+        }
+      },
       onMiniEnd: r => {
-        DB.stats.bestKills = Math.max(DB.stats.bestKills, r.kills);
+        DB.stats.bestKills = Math.max(DB.stats.bestKills, r.score);
+        DB.stats.bestMiniStars = Math.max(DB.stats.bestMiniStars || 0, r.stars);
         DB.stats.totalStars += r.stars;
+        DB.stats.miniPlayed = (DB.stats.miniPlayed || 0) + 1;
         save();
         checkBadges();
-        $('#miniStats').innerHTML = [
-          ['👾 ' + r.kills, 'Aliens getroffen'],
+        cannonInst = null;
+        const net = r.stars - r.cost;
+        $('#miniTitle').textContent = r.game.icon + ' ' + r.game.name;
+        $('#miniStats').innerHTML = (r.detail || []).concat([
           ['💯 +' + r.score, 'Extra-Punkte'],
-          ['⭐ +' + r.stars, 'Sternchen'],
-          [r.heart ? '❤️ +1' : '—', r.heart ? 'Bonus-Herz!' : 'kein Bonus-Herz']
-        ].map(x => '<div><b>' + x[0] + '</b><small>' + x[1] + '</small></div>').join('');
+          ['⭐ +' + r.stars, 'von 5 möglichen']
+        ]).slice(0, 4)
+          .map(x => '<div><b>' + x[0] + '</b><small>' + x[1] + '</small></div>').join('');
+        $('#miniNet').textContent = 'Einsatz ' + r.cost + ' ★ · zurück ' + r.stars + ' ★ · Bilanz ' +
+          (net >= 0 ? '+' : '') + net + ' ★';
         $('#miniHint').hidden = true;
+        $('#cannonPad').hidden = true;
         show('miniresult');
       }
     });

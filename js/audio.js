@@ -140,32 +140,116 @@
   }
 
   /* ============================================================
-     Chiptune-Hintergrundmusik: 4 Akkorde, Bass + Arpeggio + Lead
+     Chiptune-Hintergrundmusik
+
+     Drei Stücke à 8 Takte (64 Achtel) - doppelt so lang wie vorher.
+     Jedes hat eine eigene Akkordfolge, Melodie, Basslinie und ein
+     einfaches Schlagzeug. Pro Runde wird zufällig eines gewählt,
+     nie zweimal dasselbe hintereinander.
      ============================================================ */
   const NOTE = {
-    C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
-    C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
-    C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99, A5: 880.00
+    'C2': 65.41, 'D2': 73.42, 'E2': 82.41, 'F2': 87.31, 'G2': 98.00, 'A2': 110.00, 'B2': 123.47,
+    'C3': 130.81, 'CS3': 138.59, 'D3': 146.83, 'DS3': 155.56, 'E3': 164.81, 'F3': 174.61,
+    'FS3': 185.00, 'G3': 196.00, 'GS3': 207.65, 'A3': 220.00, 'AS3': 233.08, 'B3': 246.94,
+    'C4': 261.63, 'CS4': 277.18, 'D4': 293.66, 'DS4': 311.13, 'E4': 329.63, 'F4': 349.23,
+    'FS4': 369.99, 'G4': 392.00, 'GS4': 415.30, 'A4': 440.00, 'AS4': 466.16, 'B4': 493.88,
+    'C5': 523.25, 'CS5': 554.37, 'D5': 587.33, 'DS5': 622.25, 'E5': 659.25, 'F5': 698.46,
+    'FS5': 739.99, 'G5': 783.99, 'GS5': 830.61, 'A5': 880.00, 'AS5': 932.33, 'B5': 987.77,
+    'C6': 1046.50, 'D6': 1174.66, 'E6': 1318.51, 'G6': 1567.98
   };
 
-  /* I - V - vi - IV in C-Dur */
-  const CHORDS = [
-    { bass: NOTE.C3, arp: [NOTE.C4, NOTE.E4, NOTE.G4, NOTE.E4] },
-    { bass: NOTE.G3, arp: [NOTE.G3, NOTE.B3, NOTE.D4, NOTE.B3] },
-    { bass: NOTE.A3, arp: [NOTE.A3, NOTE.C4, NOTE.E4, NOTE.C4] },
-    { bass: NOTE.F3, arp: [NOTE.F3, NOTE.A3, NOTE.C4, NOTE.A3] }
-  ];
-  const MELODY = [
-    NOTE.E5, 0, NOTE.G5, 0, NOTE.E5, NOTE.D5, 0, 0,
-    NOTE.D5, 0, NOTE.B4, 0, NOTE.D5, 0, 0, 0,
-    NOTE.C5, 0, NOTE.E5, 0, NOTE.A4, 0, NOTE.C5, 0,
-    NOTE.F5, 0, NOTE.E5, NOTE.D5, NOTE.C5, 0, 0, 0
+  function seq(str) {
+    return str.trim().split(/\s+/).map(t => (t === '.' ? 0 : (NOTE[t] || 0)));
+  }
+  function chordSeq(list) {
+    return list.map(c => ({ bass: NOTE[c.b], arp: c.a.map(n => NOTE[n]) }));
+  }
+
+  const TRACKS = [
+    {
+      /* 1) Sternenflug - freundlich, C-Dur */
+      name: 'Sternenflug', tempo: 128,
+      chords: chordSeq([
+        { b: 'C3', a: ['C4', 'E4', 'G4', 'E4'] },
+        { b: 'G2', a: ['G3', 'B3', 'D4', 'B3'] },
+        { b: 'A2', a: ['A3', 'C4', 'E4', 'C4'] },
+        { b: 'F2', a: ['F3', 'A3', 'C4', 'A3'] },
+        { b: 'C3', a: ['C4', 'E4', 'G4', 'E4'] },
+        { b: 'G2', a: ['G3', 'B3', 'D4', 'B3'] },
+        { b: 'F2', a: ['F3', 'A3', 'C4', 'A3'] },
+        { b: 'G2', a: ['G3', 'B3', 'D4', 'G4'] }
+      ]),
+      melody: seq(`
+        E5 .  G5 .  E5 D5 .  .
+        D5 .  B4 .  D5 .  .  .
+        C5 .  E5 .  A4 .  C5 .
+        F5 .  E5 D5 C5 .  .  .
+        E5 .  G5 .  C6 .  B5 .
+        D5 .  G5 .  B5 .  A5 .
+        C5 .  F5 .  A5 .  G5 .
+        B4 .  D5 .  G5 .  .  .
+      `),
+      drums: 'k...h...k..kh...k...h...k..kh..s' + 'k...h...k..kh...k..sh...k.k.hs..'
+    },
+    {
+      /* 2) Turbo-Rechner - treibend, a-Moll */
+      name: 'Turbo-Rechner', tempo: 144,
+      chords: chordSeq([
+        { b: 'A2', a: ['A3', 'C4', 'E4', 'C4'] },
+        { b: 'F2', a: ['F3', 'A3', 'C4', 'A3'] },
+        { b: 'C3', a: ['C4', 'E4', 'G4', 'E4'] },
+        { b: 'G2', a: ['G3', 'B3', 'D4', 'B3'] },
+        { b: 'A2', a: ['A3', 'C4', 'E4', 'A4'] },
+        { b: 'F2', a: ['F3', 'A3', 'C4', 'F4'] },
+        { b: 'G2', a: ['G3', 'B3', 'D4', 'G4'] },
+        { b: 'A2', a: ['A3', 'E4', 'A4', 'E4'] }
+      ]),
+      melody: seq(`
+        A5 .  A5 G5 E5 .  .  D5
+        F5 .  F5 E5 C5 .  .  .
+        E5 .  G5 .  C6 .  B5 G5
+        D5 .  B4 .  G4 .  .  .
+        A5 A5 .  C6 B5 .  A5 .
+        F5 F5 .  A5 G5 .  F5 .
+        G5 .  B5 .  D6 .  B5 .
+        A5 .  E5 .  A4 .  .  .
+      `),
+      drums: 'k.h.s.h.k.h.s.h.k.h.s.h.k.hks.h.' + 'k.h.s.h.k.h.s.h.k.h.s.h.kkh.s.hh'
+    },
+    {
+      /* 3) Mondspaziergang - ruhig, F-Dur */
+      name: 'Mondspaziergang', tempo: 112,
+      chords: chordSeq([
+        { b: 'F2', a: ['F3', 'A3', 'C4', 'A3'] },
+        { b: 'D3', a: ['D3', 'F3', 'A3', 'F3'] },
+        { b: 'AS3', a: ['AS3', 'D4', 'F4', 'D4'] },
+        { b: 'C3', a: ['C4', 'E4', 'G4', 'E4'] },
+        { b: 'F2', a: ['F3', 'A3', 'C4', 'F4'] },
+        { b: 'D3', a: ['D3', 'A3', 'D4', 'A3'] },
+        { b: 'AS3', a: ['AS3', 'F4', 'AS4', 'F4'] },
+        { b: 'C3', a: ['C4', 'G4', 'C5', 'G4'] }
+      ]),
+      melody: seq(`
+        F5 .  .  A5 .  G5 .  .
+        D5 .  .  F5 .  E5 .  .
+        AS4 . D5 .  F5 .  D5 .
+        C5 .  E5 .  G5 .  .  .
+        A5 .  .  C6 .  AS5 . .
+        F5 .  .  A5 .  G5 .  .
+        D5 .  F5 .  AS5 . A5 .
+        G5 .  E5 .  C5 .  .  .
+      `),
+      drums: 'k.......h.......k.......h......s' + 'k.......h.......k...h...k.h.s...'
+    }
   ];
 
+  const STEPS = 64;
   let musicTimer = null;
   let step = 0;
   let nextTime = 0;
-  let tempo = 132;
+  let track = TRACKS[0];
+  let lastTrack = -1;
+  let tempoScale = 1;
   let musicPlaying = false;
 
   function musicNote(freq, time, dur, type, vol) {
@@ -182,31 +266,80 @@
     osc.stop(time + dur + 0.02);
   }
 
+  /* einfaches Schlagzeug aus Rauschen und einem tiefen Sinus */
+  function drum(kind, time) {
+    if (kind === 'k') {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(130, time);
+      osc.frequency.exponentialRampToValueAtTime(42, time + 0.12);
+      g.gain.setValueAtTime(0.5, time);
+      g.gain.exponentialRampToValueAtTime(0.0001, time + 0.16);
+      osc.connect(g); g.connect(masterMusic);
+      osc.start(time); osc.stop(time + 0.18);
+      return;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = getNoise();
+    const filt = ctx.createBiquadFilter();
+    const g = ctx.createGain();
+    if (kind === 's') {
+      filt.type = 'bandpass'; filt.frequency.value = 1900; filt.Q.value = 0.8;
+      g.gain.setValueAtTime(0.28, time);
+      g.gain.exponentialRampToValueAtTime(0.0001, time + 0.13);
+      src.connect(filt); filt.connect(g); g.connect(masterMusic);
+      src.start(time); src.stop(time + 0.15);
+    } else {
+      filt.type = 'highpass'; filt.frequency.value = 7000;
+      g.gain.setValueAtTime(0.1, time);
+      g.gain.exponentialRampToValueAtTime(0.0001, time + 0.04);
+      src.connect(filt); filt.connect(g); g.connect(masterMusic);
+      src.start(time); src.stop(time + 0.06);
+    }
+  }
+
   function scheduler() {
     if (!ready || !musicPlaying) return;
-    const spb = 60 / tempo / 2; /* Achtel */
+    const spb = 60 / (track.tempo * tempoScale) / 2;   /* Achtel */
     while (nextTime < ctx.currentTime + 0.25) {
-      const bar = Math.floor(step / 8) % CHORDS.length;
-      const ch = CHORDS[bar];
-      const inBar = step % 8;
-      /* Bass auf 1 und 5 */
-      if (inBar === 0 || inBar === 4) musicNote(ch.bass, nextTime, spb * 1.6, 'triangle', 0.5);
-      /* Arpeggio durchgehend */
-      musicNote(ch.arp[inBar % ch.arp.length], nextTime, spb * 0.75, 'square', 0.16);
-      /* Melodie */
-      const m = MELODY[step % MELODY.length];
-      if (m) musicNote(m, nextTime, spb * 1.3, 'square', 0.13);
+      const pos = step % STEPS;
+      const bar = Math.floor(pos / 8);
+      const ch = track.chords[bar];
+      const inBar = pos % 8;
+
+      if (inBar === 0 || inBar === 4) musicNote(ch.bass, nextTime, spb * 1.7, 'triangle', 0.5);
+      if (inBar === 6) musicNote(ch.bass * 1.5, nextTime, spb * 0.8, 'triangle', 0.32);
+
+      musicNote(ch.arp[inBar % ch.arp.length], nextTime, spb * 0.72, 'square', 0.15);
+
+      const m = track.melody[pos];
+      if (m) musicNote(m, nextTime, spb * 1.35, 'square', 0.13);
+
+      const d = track.drums.charAt(pos);
+      if (d && d !== '.') drum(d, nextTime);
+
       nextTime += spb;
       step++;
     }
   }
 
-  function startMusic(speed) {
+  /* wählt ein Stück - möglichst nicht dasselbe wie zuletzt */
+  function pickTrack(index) {
+    if (typeof index === 'number' && TRACKS[index]) return index;
+    let i = Math.floor(Math.random() * TRACKS.length);
+    if (TRACKS.length > 1 && i === lastTrack) i = (i + 1) % TRACKS.length;
+    return i;
+  }
+
+  function startMusic(index) {
     if (!ready) init();
     if (!ready || !state.music) return;
     resume();
-    tempo = speed || 132;
-    if (musicPlaying) { return; }
+    if (musicPlaying) return;
+    const i = pickTrack(index);
+    lastTrack = i;
+    track = TRACKS[i];
+    tempoScale = 1;
     musicPlaying = true;
     step = 0;
     nextTime = ctx.currentTime + 0.1;
@@ -216,7 +349,10 @@
     musicTimer = setInterval(scheduler, 40);
   }
 
-  function setTempo(t) { tempo = t; }
+  /* Das Spiel meldet hier sein Tempo - die Musik zieht sanft mit. */
+  function setTempo(t) {
+    tempoScale = Math.max(0.85, Math.min(1.35, (t || 132) / 132));
+  }
 
   function stopMusic() {
     musicPlaying = false;
@@ -236,6 +372,10 @@
 
   global.Sound = {
     init, resume, play, startMusic, stopMusic, setTempo, setSfx, setMusic,
-    get isMusicPlaying() { return musicPlaying; }
+    get isMusicPlaying() { return musicPlaying; },
+    get trackName() { return track ? track.name : ''; },
+    get tracks() { return TRACKS.map(t => t.name); },
+    /* Nur zum Testen: Länge eines Durchlaufs in Sekunden */
+    loopSeconds(i) { const t = TRACKS[i == null ? 0 : i]; return STEPS * (60 / t.tempo / 2); }
   };
 })(window);
