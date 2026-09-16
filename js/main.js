@@ -560,6 +560,22 @@
     drawAvatarBox();
   }
 
+  let entryDone = false;
+
+  /* Ohne Spitznamen kein Eintrag - der Knopf bleibt so lange gesperrt. */
+  function syncEntryButton() {
+    const btn = $('#submitScore');
+    if (entryDone) {
+      btn.disabled = true;
+      btn.textContent = 'Eingetragen ✓';
+      return;
+    }
+    const name = Leaderboard.cleanName($('#nickInput').value);
+    btn.disabled = name.length === 0;
+    btn.textContent = name ? 'Eintragen' : 'Spitzname fehlt';
+    $('#nickInput').classList.toggle('needed', name.length === 0);
+  }
+
   function prepareEntry(r) {
     pendingEntry = r;
     currentAvatar = DB.settings.avatar || Pixel.randomAvatar();
@@ -567,17 +583,24 @@
     $('#nickInput').value = DB.settings.nick || '';
     drawAvatarBox();
     const key = r.score + '|' + r.seconds + '|' + r.correct;
-    const already = key === lastEntryKey;
+    entryDone = key === lastEntryKey;
     $('#entryBox').hidden = r.score <= 0;
-    $('#submitScore').disabled = already;
-    $('#submitScore').textContent = already ? 'Schon eingetragen ✓' : 'Eintragen';
+    if (entryDone) $('#submitScore').textContent = 'Schon eingetragen ✓';
+    syncEntryButton();
     $('#entryNote').textContent = Leaderboard.configured()
       ? '' : 'Ohne Online-Liste wird der Eintrag nur auf diesem Gerät gespeichert.';
   }
 
   async function submitEntry() {
-    if (!pendingEntry) return;
-    const nick = Leaderboard.cleanName($('#nickInput').value) || 'Anonym';
+    if (!pendingEntry || entryDone) return;
+    const nick = Leaderboard.cleanName($('#nickInput').value);
+    if (!nick) {
+      $('#entryNote').textContent = 'Bitte zuerst einen Spitznamen eintragen.';
+      $('#nickInput').classList.add('needed');
+      $('#nickInput').focus();
+      Sound.play('wrong');
+      return;
+    }
     DB.settings.nick = nick;
     DB.settings.avatar = currentAvatar;
 
@@ -595,8 +618,8 @@
     save();
 
     lastEntryKey = pendingEntry.score + '|' + pendingEntry.seconds + '|' + pendingEntry.correct;
-    $('#submitScore').disabled = true;
-    $('#submitScore').textContent = 'Eingetragen ✓';
+    entryDone = true;
+    syncEntryButton();
     Sound.play('badge');
 
     if (!Leaderboard.configured()) {
@@ -767,6 +790,7 @@
     /* Eintrag in die Bestenliste */
     $('#avatarDice').addEventListener('click', () => { Sound.play('click'); rollAvatar(); });
     $('#submitScore').addEventListener('click', submitEntry);
+    $('#nickInput').addEventListener('input', syncEntryButton);
     $('#nickInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); submitEntry(); }
     });

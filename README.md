@@ -18,6 +18,7 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | ⏱ **10-Minuten-Limit** | jede Runde dauert höchstens 10 Minuten reine Spielzeit; Pausen und Menüs zählen nicht mit |
 | ❤️ **3 Leben als Herzchen** | bis zu 8 Herzen möglich – im 3er- und 5er-Paket günstiger |
 | ⭐ **Sternchen** | für jede richtig gelöste Aufgabe (mehr bei Combo und goldenen Aufgaben) |
+| ✌️ **Zwei Versuche** | eine falsche Antwort löscht nur die Eingabe; erst die zweite zählt als Fehler und kostet ein ❤️ |
 | 🎁 **Bonus-Station** | nach **je 10 richtig gelösten** Aufgaben – Danebenschießen bringt einen keinen Schritt näher |
 | 🎮 **Drei Bonusspiele** | Alien-Jagd, Zielschießen mit einstellbarem Winkel und Dosenwerfen mit echter Physik |
 | ⚖️ **Ehrliche Wirtschaft** | ein Bonusspiel kostet 8 ★ und gibt höchstens 5 ★ zurück – Sternchen gibt es nur fürs Rechnen |
@@ -41,6 +42,14 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 * `±` bzw. `-` für negative Ergebnisse (ab Klasse 5)
 * `⌫` bzw. `Backspace` löscht
 * **ABSCHIESSEN** bzw. `Enter` / `Leertaste` feuert
+
+**Zwei Versuche pro Aufgabe**
+
+Bei einer falschen Antwort wird die Eingabe gelöscht, ein Hinweis meldet „Noch 1 Versuch!“
+und die Aufgabe fällt weiter – man darf es also noch einmal probieren. Ist auch die zweite
+Antwort falsch, zählt die Aufgabe als Fehler: Sie verschwindet, die richtige Lösung wird
+kurz eingeblendet und es kostet ein ❤️ – genau wie bei einer Aufgabe, die man gar nicht
+beantwortet hat. Die Anzahl der Versuche steht in `CONFIG.maxTries` (`js/game.js`).
 
 **Auswahl-Modus**
 
@@ -182,6 +191,9 @@ window.APP_CONFIG = {
 Der *anon public*-Schlüssel darf offen in der Seite stehen – genau dafür ist er gedacht.
 Was erlaubt ist, entscheiden allein die Regeln aus Schritt 2.
 
+Ohne Spitznamen geht kein Eintrag: Der Knopf bleibt gesperrt, solange das Feld leer ist
+(Leerzeichen zählen nicht).
+
 **Datenschutz:** Gespeichert werden nur Spitzname (max. 12 Zeichen), Avatar-Kennung,
 Punktzahl, Klassenstufe und ein Zeitstempel. Keine echten Namen, keine E-Mail, keine
 Geräte-Kennung, keine Zählpixel. Das Eingabefeld weist ausdrücklich darauf hin, keinen
@@ -265,7 +277,7 @@ direkt bearbeiten: Datei anklicken → Stift-Symbol → ändern → **Commit cha
 
 1. Im Repository auf `sw.js` klicken
 2. Stift-Symbol (✏️ *Edit this file*)
-3. In der Zeile `const VERSION = '1.4.2';` die letzte Zahl erhöhen, z. B. auf `'1.4.2'`
+3. In der Zeile `const VERSION = '1.4.3';` die letzte Zahl erhöhen, z. B. auf `'1.4.3'`
 4. **Commit changes**
 
 > Wer lieber auf dem Rechner arbeitet: `./bump.sh "Was geändert wurde"` erledigt

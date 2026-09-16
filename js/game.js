@@ -23,6 +23,7 @@
       { n: 5, cost: 18 }   /* 3,6 Sternchen pro Herz */
     ],
     bonusEvery: 10,      /* nach je 10 RICHTIG gelösten Aufgaben */
+    maxTries: 2,         /* so oft darf pro Aufgabe daneben geraten werden */
     levelEvery: 10,      /* Level-Up nach je 10 richtigen Aufgaben */
     sessionLimit: 600    /* Sekunden reine Spielzeit pro Runde (10 Minuten) */
   };
@@ -107,7 +108,12 @@
   }
 
   function float(x, y, text, color, size) {
-    G.floats.push({ x, y, text, color: color || '#fff', size: size || 22, life: 1.1 });
+    /* am Rand nach innen rücken, damit nichts abgeschnitten wird */
+    const pad = Math.min(G.W * 0.45, 20 + (String(text).length * (size || 22)) / 3.2);
+    G.floats.push({
+      x: clamp(x, pad, G.W - pad), y,
+      text, color: color || '#fff', size: size || 22, life: 1.1
+    });
   }
 
   /* ================= Aufgaben ================= */
@@ -178,7 +184,7 @@
     G.eqs.push({
       id: G.idc++, text: p.text, answer: p.answer,
       x, y: spawnY(), w: m.w, h: m.h, fs: m.fs,
-      kind, locked: false, ph: Math.random() * TAU,
+      kind, locked: false, tries: 0, ph: Math.random() * TAU,
       choices: MathGen.choicesFor(p.answer, 4)
     });
     updateTarget(true);
@@ -220,13 +226,28 @@
     G.recoil = 1;
   }
 
+  /* Ein Fehlversuch geht immer auf die Aufgabe, die gerade als Ziel
+     markiert ist. Nach CONFIG.maxTries Fehlversuchen gilt sie als falsch. */
   function onWrong() {
     G.wrongShots++;
     G.combo = 0;
     G.flash = 0.35; G.flashColor = '255,120,120';
     G.shake = Math.max(G.shake, 5);
     Sound.play('wrong');
-    float(G.W / 2, groundY() - 70, 'Daneben!', '#FF8A8A', 20);
+
+    const tgt = G.eqs.find(e => e.id === G.targetId);
+    if (!tgt) {
+      float(G.W / 2, groundY() - 70, 'Daneben!', '#FF8A8A', 20);
+      pushHud();
+      return;
+    }
+
+    tgt.tries++;
+    const left = CONFIG.maxTries - tgt.tries;
+    if (left <= 0) { failEq(tgt); return; }
+
+    float(tgt.x, tgt.y - tgt.h, left === 1 ? 'Noch 1 Versuch!' : 'Noch ' + left + ' Versuche!',
+      '#FF8A8A', 20);
     pushHud();
   }
 
@@ -260,18 +281,33 @@
     pushHud();
   }
 
-  function onMiss(e) {
+  /* Eine Aufgabe geht verloren - entweder weil sie die Schutzlinie
+     erreicht hat oder weil zu oft daneben geraten wurde. */
+  function loseEq(e, atY, note) {
     G.lives--;
     G.combo = 0;
     G.flash = 0.75; G.flashColor = '255,60,60';
     G.shake = 16;
-    burst(e.x, groundY(), ['#FF5D73', '#FF9E9E', '#FFFFFF'], 30, 420);
-    ring(e.x, groundY(), '#FF5D73', 150);
-    float(e.x, groundY() - 50, '= ' + MathGen.sgn(e.answer), '#FFD1D1', 26);
+    burst(e.x, atY, ['#FF5D73', '#FF9E9E', '#FFFFFF'], 30, 420);
+    ring(e.x, atY, '#FF5D73', 150);
+    if (note) float(e.x, atY - 78, note, '#FF8A8A', 20);
+    float(e.x, atY - 50, '= ' + MathGen.sgn(e.answer), '#FFD1D1', 26);
     Sound.play('life');
     resolveOne(false);
     pushHud();
-    if (G.lives <= 0) { gameOver(); return; }
+    if (G.lives <= 0) gameOver();
+  }
+
+  function onMiss(e) {
+    loseEq(e, groundY(), null);
+  }
+
+  /* Zu oft geraten: Aufgabe verschwindet sofort und zählt als falsch. */
+  function failEq(e) {
+    const i = G.eqs.indexOf(e);
+    if (i >= 0) G.eqs.splice(i, 1);
+    loseEq(e, e.y, 'Zweimal daneben!');
+    updateTarget(true);
   }
 
   /* Für die Bonus-Station zählen ausschließlich richtig gelöste Aufgaben.
@@ -814,6 +850,7 @@
       e.w = m.w; e.h = m.h; e.fs = m.fs;
       e.choices = MathGen.choicesFor(p.answer, 4);
       e.locked = false;
+      e.tries = 0;
       e.x = clamp(e.x, e.w / 2 + 10, G.W - e.w / 2 - 10);
     });
     G.bullets.length = 0;
@@ -863,7 +900,7 @@
     /* Nur für Tests/Debugging: laufendes Bonusspiel */
     get miniState() { return G.mini; },
     /* Nur für Tests/Debugging: aktuelle Aufgaben auf dem Feld */
-    get equations() { return G.eqs.map(e => ({ id: e.id, text: e.text, answer: e.answer, y: e.y })); },
+    get equations() { return G.eqs.map(e => ({ id: e.id, text: e.text, answer: e.answer, y: e.y, tries: e.tries })); },
     demoFrame() { render(); }
   };
 })(window);
