@@ -43,7 +43,7 @@
     cb: {},
     raf: null, last: 0, time: 0,
     state: 'idle',        /* idle | playing | paused | bonus | mini | over */
-    settings: { grade: 1, theme: 'stadt-tag', inputMode: 'keypad', speed: 3, ops: null },
+    settings: { grade: 1, theme: 'stadt-tag', inputMode: 'choice', speed: 3, ops: null },
 
     lives: 3, maxLives: 8, stars: 0, score: 0, level: 1,
     combo: 0, bestCombo: 0, correct: 0, wrongShots: 0, resolved: 0,

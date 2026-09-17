@@ -28,7 +28,7 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | 🔊 **8-Bit Sound** | Effekte und **drei** Chiptune-Stücke mit Bass, Arpeggio, Melodie und Schlagzeug – alles per WebAudio erzeugt, keine Audiodateien |
 | 👾 **Pixel-Art** | Rakete und Ufos als echte Pixel-Sprites; die Aufgabenkästen bleiben bewusst rund und gut lesbar |
 | 🏆 **Online-Bestenliste** | mit Spitzname und selbst gewürfeltem Pixel-Avatar (optional, siehe unten) |
-| 🔢 **Zwei Eingabearten** | großes Zahlenfeld (Touch + Tastatur) oder Multiple-Choice – jederzeit umschaltbar |
+| 🎯 **Zwei Eingabearten** | **Auswahl** (vier Antworten antippen, Voreinstellung) oder großes Zahlenfeld mit Touch und Tastatur – jederzeit umschaltbar |
 | 🏅 **Gamification** | Combo-Multiplikator bis x4, Level, XP-Ränge, 10 Abzeichen, Bestenliste pro Klasse |
 | 🔄 **Selbst-Update** | eine neue Fassung auf GitHub landet beim nächsten Öffnen automatisch auf dem Gerät |
 | 📲 **PWA** | installierbar auf Handy, Tablet und Desktop, funktioniert offline |
@@ -52,9 +52,10 @@ Antwort falsch, zählt die Aufgabe als Fehler: Sie verschwindet, die richtige L�
 kurz eingeblendet und es kostet ein ❤️ – genau wie bei einer Aufgabe, die man gar nicht
 beantwortet hat. Die Anzahl der Versuche steht in `CONFIG.maxTries` (`js/game.js`).
 
-**Auswahl-Modus**
+**Auswahl-Modus** (Voreinstellung)
 
 * Vier Antwortmöglichkeiten antippen – sie gehören immer zur untersten Aufgabe
+* Umschalten unter *Einstellungen → Eingabe*
 
 **Bonusspiele**
 

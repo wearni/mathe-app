@@ -12,7 +12,7 @@
   const OLD_KEY = 'ida-mathe-app.v1';   /* früherer Name - Fortschritt übernehmen */
   const DEFAULTS = {
     settings: {
-      grade: 1, theme: 'stadt-tag', inputMode: 'keypad', sfx: true, music: true,
+      grade: 1, theme: 'stadt-tag', inputMode: 'choice', sfx: true, music: true,
       /* Start-Tempo je Klassenstufe - die Kleinen starten langsamer */
       speedByGrade: { 1: 1, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3 },
       /* leer = alle Rechenarten dieser Klassenstufe sind an */
@@ -483,11 +483,12 @@
   }
 
   /* ---------- Bestenlisten ---------- */
-  function scoreRow(e, i, mine) {
-    return '<div class="online-row' + (mine ? ' mine' : '') + '">' +
+  function scoreRow(e, i, mine, note) {
+    return '<div class="online-row' + (mine ? ' mine' : '') + (note ? ' waiting' : '') + '">' +
       '<span class="rank">' + (i + 1) + '.</span>' +
       '<img alt="" src="' + Pixel.avatarDataUrl(e.avatar, 5) + '">' +
-      '<span class="who"><b>' + escapeHtml(e.name) + '</b><small>Klasse ' + (e.grade || '?') + '</small></span>' +
+      '<span class="who"><b>' + escapeHtml(e.name) + '</b><small>Klasse ' + (e.grade || '?') +
+      (note ? ' · ' + note : '') + '</small></span>' +
       '<span class="pts">' + (e.score | 0) + '</span></div>';
   }
 
@@ -499,7 +500,7 @@
   function renderMyList() {
     const list = (DB.scores || []).slice(0, 15);
     $('#myList').innerHTML = list.length
-      ? list.map((e, i) => scoreRow(e, i, true)).join('')
+      ? list.map((e, i) => scoreRow(e, i, true, e.online ? '' : 'noch nicht online ⏳')).join('')
       : '<p class="hint small">Noch kein Eintrag – spiel eine Runde und trag dich ein!</p>';
   }
 
@@ -1035,7 +1036,7 @@
     }
   }
 
-  const APP_FALLBACK_VERSION = '1.5.0';
+  const APP_FALLBACK_VERSION = '1.5.1';
 
   function pwa() {
     $('#appVersion').textContent = APP_FALLBACK_VERSION;

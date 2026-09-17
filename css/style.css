@@ -148,7 +148,14 @@ html, body {
 #keypad button:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.45); }
 #keypad button.k-alt { color: var(--accent); font-size: 15px; }
 
-#choiceWrap .choice-hint { margin: 0 0 6px; text-align: center; color: var(--muted); font-size: 14px; }
+/* Der Hinweis steht über dem Hintergrundbild - dunkle Pille dahinter,
+   sonst geht er auf hellen Hintergründen (Stadt am Tag) unter. */
+#choiceWrap .choice-hint {
+  margin: 0 auto 8px; text-align: center; color: #e7ecff; font-size: 13px;
+  width: fit-content; max-width: 100%;
+  padding: 4px 12px; border-radius: 999px;
+  background: rgba(10, 14, 38, .72);
+}
 #choices { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 #choices button {
   font-family: var(--pixel); font-size: 15px; color: #10131f;
@@ -436,6 +443,8 @@ html, body {
   border-radius: 10px; padding: 7px 10px;
 }
 .online-row.mine { border-color: var(--accent); background: rgba(255,209,102,.12); }
+.online-row.waiting { border-style: dashed; }
+.online-row.waiting .who small { color: #FFB4B4; }
 .online-row .rank {
   font-family: var(--pixel); font-size: 11px; color: var(--muted);
   min-width: 26px; text-align: right;

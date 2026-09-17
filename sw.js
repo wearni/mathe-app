@@ -14,9 +14,12 @@
       dem Gerät, wenn das Hochzählen der VERSION mal vergessen wurde.
    ============================================================ */
 
-const VERSION = '1.5.0';
+const VERSION = '1.5.1';
 const CACHE = 'mathe-app-v' + VERSION;
 const NET_TIMEOUT = 2500;   /* ms, danach wird der Cache benutzt */
+
+/* Nur diese fremden Hosts dürfen in den Cache (Schriften). */
+const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 const ASSETS = [
   './',
@@ -80,8 +83,13 @@ self.addEventListener('fetch', e => {
 
   const url = new URL(req.url);
 
-  /* Fremde Quellen (Schriften): Cache zuerst, im Hintergrund auffrischen */
+  /* Fremde Quellen:
+     NUR die Schriften von Google werden zwischengespeichert. Alles andere -
+     allen voran die Online-Bestenliste - geht unangetastet ans Netz. Würde
+     der Worker die Bestenliste mit in den Cache nehmen, bekäme man beim
+     "Neu laden" ewig denselben alten Stand zu sehen. */
   if (url.origin !== location.origin) {
+    if (!FONT_HOSTS.includes(url.hostname)) return;   /* Browser macht es selbst */
     e.respondWith(
       caches.match(req).then(hit => hit || fetch(req).then(res => {
         const copy = res.clone();
