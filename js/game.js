@@ -214,7 +214,18 @@
   }
 
   /* ================= Schüsse ================= */
+  /* Kurze Sperre nach jeder Antwort. Sie verhindert zweierlei: dass ein
+     Doppeltipp versehentlich beide Versuche verbraucht, und dass man sich
+     durch blindes Draufhauen durch die Antwortknöpfe rät. */
+  const ANSWER_LOCK = 0.35;
+  function answerBlocked() {
+    if (G.time < (G.answerLock || 0)) return true;
+    G.answerLock = G.time + ANSWER_LOCK;
+    return false;
+  }
+
   function fire(value) {
+    if (answerBlocked()) return;
     if (G.state === 'safari') { safariAnswer(value); return; }
     if (G.state !== 'playing') return;
     value = Math.round(value);
@@ -1006,7 +1017,7 @@
     G.floats.length = 0; G.rings.length = 0;
     G.pendingBonus = false; G.mini = null; G.targetId = 0;
     G.spawnTimer = 0.9;
-    G.safari = null; G.task = null; G.safariStars = 0;
+    G.safari = null; G.task = null; G.safariStars = 0; G.answerLock = 0;
     G.last = performance.now();
     Sound.setTempo(132);
     Sound.startMusic();
@@ -1021,7 +1032,7 @@
 
   /* Eine Safari-Etappe: neue Strecke, Jeep fährt zur ersten Station */
   function newLeg() {
-    G.safari = Safari.create({ W: G.W, H: G.H, stations: CONFIG.safariStations });
+    G.safari = Safari.create({ W: G.W, H: G.H, stations: CONFIG.safariStations, theme: G.settings.theme });
     G.sinceBonus = 0;
     G.task = null;
     G.state = 'safari';
@@ -1039,6 +1050,9 @@
   function pause() {
     if (G.state === 'playing' || G.state === 'mini' || G.state === 'safari') {
       G.prevState = G.state; G.state = 'paused';
+      /* Bei einer Pause ist Ruhe - das gilt auch, wenn die App in den
+         Hintergrund rutscht und niemand mehr zuhört. */
+      Sound.stopMusic();
     }
   }
 
@@ -1067,12 +1081,14 @@
     if (G.prevState === 'safari') {
       G.state = 'safari';
       G.last = performance.now();
+      Sound.startMusic();
       if (G.cb.onChoices) G.cb.onChoices(G.task ? G.task.choices : []);
       return;
     }
     if (G.prevState !== 'mini') refreshEquations();
     G.state = G.prevState || 'playing';
     G.last = performance.now();
+    Sound.startMusic();
   }
 
   function gameOver() {

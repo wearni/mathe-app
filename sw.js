@@ -14,7 +14,7 @@
       dem Gerät, wenn das Hochzählen der VERSION mal vergessen wurde.
    ============================================================ */
 
-const VERSION = '1.7.0';
+const VERSION = '1.8.0';
 const CACHE = 'mathe-app-v' + VERSION;
 const NET_TIMEOUT = 2500;   /* ms, danach wird der Cache benutzt */
 

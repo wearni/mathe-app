@@ -128,6 +128,13 @@
     <div class="panel">
       <h2>Einstellungen</h2>
 
+      <h3>Spielart</h3>
+      <div class="seg mode-seg" id="playModeSet">
+        <button data-play="arcade">🚀 Arcade</button>
+        <button data-play="safari">🦁 Safari</button>
+      </div>
+      <p class="hint" id="modeDescSet"></p>
+
       <h3>Klassenstufe</h3>
       <div id="gradeGrid" class="grade-grid"></div>
       <p class="hint" id="gradeDesc"></p>
@@ -140,12 +147,15 @@
       <div id="rangeGrid" class="op-grid"></div>
       <p class="hint" id="rangeHint"></p>
 
-      <h3>Start-Tempo <span id="speedForGrade"></span></h3>
-      <div id="speedGrid" class="speed-grid"></div>
-      <p class="hint" id="speedDesc"></p>
+      <div id="speedSection">
+        <h3>Start-Tempo <span id="speedForGrade"></span></h3>
+        <div id="speedGrid" class="speed-grid"></div>
+        <p class="hint" id="speedDesc"></p>
+      </div>
 
-      <h3>Hintergrund</h3>
+      <h3 id="themeHead">Hintergrund</h3>
       <div id="themeGrid" class="theme-grid"></div>
+      <p class="hint" id="themeDesc"></p>
 
       <h3>Eingabe</h3>
       <div class="seg" id="modeSeg">

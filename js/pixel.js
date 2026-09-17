@@ -120,6 +120,40 @@
       '..KKKKKKK..',
       '...K...K...'
     ],
+    /* Mondrover von oben (11 x 14) */
+    rover: [
+      '...WWWWW...',
+      '..WWCCCWW..',
+      '..WWCCCWW..',
+      '.KWWWWWWWK.',
+      'KKWWWWWWWKK',
+      'KKWSSSSSWKK',
+      '.KWSSSSSWK.',
+      '.KWWWWWWWK.',
+      'KKWWWWWWWKK',
+      'KKWWSSSWWKK',
+      '.KWWSSSWWK.',
+      '.KWWWWWWWK.',
+      '..KKKKKKK..',
+      '...K...K...'
+    ],
+    /* U-Boot von oben (11 x 14) */
+    subtop: [
+      '....YYY....',
+      '...YYYYY...',
+      '..YYCCCYY..',
+      '..YYCCCYY..',
+      '.YYYYYYYYY.',
+      'cYYYYYYYYYc',
+      'cYYYYYYYYYc',
+      '.YYYYYYYYY.',
+      '.YYYCCCYYY.',
+      '.YYYYYYYYY.',
+      '..YYYYYYY..',
+      '...YYYYY...',
+      '....ccc....',
+      '.....c.....'
+    ],
     /* Giraffe von schräg oben (9 x 11) */
     giraffe: [
       '......YY.',

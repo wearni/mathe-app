@@ -17,10 +17,10 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | ✅ **Rechenarten wählbar** | Plus, Minus, Mal, Geteilt … einzeln per Haken an- und abschalten – **pro Klassenstufe** gespeichert, von Haus aus ist alles an |
 | 🔟 **Zahlenraum wählbar** | 1er, 10er, 100er, 1000er einzeln an- und abschalten – ebenfalls pro Klassenstufe gespeichert |
 | 🐌 **Start-Tempo** | fünf Stufen von *Schnecke* bis *Rakete*, **pro Klassenstufe** gespeichert – Klasse 1 startet automatisch auf *Schnecke* |
-| 🕹️ **Zwei Spielarten** | **Arcade** mit fallenden Aufgaben und **Safari**: der Jeep fährt ohne Zeitdruck von Station zu Station |
+| 🕹️ **Zwei Spielarten** | **Arcade** mit fallenden Aufgaben und **Safari**: das Fahrzeug fährt ohne Zeitdruck von Station zu Station – je vier Kulissen |
 | ⏱ **15 Minuten Bildschirmzeit** | gilt für das ganze Gerät, über alle Runden und beide Spielarten hinweg – danach 30 Minuten Pause |
 | 🔒 **Eltern-Einstellungen** | Zeitlimit, Pausenlänge und Reststand hinter einem vierstelligen Code |
-| ✈️ **Fahrzeug passt zum Ort** | Flugzeug über der Stadt, Hubschrauber in der Neon-Nacht, Rakete im All, U-Boot unter Wasser |
+| ✈️ **Fahrzeug passt zum Ort** | Arcade: Flugzeug, Hubschrauber, Rakete, U-Boot · Safari: Jeep, Neon-Buggy, Mondrover, U-Boot |
 | ❤️ **3 Leben als Herzchen** | bis zu 8 Herzen möglich – im 3er- und 5er-Paket günstiger |
 | ⭐ **Sternchen** | für jede richtig gelöste Aufgabe (mehr bei Combo und goldenen Aufgaben) |
 | ✌️ **Zwei Versuche** | eine falsche Antwort löscht nur die Eingabe; erst die zweite zählt als Fehler und kostet ein ❤️ |
@@ -40,6 +40,8 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 ---
 
 ## Steuerung
+
+Beide Spielarten nehmen dieselben Eingaben entgegen.
 
 **Zahlenfeld-Modus**
 
@@ -204,12 +206,21 @@ und für ein Grundschulkind ist die Hürde trotzdem hoch genug.
 
 ## Safari-Modus
 
-Die zweite Spielart, im Startmenü umschaltbar. Aus der Vogelperspektive fährt ein
-Jeep über eine kurvige Piste durch die Savanne – vorbei an Bäumen, Felsen,
-Wasserlöchern, Giraffen und Elefanten.
+Die zweite Spielart, im Startmenü und ganz oben in den Einstellungen umschaltbar. Aus
+der Vogelperspektive fährt ein Fahrzeug über eine kurvige Piste von Station zu Station.
 
-* An jeder Station steht ein Holzschild mit einer Aufgabe. **Nur eine richtige
-  Antwort bringt den Jeep weiter.**
+Die vier Hintergründe aus dem Arcade-Modus gibt es auch hier – jeweils als Landkarte
+von oben, mit eigenem Untergrund, eigener Landschaft, eigenem Ziel und eigenem Fahrzeug:
+
+| Landschaft | Fahrzeug | Ziel |
+|---|---|---|
+| 🦁 **Savanne** | Jeep | Camp mit Zelt und Lagerfeuer |
+| 🌃 **Neon-Stadt** | Neon-Buggy | leuchtendes Hochhaus |
+| 🌑 **Mondkrater** | Mondrover | Forschungsstation |
+| 🐠 **Meeresgrund** | U-Boot | Schiffswrack |
+
+* An jeder Station steht ein Schild mit einer Aufgabe. **Nur eine richtige Antwort
+  bringt das Fahrzeug weiter.**
 * Auch hier gibt es zwei Versuche. Beim zweiten Fehlversuch kostet es ein ❤️, die
   richtige Lösung wird gezeigt und an derselben Station kommt eine **neue** Aufgabe –
   festsitzen soll niemand.
@@ -220,7 +231,39 @@ Wasserlöchern, Giraffen und Elefanten.
   **halben Punkte** und ein ⭐ erst für **jede zweite** richtige Aufgabe.
 
 Die Bildschirmzeit läuft im Safari ganz normal mit – sie ist eine Bildschirmzeit,
-keine Spielzeit.
+keine Spielzeit. Das **Start-Tempo** aus den Einstellungen verschwindet im Safari, weil
+dort nichts fällt; alles andere (Klassenstufe, Rechenarten, Zahlenraum, Eingabe, Ton)
+gilt in beiden Spielarten gleichermaßen.
+
+---
+
+## Warum Warten und Raten nichts bringt
+
+Ein paar Stellen sind bewusst so gebaut, dass man sich nicht an ihnen vorbeimogeln kann:
+
+* **Pause bringt keine Denkzeit.** Beim Weiterspielen im Arcade stehen andere Aufgaben
+  auf dem Feld – an derselben Stelle und in derselben Höhe.
+* **App wegwischen bringt auch nichts.** Sobald die App in den Hintergrund rutscht,
+  pausiert das Spiel von selbst (und die Musik hört auf). Sonst friert das Bild einfach
+  ein und man könnte in aller Ruhe nachdenken.
+* **Durchhämmern lohnt nicht.** Nach jeder Antwort ist eine gute Drittelsekunde Sperre.
+  Wer blind auf alle vier Knöpfe haut, verbraucht damit trotzdem nur einen Versuch –
+  und ein versehentlicher Doppeltipp kostet nicht gleich beide.
+* **Zwei Versuche, dann ist Schluss.** Danach kostet es ein ❤️. Im Safari kommt an
+  derselben Station eine neue Aufgabe: Raten wird teuer, Festsitzen gibt es nicht.
+* **Sternchen gibt es nur fürs Rechnen.** Ein Bonusspiel kostet 8 ★ und gibt höchstens
+  5 ★ zurück – es ist immer ein Zuschussgeschäft.
+* **Zwei Fenster helfen nicht.** Beim Zurückkommen wird der gespeicherte Zeitstand
+  dazugenommen (der höhere Wert gewinnt), statt ihn zu überschreiben.
+* **Zurückgestellte Uhr verlängert nichts.** Eine laufende Pause dauert nie länger als
+  die eingestellte Pausenzeit.
+
+Was eine statische App auf einem fremden Gerät **nicht** verhindern kann: Browserdaten
+löschen, einen anderen Browser oder ein privates Fenster nehmen oder die Uhr des Geräts
+vorstellen – das setzt die Bildschirmzeit zurück. Wer das sicher dichtmachen will,
+braucht die Bildschirmzeit-Sperre des Betriebssystems (iOS-Bildschirmzeit, Android
+Family Link); die App-eigene Zeit ist als freundliche Selbstkontrolle gedacht,
+nicht als Schloss.
 
 ---
 
@@ -455,6 +498,9 @@ mathe-app/
   Streckenlänge, Fahrtempo und Pistenbreite oben in `js/safari.js` (`SEG`, `DRIVE`, `ROAD`)
 * **Fahrzeug je Hintergrund:** die Tabelle `VEHICLES` in `js/game.js` – `sprite` ist ein
   Eintrag aus `SPRITES` in `js/pixel.js`, `drive` der Antrieb (`flame`, `jet`, `rotor`, `bubbles`)
+* **Safari-Welten:** die Tabelle `WORLDS` in `js/safari.js` – Farben, Landschaftsarten
+  (`kinds`, `rare`), Ziel (`goal`) und Fahrzeug (`vehicle`, `paint`) je Hintergrund
+* **Sperre nach einer Antwort:** `ANSWER_LOCK` in `js/game.js` (Sekunden)
 * **Tempo-Stufen:** die Tabelle `SPEEDS` in `js/game.js` – `fall` ist die Fallzeit in
   Sekunden beim Start, `spawn` der Abstand zwischen zwei Aufgaben
 * **Standard-Tempo je Klasse:** `DEFAULTS.settings.speedByGrade` in `js/main.js`

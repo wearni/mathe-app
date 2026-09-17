@@ -23,27 +23,68 @@
   const DRIVE = 210;        /* Fahrtempo in Pixeln pro Sekunde */
   const ROAD = 52;          /* Breite der Piste */
 
-  const COL = {
-    sand: '#C8A96B',
-    sandDark: '#A98A4E',
-    grass1: '#9FAE5C',
-    grass2: '#8B9C4E',
-    road: '#D9C08A',
-    roadEdge: '#9B7C46',
-    rut: '#BFA271',
-    water: '#5EC6E8',
-    waterEdge: '#3E9BBB',
-    rock: '#9A9384',
-    rockDark: '#726C60',
-    bush: '#6E8F45',
-    bushDark: '#557034',
-    trunk: '#7A5230',
-    leaf: '#6FA24C',
-    leafDark: '#537C39',
-    wood: '#8A5A33',
-    woodDark: '#5E3C21',
-    board: '#E8D5A8'
+  /* ---------------- Vier Welten ----------------
+     Der Safari-Modus nutzt dieselbe Hintergrund-Auswahl wie der Arcade-
+     Modus, zeigt aber jeweils eine Landkarte aus der Vogelperspektive -
+     mit eigenem Untergrund, eigener Landschaft und eigenem Fahrzeug. */
+  const WORLDS = {
+    'stadt-tag': {
+      name: 'Savanne', icon: '🦁',
+      vehicle: 'jeep', paint: { G: '#3E7C3A', K: '#22261C', C: '#A8DBFF', Y: '#E9D6A7' },
+      ground: '#C8A96B', patch1: '#9FAE5C', patch2: '#8B9C4E',
+      road: '#D9C08A', roadEdge: '#9B7C46', rut: '#BFA271',
+      dust: '#E9DCBC', goal: 'camp',
+      kinds: ['tree', 'tree', 'tree', 'bush', 'bush', 'rock', 'grass'],
+      rare: [['giraffe', 0.10], ['elephant', 0.09], ['water', 0.06]],
+      leaf: '#6FA24C', leafDark: '#537C39', trunk: '#7A5230',
+      bush1: '#6E8F45', bush2: '#557034',
+      rock1: '#9A9384', rock2: '#726C60',
+      blade: '#8B9C4E', water1: '#5EC6E8', water2: '#3E9BBB'
+    },
+    'stadt-nacht': {
+      name: 'Neon-Stadt', icon: '🌃',
+      vehicle: 'jeep', paint: { G: '#7A2BD8', K: '#140A26', C: '#5CE1FF', Y: '#FF4FA3' },
+      ground: '#161233', patch1: '#211A47', patch2: '#2B2158',
+      road: '#3A3566', roadEdge: '#171334', rut: '#7BE7FF',
+      dust: '#6C5CBF', goal: 'tower',
+      kinds: ['tree', 'tree', 'bush', 'bush', 'rock', 'grass'],
+      rare: [['giraffe', 0.05], ['water', 0.10]],
+      leaf: '#FF4FA3', leafDark: '#8E2A66', trunk: '#3B2F63',
+      bush1: '#2BE0C8', bush2: '#17806F',
+      rock1: '#3E3872', rock2: '#241F4C',
+      blade: '#5CE1FF', water1: '#2BE0C8', water2: '#146B63'
+    },
+    'weltraum': {
+      name: 'Mondkrater', icon: '🌑',
+      vehicle: 'rover', paint: { W: '#E4E9F5', S: '#9AA3BC', K: '#1A1E2E', C: '#7BD7FF' },
+      ground: '#4A4A5C', patch1: '#5A5A70', patch2: '#3C3C4C',
+      road: '#8A8AA0', roadEdge: '#2F2F3E', rut: '#B6B6C8',
+      dust: '#C9C9DC', goal: 'base',
+      kinds: ['rock', 'rock', 'rock', 'bush', 'tree', 'grass'],
+      rare: [['water', 0.08]],
+      leaf: '#7BD7FF', leafDark: '#2E6E8C', trunk: '#6A6A80',
+      bush1: '#6E6E88', bush2: '#4A4A5E',
+      rock1: '#9A9AB0', rock2: '#5E5E72',
+      blade: '#8A8AA8', water1: '#5CE1FF', water2: '#2E6E8C'
+    },
+    'unterwasser': {
+      name: 'Meeresgrund', icon: '🐠',
+      vehicle: 'subtop', paint: { Y: '#FFD166', c: '#1E7FB5', C: '#BDEBFF' },
+      ground: '#1E7FA8', patch1: '#2A96BE', patch2: '#176B90',
+      road: '#E2D3A6', roadEdge: '#B49C63', rut: '#F2E7C4',
+      dust: '#CFE9F5', goal: 'wreck',
+      kinds: ['tree', 'tree', 'bush', 'bush', 'rock', 'grass', 'grass'],
+      rare: [['water', 0.12]],
+      leaf: '#38C98E', leafDark: '#1E7A57', trunk: '#2E9B77',
+      bush1: '#FF8FB1', bush2: '#C25480',
+      rock1: '#7E8FA6', rock2: '#4E5C72',
+      blade: '#49D6A4', water1: '#7BE7FF', water2: '#3E9BBB'
+    }
   };
+
+  function worldOf(id) { return WORLDS[id] || WORLDS['stadt-tag']; }
+
+  const WOOD = '#8A5A33', WOOD_DARK = '#5E3C21', BOARD = '#E8D5A8';
 
   /* ---------------- Strecke ---------------- */
   function catmull(p0, p1, p2, p3, t) {
@@ -109,9 +150,9 @@
   }
 
   /* ---------------- Landschaft ---------------- */
-  function buildDecor(path, wps, n) {
+  function buildDecor(path, wps, w) {
     const out = [];
-    const kinds = ['tree', 'tree', 'tree', 'bush', 'bush', 'rock', 'grass'];
+    const kinds = w.kinds;
     for (let i = 1; i < wps.length - 2; i++) {
       const here = wps[i], next = wps[i + 1];
       const nx = -(next.y - here.y), ny = next.x - here.x;
@@ -121,9 +162,9 @@
         const off = rf(82, 255) * side;
         const along = rf(-0.4, 0.6);
         let kind = pick(kinds);
-        if (Math.random() < 0.10) kind = 'giraffe';
-        else if (Math.random() < 0.09) kind = 'elephant';
-        else if (Math.random() < 0.06) kind = 'water';
+        for (const [rareKind, p] of w.rare) {
+          if (Math.random() < p) { kind = rareKind; break; }
+        }
         out.push({
           kind,
           x: here.x + (next.x - here.x) * along + (nx / len) * off,
@@ -144,8 +185,8 @@
   }
 
   /* ---------------- Zeichnen ---------------- */
-  function ground(ctx, W, H, cam, time) {
-    ctx.fillStyle = COL.sand;
+  function ground(ctx, W, H, cam, w) {
+    ctx.fillStyle = w.ground;
     ctx.fillRect(0, 0, W, H);
     /* weiche Grasflecken - fest an die Welt gekoppelt, damit nichts flimmert */
     const step = 190;
@@ -159,7 +200,7 @@
         const cx = gx * step + f * 120 - cam.x;
         const cy = gy * step + (f * 7 % 1) * 120 - cam.y;
         ctx.globalAlpha = 0.5;
-        ctx.fillStyle = f > 0.75 ? COL.grass2 : COL.grass1;
+        ctx.fillStyle = f > 0.75 ? w.patch2 : w.patch1;
         ctx.beginPath();
         ctx.ellipse(cx, cy, 60 + f * 70, 40 + f * 40, f * 3, 0, TAU);
         ctx.fill();
@@ -168,7 +209,7 @@
     ctx.globalAlpha = 1;
   }
 
-  function road(ctx, path, cam) {
+  function road(ctx, path, cam, w) {
     const poly = path.poly;
     const line = (w, color, dash) => {
       ctx.beginPath();
@@ -183,39 +224,39 @@
       ctx.setLineDash([]);
     };
     ctx.save();
-    line(ROAD + 10, COL.roadEdge);
-    line(ROAD, COL.road);
-    line(5, COL.rut, [22, 16]);
+    line(ROAD + 10, w.roadEdge);
+    line(ROAD, w.road);
+    line(5, w.rut, [22, 16]);
     ctx.restore();
   }
 
-  function tree(ctx, x, y, s) {
+  function tree(ctx, x, y, s, w) {
     ctx.fillStyle = 'rgba(0,0,0,0.18)';
     ctx.beginPath(); ctx.ellipse(x + 6 * s, y + 8 * s, 26 * s, 16 * s, 0, 0, TAU); ctx.fill();
-    ctx.fillStyle = COL.trunk;
+    ctx.fillStyle = w.trunk;
     ctx.fillRect(x - 3 * s, y - 4 * s, 6 * s, 12 * s);
-    ctx.fillStyle = COL.leafDark;
+    ctx.fillStyle = w.leafDark;
     ctx.beginPath(); ctx.ellipse(x, y - 8 * s, 30 * s, 18 * s, 0, 0, TAU); ctx.fill();
-    ctx.fillStyle = COL.leaf;
+    ctx.fillStyle = w.leaf;
     ctx.beginPath(); ctx.ellipse(x - 4 * s, y - 12 * s, 24 * s, 14 * s, 0, 0, TAU); ctx.fill();
   }
 
-  function bush(ctx, x, y, s) {
-    ctx.fillStyle = COL.bushDark;
+  function bush(ctx, x, y, s, w) {
+    ctx.fillStyle = w.bush2;
     ctx.beginPath(); ctx.ellipse(x, y, 17 * s, 12 * s, 0, 0, TAU); ctx.fill();
-    ctx.fillStyle = COL.bush;
+    ctx.fillStyle = w.bush1;
     ctx.beginPath(); ctx.ellipse(x - 3 * s, y - 3 * s, 12 * s, 9 * s, 0, 0, TAU); ctx.fill();
   }
 
-  function rock(ctx, x, y, s) {
-    ctx.fillStyle = COL.rockDark;
+  function rock(ctx, x, y, s, w) {
+    ctx.fillStyle = w.rock2;
     ctx.beginPath(); ctx.ellipse(x, y + 2 * s, 15 * s, 10 * s, 0, 0, TAU); ctx.fill();
-    ctx.fillStyle = COL.rock;
+    ctx.fillStyle = w.rock1;
     ctx.beginPath(); ctx.ellipse(x - 2 * s, y - 2 * s, 11 * s, 8 * s, 0, 0, TAU); ctx.fill();
   }
 
-  function grass(ctx, x, y, s, t, ph) {
-    ctx.strokeStyle = COL.grass2;
+  function grass(ctx, x, y, s, t, ph, w) {
+    ctx.strokeStyle = w.blade;
     ctx.lineWidth = 2 * s;
     const sway = Math.sin(t * 1.6 + ph) * 3 * s;
     for (let i = -1; i <= 1; i++) {
@@ -226,10 +267,10 @@
     }
   }
 
-  function water(ctx, x, y, s, t) {
-    ctx.fillStyle = COL.waterEdge;
+  function water(ctx, x, y, s, t, w) {
+    ctx.fillStyle = w.water2;
     ctx.beginPath(); ctx.ellipse(x, y, 46 * s, 30 * s, 0, 0, TAU); ctx.fill();
-    ctx.fillStyle = COL.water;
+    ctx.fillStyle = w.water1;
     ctx.beginPath(); ctx.ellipse(x, y, 40 * s, 25 * s, 0, 0, TAU); ctx.fill();
     ctx.globalAlpha = 0.5;
     ctx.strokeStyle = '#EAFBFF'; ctx.lineWidth = 2;
@@ -254,15 +295,15 @@
     const by = y - 96 - h;
 
     /* Pfosten */
-    ctx.fillStyle = COL.woodDark;
+    ctx.fillStyle = WOOD_DARK;
     ctx.fillRect(x - 5, by + h - 4, 10, 66);
 
     /* Brett */
     const bob = highlight ? Math.sin(t * 2.4) * 2 : 0;
     ctx.translate(0, bob);
-    ctx.fillStyle = COL.wood;
+    ctx.fillStyle = WOOD;
     ctx.fillRect(x - w / 2 - 5, by - 5, w + 10, h + 10);
-    ctx.fillStyle = COL.board;
+    ctx.fillStyle = BOARD;
     ctx.fillRect(x - w / 2, by, w, h);
     if (highlight) {
       ctx.strokeStyle = '#FFD166';
@@ -279,16 +320,19 @@
     ctx.save();
     shadow(ctx, x + 4, y + 6, 15, 8);
     ctx.fillStyle = done ? '#7CFF6B' : '#F4F7FF';
-    ctx.strokeStyle = COL.woodDark; ctx.lineWidth = 3;
+    ctx.strokeStyle = WOOD_DARK; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(x, y, 14, 0, TAU); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = COL.woodDark;
+    ctx.fillStyle = WOOD_DARK;
     ctx.font = '800 15px "Baloo 2", system-ui, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(done ? '✓' : String(num), x, y + 1);
     ctx.restore();
   }
 
-  function camp(ctx, x, y, t) {
+  function camp(ctx, x, y, t, w) {
+    if (w.goal === 'tower') return tower(ctx, x, y, t);
+    if (w.goal === 'base') return base(ctx, x, y, t);
+    if (w.goal === 'wreck') return wreck(ctx, x, y, t);
     ctx.save();
     shadow(ctx, x, y + 18, 62, 20);
     /* Zelt */
@@ -308,9 +352,9 @@
     ctx.strokeStyle = '#4A4A4A'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(x + 52, y + 16); ctx.lineTo(x + 52, y - 48); ctx.stroke();
     ctx.fillStyle = '#E63E62';
-    const w = 26 + Math.sin(t * 3) * 3;
+    const flag = 26 + Math.sin(t * 3) * 3;
     ctx.beginPath();
-    ctx.moveTo(x + 52, y - 48); ctx.lineTo(x + 52 + w, y - 40); ctx.lineTo(x + 52, y - 30);
+    ctx.moveTo(x + 52, y - 48); ctx.lineTo(x + 52 + flag, y - 40); ctx.lineTo(x + 52, y - 30);
     ctx.closePath(); ctx.fill();
     /* Lagerfeuer */
     ctx.fillStyle = '#7A5230';
@@ -323,17 +367,84 @@
     ctx.restore();
   }
 
-  function gate(ctx, x, y) {
+  /* Neon-Stadt: leuchtendes Hochhaus */
+  function tower(ctx, x, y, t) {
     ctx.save();
-    ctx.fillStyle = COL.woodDark;
+    shadow(ctx, x, y + 18, 58, 18);
+    ctx.fillStyle = '#2A2358';
+    ctx.fillRect(x - 34, y - 58, 68, 74);
+    ctx.fillStyle = '#5CE1FF';
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 3; c++) {
+        if ((r + c + Math.floor(t * 1.5)) % 3 === 0) continue;
+        ctx.fillRect(x - 24 + c * 18, y - 48 + r * 16, 11, 10);
+      }
+    }
+    ctx.fillStyle = '#FF4FA3';
+    ctx.fillRect(x - 38, y - 70, 76, 10);
+    ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4);
+    ctx.fillStyle = '#FF4FA3';
+    ctx.fillRect(x - 3, y - 84, 6, 14);
+    ctx.restore();
+  }
+
+  /* Mond: Forschungsstation mit Kuppel */
+  function base(ctx, x, y, t) {
+    ctx.save();
+    shadow(ctx, x, y + 16, 56, 16);
+    ctx.fillStyle = '#B6B6C8';
+    ctx.fillRect(x - 40, y - 6, 80, 22);
+    ctx.fillStyle = '#E4E9F5';
+    ctx.beginPath(); ctx.arc(x, y - 6, 34, Math.PI, 0); ctx.fill();
+    ctx.fillStyle = '#7BD7FF';
+    ctx.beginPath(); ctx.arc(x, y - 6, 22, Math.PI, 0); ctx.fill();
+    ctx.strokeStyle = '#9AA3BC'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x + 44, y + 12); ctx.lineTo(x + 44, y - 42); ctx.stroke();
+    ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 5);
+    ctx.fillStyle = '#FF5D73';
+    ctx.beginPath(); ctx.arc(x + 44, y - 46, 6, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+
+  /* Meeresgrund: altes Schiffswrack mit Luftblasen */
+  function wreck(ctx, x, y, t) {
+    ctx.save();
+    shadow(ctx, x, y + 16, 62, 16);
+    ctx.fillStyle = '#6B4A2A';
+    ctx.beginPath();
+    ctx.moveTo(x - 50, y - 6); ctx.lineTo(x + 50, y - 6);
+    ctx.lineTo(x + 34, y + 18); ctx.lineTo(x - 34, y + 18);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#8A6238';
+    ctx.fillRect(x - 50, y - 12, 100, 7);
+    ctx.strokeStyle = '#6B4A2A'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(x - 6, y - 12); ctx.lineTo(x + 14, y - 58); ctx.stroke();
+    ctx.fillStyle = '#E2D3A6';
+    ctx.beginPath();
+    ctx.moveTo(x + 14, y - 56); ctx.lineTo(x + 46, y - 30); ctx.lineTo(x + 16, y - 24);
+    ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 0.65;
+    ctx.fillStyle = '#CFF4FF';
+    for (let i = 0; i < 3; i++) {
+      const up = (t * 0.5 + i * 0.33) % 1;
+      ctx.beginPath();
+      ctx.arc(x - 30 + Math.sin(up * 7 + i) * 6, y - 10 - up * 60, 4 - up * 2, 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function gate(ctx, x, y, w) {
+    ctx.save();
+    ctx.fillStyle = WOOD_DARK;
     ctx.fillRect(x - 52, y - 6, 10, 46);
     ctx.fillRect(x + 42, y - 6, 10, 46);
-    ctx.fillStyle = COL.wood;
+    ctx.fillStyle = WOOD;
     ctx.fillRect(x - 58, y - 22, 116, 18);
-    ctx.fillStyle = COL.board;
+    ctx.fillStyle = BOARD;
     ctx.font = '800 13px "Baloo 2", system-ui, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('SAFARI', x, y - 12);
+    ctx.fillText(w.name.toUpperCase(), x, y - 12);
     ctx.restore();
   }
 
@@ -343,9 +454,10 @@
     const n = Math.max(3, opts.stations || 20);
     let W = opts.W || 360, H = opts.H || 640;
 
+    const w = worldOf(opts.theme);
     const wps = waypoints(n, W);
     const path = buildPath(wps);
-    const decor = buildDecor(path, wps, n);
+    const decor = buildDecor(path, wps, w);
 
     const world = {
       stationCount: n,
@@ -414,11 +526,11 @@
 
     world.render = (ctx, time) => {
       const cam = camera();
-      ground(ctx, W, H, cam, time);
-      road(ctx, path, cam);
+      ground(ctx, W, H, cam, w);
+      road(ctx, path, cam, w);
 
       /* Eingangstor am Start */
-      gate(ctx, wps[1].x - cam.x, wps[1].y - cam.y);
+      gate(ctx, wps[1].x - cam.x, wps[1].y - cam.y, w);
 
       /* Stationen */
       for (let i = 1; i <= n; i++) {
@@ -430,12 +542,12 @@
 
       /* Ziel */
       const gp = posAt(path, path.marks[path.marks.length - 1]);
-      camp(ctx, gp.x - cam.x, gp.y - cam.y - 10, time);
+      camp(ctx, gp.x - cam.x, gp.y - cam.y - 10, time, w);
 
       /* Staub */
       world.dust.forEach(d => {
         ctx.globalAlpha = clamp(d.life, 0, 1) * 0.5;
-        ctx.fillStyle = '#E9DCBC';
+        ctx.fillStyle = w.dust;
         ctx.beginPath(); ctx.arc(d.x - cam.x, d.y - cam.y, d.r, 0, TAU); ctx.fill();
       });
       ctx.globalAlpha = 1;
@@ -445,10 +557,10 @@
       const drawItem = it => {
         const x = it.x - cam.x, y = it.y - cam.y;
         if (y < -120 || y > H + 120 || x < -140 || x > W + 140) return;
-        if (it.kind === 'tree') tree(ctx, x, y, it.s);
-        else if (it.kind === 'bush') bush(ctx, x, y, it.s);
-        else if (it.kind === 'rock') rock(ctx, x, y, it.s);
-        else if (it.kind === 'water') water(ctx, x, y, it.s, time);
+        if (it.kind === 'tree') tree(ctx, x, y, it.s, w);
+        else if (it.kind === 'bush') bush(ctx, x, y, it.s, w);
+        else if (it.kind === 'rock') rock(ctx, x, y, it.s, w);
+        else if (it.kind === 'water') water(ctx, x, y, it.s, time, w);
         else if (it.kind === 'giraffe') {
           shadow(ctx, x, y + 6, 16 * it.s, 7 * it.s);
           Pixel.draw(ctx, 'giraffe', x, y - 10 * it.s, Math.max(2, Math.round(3 * it.s)));
@@ -456,7 +568,7 @@
           shadow(ctx, x, y + 6, 20 * it.s, 8 * it.s);
           Pixel.draw(ctx, 'elephant', x, y - 6 * it.s, Math.max(2, Math.round(3 * it.s)),
             { S: '#9AA0AE', D: '#2A2E3A' });
-        } else grass(ctx, x, y, it.s, time, it.ph || 0);
+        } else grass(ctx, x, y, it.s, time, it.ph || 0, w);
       };
 
       let drawnJeep = false;
@@ -478,13 +590,14 @@
       const x = world.jeep.x - cam.x, y = world.jeep.y - cam.y;
       shadow(ctx, x + 5, y + 14, 26, 12);
       const bounce = world.driving ? Math.sin(time * 22) * 1.2 : 0;
-      Pixel.draw(ctx, 'jeep', x, y + bounce, 4, {
-        G: '#3E7C3A', K: '#22261C', C: '#A8DBFF', Y: '#E9D6A7'
-      }, world.jeep.ang);
+      Pixel.draw(ctx, w.vehicle, x, y + bounce, 4, w.paint, world.jeep.ang);
     }
+
+    world.world = { id: opts.theme, name: w.name, icon: w.icon, vehicle: w.vehicle };
 
     /* Nur für Tests */
     world.debug = () => ({
+      world: w.name, vehicle: w.vehicle,
       index: world.index, driving: world.driving, atGoal: world.atGoal,
       dist: Math.round(world.dist), length: Math.round(path.length),
       stations: n, decor: decor.length
@@ -493,5 +606,42 @@
     return world;
   }
 
-  global.Safari = { create, SEG, STATIONS: 20 };
+  /* Kleine Vorschau für die Hintergrund-Auswahl im Safari-Modus */
+  function preview(ctx, id, W, H) {
+    const w = worldOf(id);
+    ctx.save();
+    ctx.fillStyle = w.ground;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = w.patch1;
+    ctx.beginPath(); ctx.ellipse(W * 0.22, H * 0.28, W * 0.3, H * 0.22, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = w.patch2;
+    ctx.beginPath(); ctx.ellipse(W * 0.82, H * 0.74, W * 0.28, H * 0.2, 0, 0, TAU); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    /* geschwungene Piste */
+    const curve = k => {
+      ctx.beginPath();
+      ctx.moveTo(W * 0.3, H);
+      ctx.bezierCurveTo(W * 0.2, H * 0.6, W * 0.8, H * 0.5, W * 0.62, 0);
+      ctx.lineWidth = k; ctx.lineCap = 'round'; ctx.stroke();
+    };
+    ctx.strokeStyle = w.roadEdge; curve(H * 0.3);
+    ctx.strokeStyle = w.road; curve(H * 0.24);
+    ctx.strokeStyle = w.rut; ctx.setLineDash([6, 6]); curve(H * 0.03); ctx.setLineDash([]);
+
+    /* ein Stück Landschaft und das Fahrzeug */
+    const sc = H / 120;
+    if (w.kinds.indexOf('tree') >= 0) tree(ctx, W * 0.16, H * 0.72, sc * 0.9, w);
+    rock(ctx, W * 0.86, H * 0.3, sc * 0.9, w);
+    Pixel.draw(ctx, w.vehicle, W * 0.42, H * 0.6, Math.max(1, Math.round(sc * 1.6)), w.paint, 0.25);
+    ctx.restore();
+  }
+
+  function info(id) {
+    const w = worldOf(id);
+    return { id, name: w.name, icon: w.icon, vehicle: w.vehicle };
+  }
+
+  global.Safari = { create, preview, info, worlds: WORLDS, SEG, STATIONS: 20 };
 })(window);

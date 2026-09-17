@@ -193,8 +193,12 @@
     $('#btnFire').disabled = !answer;
   }
 
+  /* Läuft gerade eine Runde? Arcade und Safari nehmen dieselben Eingaben
+     entgegen - nur der Zustand heißt anders. */
+  function inRound() { return Game.state === 'playing' || Game.state === 'safari'; }
+
   function key(k) {
-    if (Game.state !== 'playing') return;
+    if (!inRound()) return;
     Sound.play('type');
     if (k === 'del') { answer = answer.slice(0, -1); if (!answer) negative = false; }
     else if (k === 'neg') { negative = !negative; }
@@ -203,7 +207,7 @@
   }
 
   function fireAnswer() {
-    if (!answer || Game.state !== 'playing') return;
+    if (!answer || !inRound()) return;
     const v = parseInt(answer, 10) * (negative ? -1 : 1);
     Game.fire(v);
     answer = ''; negative = false;
@@ -221,7 +225,7 @@
     arr.forEach(v => {
       const b = document.createElement('button');
       b.textContent = MathGen.sgn(v);
-      b.addEventListener('click', () => { Game.fire(v); });
+      b.addEventListener('click', () => { if (inRound()) Game.fire(v); });
       box.appendChild(b);
     });
   }
@@ -276,7 +280,7 @@
   window.addEventListener('popstate', () => {
     backArmed = false;
     const st = Game.state;
-    if (st === 'playing' || st === 'mini') {
+    if (st === 'playing' || st === 'safari' || st === 'mini') {
       Game.pause();
       Sound.play('back');
       openPause(true);
@@ -332,14 +336,17 @@
     $('#hearts').innerHTML = '';
     Game.setTheme(DB.settings.theme);
     armBack();
-    countdown(() => {
+    /* Im Safari gibt es nichts, wofür man sich bereitmachen müsste - der
+       Countdown entfällt, sonst sähe man solange noch die alte Kulisse. */
+    const go = () => {
       Game.start({
         grade: DB.settings.grade, theme: DB.settings.theme,
         inputMode: DB.settings.inputMode, speed: curSpeed(),
         ops: curOps(), ranges: curRanges(),
         mode: DB.settings.playMode, timeLeft: leftSec()
       });
-    });
+    };
+    if (DB.settings.playMode === 'safari') go(); else countdown(go);
   }
 
   /* ===================== Bonus-Station ===================== */
@@ -491,8 +498,6 @@
       : rAll.filter(r => rOn.indexOf(r.id) >= 0).map(r => r.name).join(' + ');
     const sp = Game.speeds[curSpeed() - 1];
     $('#chipSpeed').textContent = sp ? sp.icon + ' ' + sp.name : '';
-    const th = Backgrounds.list().find(t => t.id === DB.settings.theme);
-    $('#chipTheme').textContent = th ? th.icon + ' ' + th.name : '';
     $('#chipMode').textContent = DB.settings.inputMode === 'choice' ? '🎯 Auswahl' : '🔢 Zahlenfeld';
 
     syncPlayMode();
@@ -663,10 +668,34 @@
       + '20 Stationen bis zum Camp – dafür weniger Punkte und Sternchen.'
   };
 
+  function isSafari() { return DB.settings.playMode === 'safari'; }
+
   function syncPlayMode() {
-    const m = DB.settings.playMode === 'safari' ? 'safari' : 'arcade';
-    $$('#playMode button').forEach(b => b.classList.toggle('active', b.dataset.play === m));
+    const m = isSafari() ? 'safari' : 'arcade';
+    $$('#playMode button, #playModeSet button').forEach(b => b.classList.toggle('active', b.dataset.play === m));
     $('#modeDesc').textContent = PLAY_MODES[m];
+    $('#modeDescSet').textContent = PLAY_MODES[m];
+
+    /* Das Start-Tempo gibt es nur im Arcade - im Safari fällt nichts. */
+    $('#speedSection').hidden = isSafari();
+    $('#chipSpeed').hidden = isSafari();
+
+    const t = themeList().find(x => x.id === DB.settings.theme);
+    $('#themeHead').textContent = isSafari() ? 'Landschaft' : 'Hintergrund';
+    $('#themeDesc').textContent = isSafari()
+      ? 'Jede Landschaft hat ihr eigenes Fahrzeug.'
+      : 'Die Kulisse bestimmt auch, womit du fliegst oder tauchst.';
+    $('#chipTheme').textContent = t ? t.icon + ' ' + t.name : '';
+  }
+
+  /* Umschalten zieht die ganze Oberfläche nach */
+  function setPlayMode(m) {
+    DB.settings.playMode = m === 'safari' ? 'safari' : 'arcade';
+    save();
+    buildThemes();
+    applyInputMode();
+    syncPlayMode();
+    renderMenuInfo();
   }
 
   /* ===================== Bildschirmzeit =====================
@@ -679,11 +708,15 @@
   function usedSec() { return Math.max(0, DB.time.usedSec || 0); }
   function leftSec() { return Math.max(0, limitSec() - usedSec()); }
 
-  /* Läuft gerade eine Sperre? Nach ihrem Ende ist das Budget wieder voll. */
+  /* Läuft gerade eine Sperre? Nach ihrem Ende ist das Budget wieder voll.
+     Eine zurückgestellte Uhr kann die Pause nicht endlos verlängern: länger
+     als die eingestellte Pause dauert sie nie. */
   function lockLeft() {
     const until = DB.time.lockUntil || 0;
     if (!until) return 0;
-    const left = Math.ceil((until - Date.now()) / 1000);
+    const max = Date.now() + Math.max(60, pauseSec()) * 1000;
+    if (until > max) { DB.time.lockUntil = max; save(); }
+    const left = Math.ceil((Math.min(until, max) - Date.now()) / 1000);
     if (left <= 0) {
       DB.time.lockUntil = 0;
       DB.time.usedSec = 0;
@@ -710,6 +743,23 @@
     if (now - (lastTimeSave || 0) > 1000) { lastTimeSave = now; save(); }
   }
   let lastTimeSave = 0;
+
+  /* Beim Zurückkommen den gespeicherten Stand dazunehmen. Sonst könnte man
+     die App in zwei Fenstern öffnen und die Bildschirmzeit halbieren: jedes
+     Fenster zählt für sich, und beim Speichern gewänne das langsamere. */
+  function mergeTime() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return;
+      const t = (JSON.parse(raw) || {}).time;
+      if (!t) return;
+      DB.time.usedSec = Math.max(usedSec(), t.usedSec || 0);
+      DB.time.lockUntil = Math.max(DB.time.lockUntil || 0, t.lockUntil || 0);
+      if (t.limitMin) DB.time.limitMin = t.limitMin;
+      if (t.pauseMin != null) DB.time.pauseMin = t.pauseMin;
+      if (t.code) DB.time.code = t.code;
+    } catch (e) { /* egal */ }
+  }
 
   function freeTime() {
     DB.time.usedSec = 0;
@@ -1213,10 +1263,20 @@
       : '';
   }
 
+  /* Dieselben vier Hintergründe, aber je Spielart anders benannt und
+     gezeichnet: im Arcade die Kulisse, im Safari die Landkarte von oben. */
+  function themeList() {
+    return Backgrounds.list().map(t => {
+      if (!isSafari()) return { id: t.id, name: t.name, icon: t.icon };
+      const w = Safari.info(t.id);
+      return { id: t.id, name: w.name, icon: w.icon };
+    });
+  }
+
   function buildThemes() {
     const grid = $('#themeGrid');
     grid.innerHTML = '';
-    Backgrounds.list().forEach(t => {
+    themeList().forEach(t => {
       const card = document.createElement('button');
       card.className = 'theme-card';
       card.dataset.theme = t.id;
@@ -1233,7 +1293,11 @@
         syncThemes(); renderMenuInfo();
       });
       grid.appendChild(card);
-      try { Backgrounds.preview(cv.getContext('2d'), t.id, 220, 130); } catch (e) { /* egal */ }
+      try {
+        const c = cv.getContext('2d');
+        if (isSafari()) Safari.preview(c, t.id, 220, 130);
+        else Backgrounds.preview(c, t.id, 220, 130);
+      } catch (e) { /* egal */ }
     });
     syncThemes();
   }
@@ -1259,10 +1323,9 @@
     $$('[data-close]').forEach(b => b.addEventListener('click', () => { Sound.play('back'); show('menu'); renderMenuInfo(); }));
 
     /* Spielart */
-    $$('#playMode button').forEach(b => b.addEventListener('click', () => {
-      DB.settings.playMode = b.dataset.play; save();
+    $$('#playMode button, #playModeSet button').forEach(b => b.addEventListener('click', () => {
       Sound.play('click');
-      syncPlayMode();
+      setPlayMode(b.dataset.play);
     }));
 
     /* Sperrbildschirm */
@@ -1332,8 +1395,9 @@
     $('#btnResume').addEventListener('click', () => {
       Sound.play('click');
       show(null);
-      /* kurzer Countdown, danach stehen neue Aufgaben da */
-      countdown(() => Game.resume());
+      /* kurzer Countdown, danach stehen neue Aufgaben da. Im Safari wartet
+         die Aufgabe ohnehin geduldig - da geht es direkt weiter. */
+      if (Game.mode === 'safari') Game.resume(); else countdown(() => Game.resume());
     });
     $('#btnQuit').addEventListener('click', () => { Sound.play('back'); quitToMenu(); });
 
@@ -1378,11 +1442,11 @@
     /* Tastatur */
     window.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
-        if (Game.state === 'playing' || Game.state === 'mini') { Game.pause(); show('pause'); }
+        if (inRound() || Game.state === 'mini') { Game.pause(); show('pause'); }
         else if (openScreen === 'pause') { show(null); Game.resume(); }
         return;
       }
-      if (Game.state !== 'playing' || DB.settings.inputMode !== 'keypad') return;
+      if (!inRound() || DB.settings.inputMode !== 'keypad') return;
       if (e.key >= '0' && e.key <= '9') { key(e.key); e.preventDefault(); }
       else if (e.key === 'Backspace') { key('del'); e.preventDefault(); }
       else if (e.key === '-') { key('neg'); e.preventDefault(); }
@@ -1396,8 +1460,21 @@
     window.addEventListener('resize', syncInset);
     window.addEventListener('orientationchange', () => setTimeout(syncInset, 250));
 
+    /* App im Hintergrund: sofort pausieren. Sonst friert das Spiel zwar ein,
+       man könnte aber in aller Ruhe nachdenken - und die Musik liefe weiter. */
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden && (Game.state === 'playing' || Game.state === 'mini')) { Game.pause(); show('pause'); }
+      if (document.hidden && (inRound() || Game.state === 'mini')) {
+        Game.pause();
+        openPause(false);
+      }
+      if (document.hidden) { Sound.stopMusic(); save(); }
+      else {
+        /* zurück aus dem Hintergrund: Stand abgleichen und prüfen, ob die
+           Bildschirmzeit inzwischen abgelaufen oder wieder frei ist */
+        mergeTime();
+        renderTimeStrip();
+        if (isLocked() && openScreen === 'menu') showLocked();
+      }
     });
   }
 
@@ -1440,7 +1517,7 @@
     }
   }
 
-  const APP_FALLBACK_VERSION = '1.7.0';
+  const APP_FALLBACK_VERSION = '1.8.0';
 
   function pwa() {
     $('#appVersion').textContent = APP_FALLBACK_VERSION;
@@ -1557,6 +1634,7 @@
     show('menu');
     inGameChrome(false);
     /* Läuft noch eine Pause? Dann gleich mit laufender Uhr anzeigen. */
+    mergeTime();
     if (isLocked()) { tickLock(); showLocked(); }
     /* Der Streifen im Menü zählt auch ohne Spiel weiter */
     setInterval(() => { if (openScreen === 'menu') renderTimeStrip(); }, 5000);
