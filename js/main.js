@@ -15,6 +15,8 @@
       grade: 1, theme: 'stadt-tag', inputMode: 'keypad', sfx: true, music: true,
       /* Start-Tempo je Klassenstufe - die Kleinen starten langsamer */
       speedByGrade: { 1: 1, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3 },
+      /* leer = alle Rechenarten dieser Klassenstufe sind an */
+      opsByGrade: {},
       nick: '', avatar: ''
     },
     scores: [],
@@ -39,8 +41,12 @@
         const p = JSON.parse(raw);
         DB.settings = Object.assign({}, DEFAULTS.settings, p.settings || {});
         DB.settings.speedByGrade = Object.assign({}, DEFAULTS.settings.speedByGrade, (p.settings || {}).speedByGrade || {});
+        DB.settings.opsByGrade = Object.assign({}, (p.settings || {}).opsByGrade || {});
         DB.stats = Object.assign({}, DEFAULTS.stats, p.stats || {});
         DB.scores = Array.isArray(p.scores) ? p.scores : [];
+        /* ältere Einträge kennen das Merkmal noch nicht - die gelten als
+           "noch nicht online" und werden beim Abgleich nachgereicht */
+        DB.scores.forEach(e => { if (typeof e.online !== 'boolean') e.online = false; });
         DB.badges = p.badges || {};
       }
     } catch (e) { /* Speicher nicht verfügbar - läuft trotzdem */ }
@@ -311,7 +317,7 @@
     countdown(() => {
       Game.start({
         grade: DB.settings.grade, theme: DB.settings.theme,
-        inputMode: DB.settings.inputMode, speed: curSpeed()
+        inputMode: DB.settings.inputMode, speed: curSpeed(), ops: curOps()
       });
     });
   }
@@ -446,6 +452,9 @@
   function renderMenuInfo() {
     const g = DB.settings.grade;
     $('#chipGrade').textContent = MathGen.GRADE_INFO[g].name;
+    const opsAll = allOps().length, opsOn = curOps().length;
+    $('#chipOps').textContent = opsOn === opsAll
+      ? 'Alle Rechenarten' : opsOn + '/' + opsAll + ' Rechenarten';
     const sp = Game.speeds[curSpeed() - 1];
     $('#chipSpeed').textContent = sp ? sp.icon + ' ' + sp.name : '';
     const th = Backgrounds.list().find(t => t.id === DB.settings.theme);
@@ -524,6 +533,8 @@
   function renderScores() {
     renderMyList();
     renderOnline();
+    renderPendingNote();
+    flushPending(true);
     const rows = [];
     for (let g = 1; g <= 6; g++) {
       rows.push('<div class="score-row"><span>' + MathGen.GRADE_INFO[g].name + '</span><b>' +
@@ -539,6 +550,70 @@
       ['Gespielte Bonusspiele', DB.stats.miniPlayed || 0],
       ['Gespielte Runden', DB.stats.games]
     ].map(x => '<div class="stat-row"><span>' + x[0] + '</span><b>' + x[1] + '</b></div>').join('');
+  }
+
+  /* ===================== Nachträglich online stellen =====================
+     Wenn der Upload beim Spielen scheitert (kein Netz, Supabase-Projekt
+     schläft, Regel zu streng), bleibt der Eintrag auf dem Gerät und ist
+     mit online:false markiert. Von hier aus wird er später nachgereicht. */
+  function pendingScores() {
+    return (DB.scores || []).filter(e => !e.online);
+  }
+
+  let flushing = false;
+  async function flushPending(silent) {
+    if (flushing || !Leaderboard.configured()) return;
+    const todo = pendingScores();
+    if (!todo.length) { renderPendingNote(); return; }
+    flushing = true;
+    renderPendingNote('Wird gesendet …');
+
+    /* Erst schauen, was schon oben liegt - sonst gibt es Dubletten,
+       etwa bei Einträgen aus einer älteren Fassung der App. */
+    let known = null;
+    try {
+      const rows = await Leaderboard.top(null, 100);
+      known = new Set((rows || []).map(r => r.name + '|' + r.score));
+    } catch (e) { known = null; }
+
+    let sent = 0, failed = 0, lastError = '';
+    for (const entry of todo) {
+      if (known && known.has(entry.name + '|' + entry.score)) { entry.online = true; continue; }
+      try {
+        await Leaderboard.submit(entry);
+        entry.online = true;
+        sent++;
+      } catch (err) {
+        failed++;
+        lastError = err && err.message ? err.message : String(err);
+        break;                       /* beim ersten Fehler abbrechen */
+      }
+    }
+    save();
+    flushing = false;
+
+    if (failed) {
+      renderPendingNote('Hochladen hat nicht geklappt: ' + lastError);
+    } else if (sent) {
+      renderPendingNote();
+      if (!silent) toast(sent === 1 ? 'Eintrag ist online! 🌍' : sent + ' Einträge sind online! 🌍');
+      renderOnline();
+    } else {
+      renderPendingNote();
+    }
+    renderMyList();
+  }
+
+  function renderPendingNote(msg) {
+    const box = $('#pendingBox');
+    const n = pendingScores().length;
+    if (!Leaderboard.configured() || (!n && !msg)) { box.hidden = true; $('#pendingText').textContent = ''; return; }
+    box.hidden = false;
+    $('#pendingText').textContent = msg
+      || (n === 1 ? '1 Eintrag ist noch nicht online.' : n + ' Einträge sind noch nicht online.');
+    $('#pendingSend').hidden = !n;
+    $('#pendingSend').textContent = n === 1 ? 'Jetzt hochladen' : n + ' Einträge hochladen';
+    $('#pendingSend').disabled = flushing;
   }
 
   /* ===================== Eintrag in die Bestenliste ===================== */
@@ -608,7 +683,7 @@
       name: nick, avatar: currentAvatar,
       score: pendingEntry.score, grade: pendingEntry.grade,
       correct: pendingEntry.correct, level: pendingEntry.level,
-      date: Date.now()
+      date: Date.now(), online: false
     };
 
     /* immer zuerst auf dem Gerät sichern */
@@ -623,6 +698,8 @@
     Sound.play('badge');
 
     if (!Leaderboard.configured()) {
+      entry.online = true;                /* ohne Online-Liste gibt es nichts nachzureichen */
+      save();
       $('#entryNote').textContent = 'Auf diesem Gerät gespeichert.';
       toast('Eingetragen! 🏆');
       return;
@@ -630,10 +707,14 @@
     $('#entryNote').textContent = 'Wird hochgeladen …';
     try {
       await Leaderboard.submit(entry);
+      entry.online = true;
+      save();
       $('#entryNote').textContent = 'In der Online-Bestenliste eingetragen!';
       toast('Online eingetragen! 🌍');
     } catch (err) {
-      $('#entryNote').textContent = 'Online hat nicht geklappt – auf dem Gerät ist der Eintrag aber sicher.';
+      save();
+      $('#entryNote').textContent = 'Noch nicht online: ' + (err && err.message ? err.message : err)
+        + ' – der Eintrag ist auf dem Gerät gespeichert und wird in der Bestenliste nachgereicht.';
     }
   }
 
@@ -657,7 +738,84 @@
   function syncGrades() {
     $$('#gradeGrid button').forEach(b => b.classList.toggle('active', +b.dataset.grade === DB.settings.grade));
     $('#gradeDesc').textContent = MathGen.GRADE_INFO[DB.settings.grade].desc;
+    buildOps();
     syncSpeeds();
+  }
+
+  /* ---- Rechenarten (pro Klassenstufe gemerkt) ----
+     Gespeichert wird nur eine Auswahl, wenn sie von "alles an" abweicht.
+     Dadurch sind neue Aufgabenarten in späteren Versionen automatisch
+     mit dabei, statt still zu fehlen. */
+  function allOps(grade) {
+    return MathGen.opsFor(grade || DB.settings.grade);
+  }
+
+  function curOps(grade) {
+    const g = grade || DB.settings.grade;
+    const avail = allOps(g).map(o => o.id);
+    const saved = DB.settings.opsByGrade[g];
+    if (!Array.isArray(saved) || !saved.length) return avail.slice();
+    const keep = saved.filter(id => avail.indexOf(id) >= 0);
+    return keep.length ? keep : avail.slice();
+  }
+
+  function setOps(list) {
+    const g = DB.settings.grade;
+    const avail = allOps(g).map(o => o.id);
+    if (list.length >= avail.length) delete DB.settings.opsByGrade[g];   /* alles an = kein Eintrag */
+    else DB.settings.opsByGrade[g] = list.slice();
+    save();
+  }
+
+  function buildOps() {
+    const grid = $('#opGrid');
+    const g = DB.settings.grade;
+    const active = curOps();
+    grid.innerHTML = '';
+    allOps(g).forEach(op => {
+      const lab = document.createElement('label');
+      lab.className = 'op-item';
+      lab.innerHTML =
+        '<input type="checkbox" data-op="' + op.id + '">' +
+        '<span class="box"></span>' +
+        '<span class="txt"><b>' + op.name + '</b><small>' + op.sym + '</small></span>';
+      const cb = lab.querySelector('input');
+      cb.checked = active.indexOf(op.id) >= 0;
+      lab.classList.toggle('on', cb.checked);
+      cb.addEventListener('change', () => {
+        const chosen = Array.from(grid.querySelectorAll('input:checked')).map(i => i.dataset.op);
+        if (!chosen.length) {
+          /* die letzte Rechenart bleibt an - sonst gäbe es keine Aufgaben */
+          cb.checked = true;
+          lab.classList.add('on');
+          Sound.play('wrong');
+          $('#opsHint').textContent = 'Mindestens eine Rechenart muss angehakt bleiben.';
+          return;
+        }
+        Sound.play('click');
+        setOps(chosen);
+        syncOps();
+        renderMenuInfo();
+      });
+      grid.appendChild(lab);
+    });
+    syncOps();
+  }
+
+  function syncOps() {
+    const g = DB.settings.grade;
+    const avail = allOps(g);
+    const active = curOps();
+    $('#opsForGrade').textContent = '· ' + MathGen.GRADE_INFO[g].name;
+    Array.from($('#opGrid').querySelectorAll('.op-item')).forEach(lab => {
+      const cb = lab.querySelector('input');
+      cb.checked = active.indexOf(cb.dataset.op) >= 0;
+      lab.classList.toggle('on', cb.checked);
+    });
+    const n = MathGen.poolSize(g, 12, active);
+    $('#opsHint').textContent = active.length === avail.length
+      ? 'Alle ' + avail.length + ' Rechenarten sind an (' + n + ' Aufgabenarten).'
+      : active.length + ' von ' + avail.length + ' Rechenarten an (' + n + ' Aufgabenarten).';
   }
 
   /* ---- Start-Tempo (pro Klassenstufe gemerkt) ---- */
@@ -755,8 +913,9 @@
       DB.stats = JSON.parse(JSON.stringify(DEFAULTS.stats));
       DB.badges = {};
       DB.settings.speedByGrade = JSON.parse(JSON.stringify(DEFAULTS.settings.speedByGrade));
+      DB.settings.opsByGrade = {};
       DB.scores = [];
-      save(); syncSpeeds(); renderMenuInfo(); toast('Fortschritt gelöscht');
+      save(); buildOps(); syncSpeeds(); renderMenuInfo(); toast('Fortschritt gelöscht');
     });
 
     /* Tastenfeld */
@@ -804,7 +963,8 @@
       $('#tabLocal').hidden = online;
       if (online) renderOnline();
     }));
-    $('#onlineReload').addEventListener('click', () => { Sound.play('click'); renderOnline(); });
+    $('#onlineReload').addEventListener('click', () => { Sound.play('click'); renderOnline(); renderPendingNote(); });
+    $('#pendingSend').addEventListener('click', () => { Sound.play('click'); flushPending(false); });
 
     /* Game Over */
     $('#btnAgain').addEventListener('click', () => { Sound.play('start'); startGame(); });
@@ -875,7 +1035,7 @@
     }
   }
 
-  const APP_FALLBACK_VERSION = '1.2.0';
+  const APP_FALLBACK_VERSION = '1.5.0';
 
   function pwa() {
     $('#appVersion').textContent = APP_FALLBACK_VERSION;
@@ -977,6 +1137,7 @@
 
     $$('#modeSeg button').forEach(x => x.classList.toggle('active', x.dataset.mode === DB.settings.inputMode));
     buildGrades();
+    buildOps();
     buildSpeeds();
     buildThemes();
     syncSound();
@@ -987,6 +1148,7 @@
     pwa();
     show('menu');
     inGameChrome(false);
+    setTimeout(() => flushPending(true), 2500);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

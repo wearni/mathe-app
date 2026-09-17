@@ -43,7 +43,7 @@
     cb: {},
     raf: null, last: 0, time: 0,
     state: 'idle',        /* idle | playing | paused | bonus | mini | over */
-    settings: { grade: 1, theme: 'stadt-tag', inputMode: 'keypad', speed: 3 },
+    settings: { grade: 1, theme: 'stadt-tag', inputMode: 'keypad', speed: 3, ops: null },
 
     lives: 3, maxLives: 8, stars: 0, score: 0, level: 1,
     combo: 0, bestCombo: 0, correct: 0, wrongShots: 0, resolved: 0,
@@ -171,7 +171,7 @@
   }
 
   function spawnEq() {
-    const p = MathGen.create(G.settings.grade, G.level);
+    const p = MathGen.create(G.settings.grade, G.level, G.settings.ops);
     const m = measureEq(p.text);
     const kind = (G.correct > 0 && G.correct % 7 === 0 && Math.random() < 0.5) ? 'golden' : 'normal';
     let x = rf(m.w / 2 + 12, G.W - m.w / 2 - 12);
@@ -844,7 +844,7 @@
      dabei keine Zeit geschenkt wird. */
   function refreshEquations() {
     G.eqs.forEach(e => {
-      const p = MathGen.create(G.settings.grade, G.level);
+      const p = MathGen.create(G.settings.grade, G.level, G.settings.ops);
       const m = measureEq(p.text);
       e.text = p.text; e.answer = p.answer;
       e.w = m.w; e.h = m.h; e.fs = m.fs;

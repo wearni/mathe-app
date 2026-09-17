@@ -21,6 +21,7 @@ IFS='.' read -r major minor patch <<< "$cur"
 new="$major.$minor.$((patch + 1))"
 
 sed -i.bak "s/const VERSION = '$cur'/const VERSION = '$new'/" sw.js && rm -f sw.js.bak
+sed -i.bak "s/APP_FALLBACK_VERSION = '$cur'/APP_FALLBACK_VERSION = '$new'/" js/main.js && rm -f js/main.js.bak
 
 git add -A
 git commit -m "${1:-Update} (v$new)"

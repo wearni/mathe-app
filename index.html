@@ -102,6 +102,7 @@
       </div>
       <div class="menu-chips">
         <span class="chip" id="chipGrade">Klasse 1</span>
+        <span class="chip" id="chipOps">Alle Rechenarten</span>
         <span class="chip" id="chipSpeed">🚶 Normal</span>
         <span class="chip" id="chipTheme">🏙️ Stadt am Tag</span>
         <span class="chip" id="chipMode">Zahlenfeld</span>
@@ -119,6 +120,10 @@
       <h3>Klassenstufe</h3>
       <div id="gradeGrid" class="grade-grid"></div>
       <p class="hint" id="gradeDesc"></p>
+
+      <h3>Rechenarten <span id="opsForGrade"></span></h3>
+      <div id="opGrid" class="op-grid"></div>
+      <p class="hint" id="opsHint"></p>
 
       <h3>Start-Tempo <span id="speedForGrade"></span></h3>
       <div id="speedGrid" class="speed-grid"></div>
@@ -164,6 +169,10 @@
       <div id="tabOnline">
         <div id="onlineList" class="online-list"></div>
         <p class="hint small" id="onlineNote"></p>
+        <div id="pendingBox" class="pending-box" hidden>
+          <p id="pendingText"></p>
+          <button id="pendingSend" class="mini-btn wide">Jetzt hochladen</button>
+        </div>
         <button id="onlineReload" class="mini-btn wide">Neu laden</button>
       </div>
       <div id="tabLocal" hidden>

@@ -303,6 +303,32 @@ html, body {
   border-color: #c58c00; box-shadow: 0 4px 0 #8e6400;
 }
 
+/* Rechenarten zum Ab- und Anhaken */
+#opsForGrade { font-family: var(--body); font-size: 12px; color: var(--accent); letter-spacing: 0; }
+.op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.op-item {
+  display: flex; align-items: center; gap: 9px; cursor: pointer; text-align: left;
+  background: var(--panel-2); border: 3px solid rgba(255,255,255,.14);
+  border-radius: 12px; padding: 9px 10px;
+  box-shadow: 0 4px 0 rgba(0,0,0,.4);
+  font-size: 13px; line-height: 1.2;
+}
+.op-item input { display: none; }
+.op-item .box {
+  flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px;
+  border: 3px solid rgba(255,255,255,.3); background: #0a0e26;
+  display: grid; place-items: center;
+  font-size: 15px; color: #10131f; font-weight: 800;
+}
+.op-item .box::after { content: '✓'; opacity: 0; }
+.op-item input:checked + .box { background: var(--accent-2); border-color: #4cd137; }
+.op-item input:checked + .box::after { opacity: 1; }
+.op-item.on { border-color: rgba(124,255,107,.55); }
+.op-item .txt { flex: 1; min-width: 0; }
+.op-item .txt b { display: block; color: #fff; }
+.op-item .txt small { color: var(--muted); font-size: 11px; font-family: var(--pixel); }
+.op-item.locked { opacity: .75; }
+
 /* Tempo-Auswahl */
 #speedForGrade { font-family: var(--body); font-size: 12px; color: var(--accent); letter-spacing: 0; }
 .speed-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
@@ -395,6 +421,12 @@ html, body {
 #nickInput.needed { border-color: #ff8a9c; box-shadow: 0 0 0 2px rgba(255,138,156,.25); }
 .entry-fields .mini-btn { font-size: 12px; padding: 8px 4px; }
 #entryBox .big-btn { margin-bottom: 2px; }
+
+.pending-box {
+  background: rgba(255,209,102,.12); border: 2px solid rgba(255,209,102,.5);
+  border-radius: 12px; padding: 10px; margin-bottom: 10px;
+}
+.pending-box p { margin: 0 0 8px; font-size: 13px; color: var(--accent); }
 
 /* Bestenliste */
 .online-list { display: grid; gap: 6px; text-align: left; margin-bottom: 10px; }

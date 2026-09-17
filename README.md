@@ -14,6 +14,7 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | | |
 |---|---|
 | 🎯 **Klasse 1–6** | Aufgabentypen passen sich der gewählten Klassenstufe an – von „3 + 4“ bis „3/4 von 24“ und „(−7) · (−4)“ |
+| ✅ **Rechenarten wählbar** | Plus, Minus, Mal, Geteilt … einzeln per Haken an- und abschalten – **pro Klassenstufe** gespeichert, von Haus aus ist alles an |
 | 🐌 **Start-Tempo** | fünf Stufen von *Schnecke* bis *Rakete*, **pro Klassenstufe** gespeichert – Klasse 1 startet automatisch auf *Schnecke* |
 | ⏱ **10-Minuten-Limit** | jede Runde dauert höchstens 10 Minuten reine Spielzeit; Pausen und Menüs zählen nicht mit |
 | ❤️ **3 Leben als Herzchen** | bis zu 8 Herzen möglich – im 3er- und 5er-Paket günstiger |
@@ -71,6 +72,24 @@ zum Menü? Ein zweites Mal Zurück geht dann wirklich ins Menü.
 Während der Pause läuft die Rundenzeit nicht weiter – dafür stehen beim Weiterspielen
 **andere Aufgaben** auf dem Feld, an derselben Stelle und in derselben Höhe. Eine Pause
 bringt also keinen Vorteil beim Nachdenken.
+
+---
+
+## Rechenarten ein- und ausschalten
+
+**Einstellungen → Rechenarten.** Dort steht für die gerade gewählte Klassenstufe eine Liste
+mit Haken – je nach Klasse etwa *Plus*, *Minus*, *Mal*, *Geteilt*, *Gemischt*,
+*Potenzen & Wurzeln*, *Brüche & Prozent*, *Negative Zahlen* oder *Teiler & Vielfache*.
+Abgehakte Rechenarten kommen im Spiel nicht mehr vor.
+
+* Jede Klassenstufe hat ihre **eigene** Auswahl; neu ist immer alles angehakt.
+* Mindestens eine Rechenart muss stehen bleiben – die letzte lässt sich nicht abwählen.
+* Die Auswahl liegt im `localStorage` des Geräts und gilt auch nach dem Schließen der App.
+* Unter der Liste steht, wie viele Rechenarten aktiv sind und wie viele Aufgabenarten
+  daraus gerade entstehen; im Startmenü zeigt ein Chip das Gleiche in kurz.
+
+So lässt sich zum Beispiel für Klasse 3 gezielt nur das Einmaleins üben oder in Klasse 1
+das Minusrechnen erst einmal weglassen.
 
 ---
 
@@ -191,6 +210,27 @@ window.APP_CONFIG = {
 Der *anon public*-Schlüssel darf offen in der Seite stehen – genau dafür ist er gedacht.
 Was erlaubt ist, entscheiden allein die Regeln aus Schritt 2.
 
+### Wenn ein Eintrag nicht online geht
+
+Scheitert der Upload – kein Netz, Supabase-Projekt pausiert, Regel zu streng –, bleibt der
+Eintrag auf dem Gerät und wird mit `online: false` gemerkt. In der Bestenliste erscheint
+dann oben ein gelber Kasten „n Einträge sind noch nicht online" mit einem Knopf zum
+Nachreichen. Versucht wird es außerdem automatisch beim Start der App und jedes Mal, wenn
+die Bestenliste geöffnet wird.
+
+Beim Nachreichen holt die App zuerst die vorhandene Online-Liste und überspringt Einträge,
+die dort schon stehen – es entstehen also keine Dubletten, auch nicht bei Punkteständen
+aus einer älteren Fassung der App.
+
+Die Fehlermeldung des Servers wird im Klartext angezeigt, zum Beispiel:
+
+| Meldung | Bedeutung |
+|---|---|
+| `HTTP 503: Projekt schläft` | Kostenloses Supabase-Projekt pausiert – im Dashboard auf *Restore* |
+| `HTTP 401 … row-level security` | Die Insert-Regel aus Schritt 2 fehlt oder passt nicht |
+| `HTTP 404: Tabelle nicht gefunden` | Tabellenname in `config.js` stimmt nicht |
+| `Zeitüberschreitung` | Netz war zu langsam – einfach nochmal auf „Jetzt hochladen" |
+
 Ohne Spitznamen geht kein Eintrag: Der Knopf bleibt gesperrt, solange das Feld leer ist
 (Leerzeichen zählen nicht).
 
@@ -277,7 +317,7 @@ direkt bearbeiten: Datei anklicken → Stift-Symbol → ändern → **Commit cha
 
 1. Im Repository auf `sw.js` klicken
 2. Stift-Symbol (✏️ *Edit this file*)
-3. In der Zeile `const VERSION = '1.4.3';` die letzte Zahl erhöhen, z. B. auf `'1.4.3'`
+3. In der Zeile `const VERSION = '1.4.4';` die letzte Zahl erhöhen, z. B. auf `'1.4.4'`
 4. **Commit changes**
 
 > Wer lieber auf dem Rechner arbeitet: `./bump.sh "Was geändert wurde"` erledigt
@@ -332,8 +372,12 @@ mathe-app/
 * **Neues Bonusspiel:** in `js/minigames.js` eine Funktion nach dem Muster der drei
   vorhandenen ergänzen und in `GAMES` und `LIST` eintragen
 * **Bonus seltener/öfter:** `CONFIG.bonusEvery` in `js/game.js` (zählt nur richtige Antworten)
-* **Neue Aufgabentypen:** in `js/mathgen.js` bei der passenden Klassenfunktion (`k1` … `k6`) eine
-  Funktion ergänzen, die `{ text, answer }` zurückgibt
+* **Neue Aufgabentypen:** in `js/mathgen.js` in der Tabelle `GENS` bei der passenden Klasse
+  einen Eintrag `{ op: '…', fn: level => ({ text, answer }) }` ergänzen. `op` ist eine der IDs
+  aus `OPS` – dadurch taucht der Typ automatisch unter der richtigen Rechenart in den
+  Einstellungen auf. `min` legt fest, ab welchem Level der Typ vorkommt
+* **Neue Rechenart-Kategorie:** in `js/mathgen.js` die Liste `OPS` erweitern (ID, Name, Symbol)
+  und die neuen Generatoren mit dieser ID versehen – die Checkbox baut sich von selbst
 * **Musikstücke:** die Tabelle `TRACKS` in `js/audio.js` – `melody`, `chords` und `drums`
   sind je 64 Schritte lang
 * **Pixel-Sprites:** `SPRITES` in `js/pixel.js` (`FONT` liegt dort als fertige
@@ -349,8 +393,10 @@ mathe-app/
 * Die Schriften werden von Google Fonts geladen. Ohne Internet greifen automatisch die
   System-Schriften – die App bleibt voll spielbar.
 * Der Ton startet erst nach der ersten Berührung des Bildschirms (Browser-Vorgabe).
-* Alle Spielstände liegen im `localStorage` des Geräts. „Alle Fortschritte löschen“ in den
-  Einstellungen räumt sie wieder weg.
+* Alle Spielstände **und Einstellungen** (Klasse, Rechenarten, Tempo, Hintergrund, Ton)
+  liegen im `localStorage` des Geräts. „Alle Fortschritte löschen“ in den
+  Einstellungen räumt sie wieder weg – auch die abgewählten Rechenarten sind danach
+  wieder alle an.
 
 ## Lizenz
 

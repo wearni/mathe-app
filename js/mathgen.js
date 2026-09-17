@@ -1,13 +1,17 @@
 /* ============================================================
    Mathe App - Aufgaben-Generator (Klasse 1 bis 6)
-   Alle Ergebnisse sind ganze Zahlen (ggf. negativ ab Klasse 5).
+
+   Jede Aufgabenart hat eine Rechenart ("op"). Über die Einstellungen
+   lassen sich Rechenarten pro Klassenstufe ein- und ausschalten;
+   create() bekommt dann die erlaubten Arten übergeben.
+
+   Alle Ergebnisse sind ganze Zahlen (ab Klasse 5 auch negative).
    ============================================================ */
 (function (global) {
   'use strict';
 
   function ri(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-  function chance(p) { return Math.random() < p; }
   function shuffle(a) {
     for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -15,139 +19,125 @@
     }
     return a;
   }
+  function chance(p) { return Math.random() < p; }
   function ggT(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a; }
   function kgV(a, b) { return Math.abs(a * b) / ggT(a, b); }
   function neg(n) { return n < 0 ? '(−' + Math.abs(n) + ')' : String(n); }
   function sgn(n) { return String(n).replace('-', '−'); }
 
-  /* Skalierungsfaktor: Aufgaben werden innerhalb einer Klassenstufe
-     mit steigendem Level etwas anspruchsvoller (max. Faktor 2.2). */
+  /* Innerhalb einer Klassenstufe werden die Zahlen mit steigendem
+     Level etwas größer (höchstens Faktor 2,2). */
   function scale(level) { return Math.min(1 + (level - 1) * 0.13, 2.2); }
 
-  /* ---------------- Klasse 1: erst bis 10, später bis 20 ----------------
-     Bewusst sanfter Einstieg: kleine Summanden, viele Nachbaraufgaben
-     und Zehnerfreunde. Erst ab Level 3 bzw. 5 kommt mehr dazu.        */
-  function k1(level) {
-    const s = Math.min(1 + (level - 1) * 0.09, 1.7);   /* deutlich flacher als sonst */
-    const hi = Math.min(Math.round(5 * s), 9);         /* Summanden von 1..5 bis 1..9 */
+  /* ===================== Rechenarten ===================== */
+  const OPS = [
+    { id: 'add', name: 'Plus', sym: '+' },
+    { id: 'sub', name: 'Minus', sym: '−' },
+    { id: 'mul', name: 'Mal', sym: '·' },
+    { id: 'div', name: 'Geteilt', sym: ':' },
+    { id: 'mix', name: 'Gemischt', sym: '( )' },
+    { id: 'pow', name: 'Potenzen & Wurzeln', sym: 'x²' },
+    { id: 'frac', name: 'Brüche & Prozent', sym: '%' },
+    { id: 'neg', name: 'Negative Zahlen', sym: '±' },
+    { id: 'teiler', name: 'Teiler & Vielfache', sym: 'ggT' }
+  ];
+  const OP_INFO = {};
+  OPS.forEach(o => { OP_INFO[o.id] = o; });
 
-    const pool = [
-      /* Plus im Zahlenraum bis 10 */
-      () => { const a = ri(1, hi), b = ri(1, hi); return { text: a + ' + ' + b, answer: a + b }; },
-      /* Minus im Zahlenraum bis 10 */
-      () => { const a = ri(2, hi + 4), b = ri(1, a - 1); return { text: a + ' − ' + b, answer: a - b }; },
-      /* Nachbaraufgaben */
-      () => { const a = ri(1, 9); return { text: a + ' + 1', answer: a + 1 }; },
-      () => { const a = ri(2, 10); return { text: a + ' − 1', answer: a - 1 }; },
-      () => { const a = ri(1, 8); return { text: a + ' + 2', answer: a + 2 }; },
-      /* Verdoppeln */
-      () => { const a = ri(1, Math.min(6, hi + 1)); return { text: a + ' + ' + a, answer: 2 * a }; },
-      /* Zehnerfreunde */
-      () => { const a = ri(1, 9); return { text: a + ' + ' + (10 - a), answer: 10 }; }
-    ];
+  /* ===================== Aufgaben je Klassenstufe =====================
+     op   = Rechenart (zum Ein- und Ausschalten)
+     min  = erst ab diesem Level                                     */
 
-    if (level >= 3) {
-      pool.push(
-        () => { const a = ri(10, 15), b = ri(1, 5); return { text: a + ' + ' + b, answer: a + b }; },
-        () => { const a = ri(11, 20), b = ri(1, 9); return { text: a + ' − ' + b, answer: a - b }; }
-      );
-    }
-    if (level >= 5) {
-      pool.push(
-        () => { const b = ri(1, 6), a = ri(1, 6); return { text: a + ' + ? = ' + (a + b), answer: b }; },
-        () => { const a = ri(1, 4), b = ri(1, 4), c = ri(1, 4); return { text: a + ' + ' + b + ' + ' + c, answer: a + b + c }; },
-        () => { const a = ri(1, 9), b = ri(1, 20 - a > 0 ? 20 - a : 1); return { text: a + ' + ' + b, answer: a + b }; }
-      );
-    }
-    return pick(pool)();
+  const GENS = {
+
+    /* ---------- Klasse 1: erst bis 10, später bis 20 ---------- */
+    1: [
+      { op: 'add', fn: l => { const h = hi1(l); const a = ri(1, h), b = ri(1, h); return { text: a + ' + ' + b, answer: a + b }; } },
+      { op: 'sub', fn: l => { const h = hi1(l); const a = ri(2, h + 4), b = ri(1, a - 1); return { text: a + ' − ' + b, answer: a - b }; } },
+      { op: 'add', fn: () => { const a = ri(1, 9); return { text: a + ' + 1', answer: a + 1 }; } },
+      { op: 'sub', fn: () => { const a = ri(2, 10); return { text: a + ' − 1', answer: a - 1 }; } },
+      { op: 'add', fn: () => { const a = ri(1, 8); return { text: a + ' + 2', answer: a + 2 }; } },
+      { op: 'add', fn: l => { const a = ri(1, Math.min(6, hi1(l) + 1)); return { text: a + ' + ' + a, answer: 2 * a }; } },
+      { op: 'add', fn: () => { const a = ri(1, 9); return { text: a + ' + ' + (10 - a), answer: 10 }; } },
+      { op: 'add', min: 3, fn: () => { const a = ri(10, 15), b = ri(1, 5); return { text: a + ' + ' + b, answer: a + b }; } },
+      { op: 'sub', min: 3, fn: () => { const a = ri(11, 20), b = ri(1, 9); return { text: a + ' − ' + b, answer: a - b }; } },
+      { op: 'add', min: 5, fn: () => { const b = ri(1, 6), a = ri(1, 6); return { text: a + ' + ? = ' + (a + b), answer: b }; } },
+      { op: 'mix', min: 5, fn: () => { const a = ri(1, 4), b = ri(1, 4), c = ri(1, 4); return { text: a + ' + ' + b + ' + ' + c, answer: a + b + c }; } },
+      { op: 'add', min: 5, fn: () => { const a = ri(1, 9), b = ri(1, Math.max(1, 20 - a)); return { text: a + ' + ' + b, answer: a + b }; } }
+    ],
+
+    /* ---------- Klasse 2: bis 100 + kleines Einmaleins ---------- */
+    2: [
+      { op: 'add', fn: l => { const m = Math.min(Math.round(40 * scale(l)), 100); const a = ri(10, m), b = ri(2, Math.min(50, m)); return { text: a + ' + ' + b, answer: a + b }; } },
+      { op: 'sub', fn: () => { const a = ri(20, 100), b = ri(2, a - 1); return { text: a + ' − ' + b, answer: a - b }; } },
+      { op: 'mul', fn: () => { const a = ri(2, 10), b = ri(2, 10); return { text: a + ' · ' + b, answer: a * b }; } },
+      { op: 'div', fn: () => { const a = ri(2, 10), b = ri(2, 10); return { text: (a * b) + ' : ' + a, answer: b }; } },
+      { op: 'mul', fn: () => { const a = ri(2, 10), b = ri(2, 10); return { text: a + ' · ? = ' + (a * b), answer: b }; } },
+      { op: 'add', fn: () => { const a = ri(5, 50); return { text: a + ' + ' + a, answer: 2 * a }; } },
+      { op: 'mix', fn: () => { const a = ri(1, 9), b = ri(1, 9), c = ri(1, 9); return { text: a + ' + ' + b + ' + ' + c, answer: a + b + c }; } }
+    ],
+
+    /* ---------- Klasse 3: bis 1000, Einmaleins sicher ---------- */
+    3: [
+      { op: 'add', fn: l => { const m = Math.min(Math.round(300 * scale(l)), 1000); const a = ri(100, m), b = ri(10, 300); return { text: a + ' + ' + b, answer: a + b }; } },
+      { op: 'sub', fn: () => { const a = ri(100, 1000), b = ri(10, a - 1); return { text: a + ' − ' + b, answer: a - b }; } },
+      { op: 'mul', fn: () => { const a = ri(11, 25), b = ri(2, 9); return { text: a + ' · ' + b, answer: a * b }; } },
+      { op: 'div', fn: () => { const a = ri(2, 9), b = ri(11, 40); return { text: (a * b) + ' : ' + a, answer: b }; } },
+      { op: 'mix', fn: () => { const a = ri(2, 10), b = ri(2, 10), c = ri(1, 20); return { text: a + ' · ' + b + ' + ' + c, answer: a * b + c }; } },
+      { op: 'mul', fn: () => { const a = ri(3, 12), b = ri(3, 12); return { text: a + ' · ? = ' + (a * b), answer: b }; } },
+      { op: 'mul', fn: () => { const a = ri(2, 9); return { text: a + ' · ' + a, answer: a * a }; } },
+      { op: 'mix', fn: () => { const a = ri(20, 90), b = ri(10, 90); return { text: a + ' + ' + b + ' − ' + Math.min(a, b), answer: a + b - Math.min(a, b) }; } }
+    ],
+
+    /* ---------- Klasse 4: bis 10 000, schriftliche Verfahren ---------- */
+    4: [
+      { op: 'add', fn: l => { const m = Math.min(Math.round(2000 * scale(l)), 10000); const a = ri(500, m), b = ri(100, 2500); return { text: a + ' + ' + b, answer: a + b }; } },
+      { op: 'sub', fn: () => { const a = ri(1000, 9999), b = ri(100, a - 1); return { text: a + ' − ' + b, answer: a - b }; } },
+      { op: 'mul', fn: () => { const a = ri(12, 45), b = ri(11, 25); return { text: a + ' · ' + b, answer: a * b }; } },
+      { op: 'div', fn: () => { const a = ri(2, 9), b = ri(30, 250); return { text: (a * b) + ' : ' + a, answer: b }; } },
+      { op: 'mix', fn: () => { const a = ri(2, 15), b = ri(2, 15), c = ri(2, 9); return { text: '(' + a + ' + ' + b + ') · ' + c, answer: (a + b) * c }; } },
+      { op: 'mix', fn: () => { const a = ri(3, 12), b = ri(3, 12), c = ri(2, 10); return { text: a + ' · ' + b + ' − ' + c, answer: a * b - c }; } },
+      { op: 'mul', fn: () => { const a = ri(100, 900); return { text: a + ' · 10', answer: a * 10 }; } },
+      { op: 'mul', fn: () => { const a = ri(11, 40); return { text: a + ' · ' + a, answer: a * a }; } },
+      { op: 'mul', fn: () => { const b = ri(2, 12), a = ri(2, 12); return { text: '? · ' + a + ' = ' + (a * b), answer: b }; } }
+    ],
+
+    /* ---------- Klasse 5: negative Zahlen, Potenzen, Terme ---------- */
+    5: [
+      { op: 'sub', fn: () => { const a = ri(5, 60), b = ri(a + 1, a + 80); return { text: a + ' − ' + b, answer: a - b }; } },
+      { op: 'neg', fn: () => { const a = ri(2, 20), b = ri(2, 30); return { text: neg(-a) + ' + ' + b, answer: b - a }; } },
+      { op: 'neg', fn: () => { const a = ri(2, 12), b = ri(2, 12); return { text: neg(-a) + ' · ' + b, answer: -a * b }; } },
+      { op: 'pow', fn: () => { const a = ri(2, 15); return { text: a + '²', answer: a * a }; } },
+      { op: 'pow', fn: () => { const a = ri(2, 6); return { text: a + '³', answer: a * a * a }; } },
+      { op: 'pow', fn: () => { const a = ri(2, 20); return { text: '√' + (a * a), answer: a }; } },
+      { op: 'mix', fn: () => { const a = ri(2, 12), b = ri(2, 12), c = ri(2, 12); return { text: a + ' + ' + b + ' · ' + c, answer: a + b * c }; } },
+      { op: 'mix', fn: () => { const a = ri(2, 15), b = ri(2, 12), c = ri(2, 9); return { text: '(' + a + ' + ' + b + ') · ' + c, answer: (a + b) * c }; } },
+      { op: 'teiler', fn: () => { const a = ri(3, 18), b = ri(3, 18); return { text: 'ggT(' + (a * 6) + '; ' + (b * 6) + ')', answer: ggT(a * 6, b * 6) }; } },
+      { op: 'mul', fn: l => { const a = ri(11, Math.round(30 * scale(l))), b = ri(11, 30); return { text: a + ' · ' + b, answer: a * b }; } },
+      { op: 'div', fn: () => { const a = ri(3, 12), b = ri(20, 200); return { text: (a * b) + ' : ' + a, answer: b }; } }
+    ],
+
+    /* ---------- Klasse 6: Brüche, Prozent, negative Zahlen ---------- */
+    6: [
+      { op: 'frac', fn: () => { const p = pick([10, 20, 25, 50, 75, 5]), base = pick([20, 40, 60, 80, 100, 120, 200, 400]); return { text: p + ' % von ' + base, answer: Math.round(base * p / 100) }; } },
+      { op: 'frac', fn: () => { const n = pick([2, 3, 4, 5]), z = ri(1, Math.max(1, n - 1)), base = n * ri(2, 12); return { text: z + '/' + n + ' von ' + base, answer: base / n * z }; } },
+      { op: 'frac', fn: () => { const base = pick([200, 400, 800, 1000]), p = pick([10, 25, 50]); return { text: p + ' % von ' + base, answer: base * p / 100 }; } },
+      { op: 'neg', fn: () => { const a = ri(3, 30), b = ri(3, 30); return { text: neg(-a) + ' − ' + neg(-b), answer: -a + b }; } },
+      { op: 'neg', fn: () => { const a = ri(2, 15), b = ri(2, 15); return { text: neg(-a) + ' · ' + neg(-b), answer: a * b }; } },
+      { op: 'neg', fn: () => { const a = ri(2, 12), b = ri(2, 12); return { text: neg(-a * b) + ' : ' + a, answer: -b }; } },
+      { op: 'pow', fn: () => { const a = ri(2, 8); return { text: a + '³', answer: a * a * a }; } },
+      { op: 'pow', fn: () => { const a = ri(2, 25); return { text: '√' + (a * a), answer: a }; } },
+      { op: 'teiler', fn: () => { const a = ri(4, 18), b = ri(4, 18); return { text: 'kgV(' + a + '; ' + b + ')', answer: kgV(a, b) }; } },
+      { op: 'mix', fn: () => { const a = ri(2, 12), b = ri(2, 12), c = ri(2, 12); return { text: a + ' · ' + b + ' − ' + c + ' · ' + a, answer: a * b - c * a }; } },
+      { op: 'mix', fn: () => { const a = ri(2, 20), b = ri(2, 20), c = ri(2, 9); return { text: '(' + a + ' − ' + b + ') · ' + c, answer: (a - b) * c }; } },
+      { op: 'mul', fn: l => { const a = ri(20, Math.round(60 * scale(l))), b = ri(11, 40); return { text: a + ' · ' + b, answer: a * b }; } }
+    ]
+  };
+
+  /* Klasse 1 wächst besonders sanft */
+  function hi1(level) {
+    return Math.min(Math.round(5 * Math.min(1 + (level - 1) * 0.09, 1.7)), 9);
   }
-
-  /* ---------------- Klasse 2: bis 100 + kleines Einmaleins ---------------- */
-  function k2(level) {
-    const s = scale(level);
-    const max = Math.min(Math.round(40 * s), 100);
-    return pick([
-      () => { const a = ri(10, max), b = ri(2, Math.min(50, max)); return { text: a + ' + ' + b, answer: a + b }; },
-      () => { const a = ri(20, 100), b = ri(2, a - 1); return { text: a + ' − ' + b, answer: a - b }; },
-      () => { const a = ri(2, 10), b = ri(2, 10); return { text: a + ' · ' + b, answer: a * b }; },
-      () => { const a = ri(2, 10), b = ri(2, 10); return { text: (a * b) + ' : ' + a, answer: b }; },
-      () => { const a = ri(2, 10), b = ri(2, 10); return { text: a + ' · ? = ' + (a * b), answer: b }; },
-      () => { const a = ri(5, 50); return { text: a + ' + ' + a, answer: 2 * a }; },
-      () => { const a = ri(1, 9), b = ri(1, 9), c = ri(1, 9); return { text: a + ' + ' + b + ' + ' + c, answer: a + b + c }; }
-    ])();
-  }
-
-  /* ---------------- Klasse 3: bis 1000, Einmaleins sicher ---------------- */
-  function k3(level) {
-    const s = scale(level);
-    const max = Math.min(Math.round(300 * s), 1000);
-    return pick([
-      () => { const a = ri(100, max), b = ri(10, 300); return { text: a + ' + ' + b, answer: a + b }; },
-      () => { const a = ri(100, 1000), b = ri(10, a - 1); return { text: a + ' − ' + b, answer: a - b }; },
-      () => { const a = ri(11, 25), b = ri(2, 9); return { text: a + ' · ' + b, answer: a * b }; },
-      () => { const a = ri(2, 9), b = ri(11, 40); return { text: (a * b) + ' : ' + a, answer: b }; },
-      () => { const a = ri(2, 10), b = ri(2, 10), c = ri(1, 20); return { text: a + ' · ' + b + ' + ' + c, answer: a * b + c }; },
-      () => { const a = ri(3, 12), b = ri(3, 12); return { text: a + ' · ? = ' + (a * b), answer: b }; },
-      () => { const a = ri(2, 9); return { text: a + ' · ' + a, answer: a * a }; },
-      () => { const a = ri(20, 90), b = ri(10, 90); return { text: a + ' + ' + b + ' − ' + Math.min(a, b), answer: a + b - Math.min(a, b) }; }
-    ])();
-  }
-
-  /* ---------------- Klasse 4: bis 10 000, schriftliche Verfahren ---------------- */
-  function k4(level) {
-    const s = scale(level);
-    const max = Math.min(Math.round(2000 * s), 10000);
-    return pick([
-      () => { const a = ri(500, max), b = ri(100, 2500); return { text: a + ' + ' + b, answer: a + b }; },
-      () => { const a = ri(1000, 9999), b = ri(100, a - 1); return { text: a + ' − ' + b, answer: a - b }; },
-      () => { const a = ri(12, 45), b = ri(11, 25); return { text: a + ' · ' + b, answer: a * b }; },
-      () => { const a = ri(2, 9), b = ri(30, 250); return { text: (a * b) + ' : ' + a, answer: b }; },
-      () => { const a = ri(2, 15), b = ri(2, 15), c = ri(2, 9); return { text: '(' + a + ' + ' + b + ') · ' + c, answer: (a + b) * c }; },
-      () => { const a = ri(3, 12), b = ri(3, 12), c = ri(2, 10); return { text: a + ' · ' + b + ' − ' + c, answer: a * b - c }; },
-      () => { const a = ri(100, 900); return { text: a + ' · 10', answer: a * 10 }; },
-      () => { const a = ri(11, 40); return { text: a + ' · ' + a, answer: a * a }; },
-      () => { const b = ri(2, 12), a = ri(2, 12); return { text: '? · ' + a + ' = ' + (a * b), answer: b }; }
-    ])();
-  }
-
-  /* ---------------- Klasse 5: negative Zahlen, Potenzen, Terme ---------------- */
-  function k5(level) {
-    const s = scale(level);
-    return pick([
-      () => { const a = ri(5, 60), b = ri(a + 1, a + 80); return { text: a + ' − ' + b, answer: a - b }; },
-      () => { const a = ri(2, 20), b = ri(2, 30); return { text: neg(-a) + ' + ' + b, answer: b - a }; },
-      () => { const a = ri(2, 12), b = ri(2, 12); return { text: neg(-a) + ' · ' + b, answer: -a * b }; },
-      () => { const a = ri(2, 15); return { text: a + '²', answer: a * a }; },
-      () => { const a = ri(2, 6); return { text: a + '³', answer: a * a * a }; },
-      () => { const a = ri(2, 20); return { text: '√' + (a * a), answer: a }; },
-      () => { const a = ri(2, 12), b = ri(2, 12), c = ri(2, 12); return { text: a + ' + ' + b + ' · ' + c, answer: a + b * c }; },
-      () => { const a = ri(2, 15), b = ri(2, 12), c = ri(2, 9); return { text: '(' + a + ' + ' + b + ') · ' + c, answer: (a + b) * c }; },
-      () => { const a = ri(3, 18), b = ri(3, 18); return { text: 'ggT(' + (a * 6) + '; ' + (b * 6) + ')', answer: ggT(a * 6, b * 6) }; },
-      () => { const a = ri(11, Math.round(30 * s)), b = ri(11, 30); return { text: a + ' · ' + b, answer: a * b }; },
-      () => { const a = ri(3, 12), b = ri(20, 200); return { text: (a * b) + ' : ' + a, answer: b }; }
-    ])();
-  }
-
-  /* ---------------- Klasse 6: Brüche, Prozent, negative Zahlen ---------------- */
-  function k6(level) {
-    const s = scale(level);
-    return pick([
-      () => { const p = pick([10, 20, 25, 50, 75, 5]), base = pick([20, 40, 60, 80, 100, 120, 200, 400]); return { text: p + ' % von ' + base, answer: Math.round(base * p / 100) }; },
-      () => { const n = pick([2, 3, 4, 5]), z = ri(1, n - 1 || 1), base = n * ri(2, 12); return { text: z + '/' + n + ' von ' + base, answer: base / n * z }; },
-      () => { const a = ri(3, 30), b = ri(3, 30); return { text: neg(-a) + ' − ' + neg(-b), answer: -a + b }; },
-      () => { const a = ri(2, 15), b = ri(2, 15); return { text: neg(-a) + ' · ' + neg(-b), answer: a * b }; },
-      () => { const a = ri(2, 12), b = ri(2, 12); return { text: neg(-a * b) + ' : ' + a, answer: -b }; },
-      () => { const a = ri(2, 8); return { text: a + '³', answer: a * a * a }; },
-      () => { const a = ri(2, 25); return { text: '√' + (a * a), answer: a }; },
-      () => { const a = ri(4, 18), b = ri(4, 18); return { text: 'kgV(' + a + '; ' + b + ')', answer: kgV(a, b) }; },
-      () => { const a = ri(2, 12), b = ri(2, 12), c = ri(2, 12); return { text: a + ' · ' + b + ' − ' + c + ' · ' + a, answer: a * b - c * a }; },
-      () => { const a = ri(20, Math.round(60 * s)), b = ri(11, 40); return { text: a + ' · ' + b, answer: a * b }; },
-      () => { const a = ri(2, 20), b = ri(2, 20), c = ri(2, 9); return { text: '(' + a + ' − ' + b + ') · ' + c, answer: (a - b) * c }; },
-      () => { const base = pick([200, 400, 800, 1000]), p = pick([10, 25, 50]); return { text: p + ' % von ' + base, answer: base * p / 100 }; }
-    ])();
-  }
-
-  const GENERATORS = { 1: k1, 2: k2, 3: k3, 4: k4, 5: k5, 6: k6 };
 
   const GRADE_INFO = {
     1: { name: 'Klasse 1', desc: 'Plus & Minus bis 10, später bis 20' },
@@ -158,13 +148,36 @@
     6: { name: 'Klasse 6', desc: 'Brüche · Prozent · Terme' }
   };
 
-  /* Erzeugt eine Aufgabe und vermeidet direkte Wiederholungen. */
+  /* Welche Rechenarten gibt es in dieser Klassenstufe? */
+  function opsFor(grade) {
+    const seen = [];
+    (GENS[grade] || []).forEach(g => { if (seen.indexOf(g.op) < 0) seen.push(g.op); });
+    /* in der Reihenfolge von OPS ausgeben, damit die Liste ruhig bleibt */
+    return OPS.filter(o => seen.indexOf(o.id) >= 0)
+      .map(o => ({ id: o.id, name: o.name, sym: o.sym }));
+  }
+
+  /* Wie viele Aufgabenarten stehen mit dieser Auswahl zur Verfügung? */
+  function poolFor(grade, level, allowed) {
+    const all = GENS[grade] || GENS[1];
+    return all.filter(g =>
+      (!g.min || level >= g.min) &&
+      (!allowed || !allowed.length || allowed.indexOf(g.op) >= 0));
+  }
+
   let lastText = '';
-  function create(grade, level) {
-    const gen = GENERATORS[grade] || GENERATORS[1];
+
+  /* allowed: Liste erlaubter Rechenarten, z. B. ['add','sub'].
+     Fehlt sie oder passt nichts dazu, sind alle erlaubt. */
+  function create(grade, level, allowed) {
+    level = level || 1;
+    let pool = poolFor(grade, level, allowed);
+    if (!pool.length) pool = poolFor(grade, level, null);
+    if (!pool.length) pool = GENS[1];
+
     let p, guard = 0;
     do {
-      p = gen(level || 1);
+      p = pick(pool).fn(level);
       guard++;
     } while (p.text === lastText && guard < 12);
     lastText = p.text;
@@ -206,5 +219,10 @@
     return shuffle(distractors(answer, (count || 4) - 1).concat([answer]));
   }
 
-  global.MathGen = { create, choicesFor, distractors, GRADE_INFO, sgn };
+  global.MathGen = {
+    create, choicesFor, distractors, opsFor,
+    GRADE_INFO, OPS, OP_INFO, sgn,
+    /* Nur zum Testen: wie viele Aufgabenarten sind gerade möglich? */
+    poolSize(grade, level, allowed) { return poolFor(grade, level, allowed).length; }
+  };
 })(window);
