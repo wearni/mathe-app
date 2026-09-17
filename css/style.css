@@ -273,7 +273,8 @@ html, body {
 }
 .big-btn:active { transform: translateY(5px); box-shadow: 0 1px 0 #8e6400; }
 
-.menu-row { display: flex; gap: 7px; }
+/* Vier Knöpfe passen nicht mehr nebeneinander - zwei Reihen zu zweit */
+.menu-row { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
 .mini-btn {
   flex: 1; cursor: pointer;
   font-family: var(--body); font-weight: 700; font-size: 13px; color: #fff;
@@ -558,3 +559,41 @@ html, body {
   .fire-btn { font-size: 9px; }
   #choices button { padding: 13px 4px; font-size: 13px; }
 }
+
+/* ===================== Spielart, Bildschirmzeit, Eltern ===================== */
+.mode-seg { margin: 4px 0 6px; }
+.mode-seg button { font-size: 15px; padding: 12px 6px; }
+
+.time-strip { margin: 10px 0 2px; }
+.time-bar {
+  height: 10px; border-radius: 999px; overflow: hidden;
+  background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.16);
+}
+.time-bar > div {
+  height: 100%; width: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, #7CFF6B, #FFD166);
+  transition: width .3s ease;
+}
+.time-strip small { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; }
+.time-strip.low .time-bar > div { background: linear-gradient(90deg, #FFD166, #FF8A5B); }
+.time-strip.out .time-bar > div { background: #FF5D73; }
+
+.lock-clock {
+  font-family: var(--pixel); font-size: 30px; color: #FFD166;
+  text-align: center; margin: 14px 0 6px; letter-spacing: 1px;
+}
+
+.code-row { display: flex; justify-content: center; margin: 10px 0; }
+.code-row input {
+  width: 190px; text-align: center; letter-spacing: 10px;
+  font-family: var(--pixel); font-size: 20px; padding: 14px 10px;
+  color: #fff; background: rgba(10,14,38,.75);
+  border: 3px solid rgba(255,255,255,.22); border-radius: 14px;
+}
+.code-row input:focus { outline: none; border-color: var(--accent); }
+#gateMath { letter-spacing: 2px; }
+.gate-task {
+  font-family: var(--pixel); font-size: 22px; color: #FFD166;
+  text-align: center; margin: 6px 0;
+}
+.danger-text { color: #FFB4B4; min-height: 18px; }

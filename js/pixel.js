@@ -46,6 +46,106 @@
       '....OYO....',
       '.....O.....'
     ],
+    /* Flugzeug (11 x 16) - Stadt am Tag */
+    plane: [
+      '.....R.....',
+      '....WRW....',
+      '....WCW....',
+      '....WWW....',
+      '....WWW....',
+      '.WWWWWWWWW.',
+      'WWWWWWWWWWW',
+      'WcW.WWW.WcW',
+      '.D..WWW..D.',
+      '....WWW....',
+      '....WWW....',
+      '....WWW....',
+      '...WWWWW...',
+      '..WWWWWWW..',
+      '...W.W.W...',
+      '....O.O....'
+    ],
+    /* Hubschrauber (11 x 16) - Neon-Nacht. Der Rotor wird gezeichnet. */
+    heli: [
+      '.....K.....',
+      '.....K.....',
+      '....BBB....',
+      '...BBBBB...',
+      '..BCCCCCB..',
+      '..BCCcCCB..',
+      '.BBBBBBBBB.',
+      '.BBBBBBBBB.',
+      'KBBBBBBBBBK',
+      'K.BBBBBBB.K',
+      '....BBB....',
+      '....BBB....',
+      '....BBB....',
+      '...BBBBB...',
+      '..KKBBBKK..',
+      '.....K.....'
+    ],
+    /* U-Boot (11 x 16) - Unterwasser */
+    sub: [
+      '.....K.....',
+      '....KKK....',
+      '...YYYYY...',
+      '..YYCCCYY..',
+      '..YYCcCYY..',
+      '.YYYYYYYYY.',
+      'YYYYCCCYYYY',
+      'YYYYCcCYYYY',
+      'YYYYYYYYYYY',
+      'cYYYYYYYYYc',
+      'cYYYYYYYYYc',
+      '.YYYYYYYYY.',
+      '..YYYYYYY..',
+      '...YYYYY...',
+      '....ccc....',
+      '.....c.....'
+    ],
+    /* Safari-Jeep von oben (11 x 14), Fahrtrichtung nach oben */
+    jeep: [
+      '...KKKKK...',
+      '..KYYYYYK..',
+      '.KKCCCCCKK.',
+      'KKKGGGGGKKK',
+      'KKGGGGGGGKK',
+      '.KGGKKKGGK.',
+      '.KGGKKKGGK.',
+      '.KGGGGGGGK.',
+      'KKGGGGGGGKK',
+      'KKKGGGGGKKK',
+      '.KGGGGGGGK.',
+      '.KKGGGGGKK.',
+      '..KKKKKKK..',
+      '...K...K...'
+    ],
+    /* Giraffe von schräg oben (9 x 11) */
+    giraffe: [
+      '......YY.',
+      '......YO.',
+      '.....YY..',
+      '.....Y...',
+      '....YY...',
+      '.YYYYYY..',
+      'YYOYYOYY.',
+      'YYYOYYOY.',
+      'YYYYYYYY.',
+      '.Y.YY.Y..',
+      '.Y.YY.Y..'
+    ],
+    /* Elefant (11 x 9) */
+    elephant: [
+      '..SSSSSS...',
+      '.SSSSSSSS..',
+      'SSSSSSSSSS.',
+      'SSDSSSSSSS.',
+      'SSSSSSSSSSS',
+      '.SSSSSSSSS.',
+      '.SSSSSSSS.S',
+      '.S.SS.SS...',
+      '.S.SS.SS...'
+    ],
     /* Ufo (13 x 8) - Rumpffarbe wird pro Gegner ersetzt */
     ufo: [
       '....DDDDD....',

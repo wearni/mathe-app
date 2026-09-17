@@ -15,8 +15,12 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 |---|---|
 | 🎯 **Klasse 1–6** | Aufgabentypen passen sich der gewählten Klassenstufe an – von „3 + 4“ bis „3/4 von 24“ und „(−7) · (−4)“ |
 | ✅ **Rechenarten wählbar** | Plus, Minus, Mal, Geteilt … einzeln per Haken an- und abschalten – **pro Klassenstufe** gespeichert, von Haus aus ist alles an |
+| 🔟 **Zahlenraum wählbar** | 1er, 10er, 100er, 1000er einzeln an- und abschalten – ebenfalls pro Klassenstufe gespeichert |
 | 🐌 **Start-Tempo** | fünf Stufen von *Schnecke* bis *Rakete*, **pro Klassenstufe** gespeichert – Klasse 1 startet automatisch auf *Schnecke* |
-| ⏱ **10-Minuten-Limit** | jede Runde dauert höchstens 10 Minuten reine Spielzeit; Pausen und Menüs zählen nicht mit |
+| 🕹️ **Zwei Spielarten** | **Arcade** mit fallenden Aufgaben und **Safari**: der Jeep fährt ohne Zeitdruck von Station zu Station |
+| ⏱ **15 Minuten Bildschirmzeit** | gilt für das ganze Gerät, über alle Runden und beide Spielarten hinweg – danach 30 Minuten Pause |
+| 🔒 **Eltern-Einstellungen** | Zeitlimit, Pausenlänge und Reststand hinter einem vierstelligen Code |
+| ✈️ **Fahrzeug passt zum Ort** | Flugzeug über der Stadt, Hubschrauber in der Neon-Nacht, Rakete im All, U-Boot unter Wasser |
 | ❤️ **3 Leben als Herzchen** | bis zu 8 Herzen möglich – im 3er- und 5er-Paket günstiger |
 | ⭐ **Sternchen** | für jede richtig gelöste Aufgabe (mehr bei Combo und goldenen Aufgaben) |
 | ✌️ **Zwei Versuche** | eine falsche Antwort löscht nur die Eingabe; erst die zweite zählt als Fehler und kostet ein ❤️ |
@@ -26,7 +30,7 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | ⏩ **Steigendes Tempo** | vom eingestellten Start-Tempo aus fallen die Aufgaben mit jedem Level und jeder Spielminute schneller – höchstens bis auf ein Drittel der Startzeit |
 | 🖼️ **4 Hintergründe** | Stadt am Tag, Neon-Nacht, Weltraum, Unterwasser – alles live per Canvas gezeichnet |
 | 🔊 **8-Bit Sound** | Effekte und **drei** Chiptune-Stücke mit Bass, Arpeggio, Melodie und Schlagzeug – alles per WebAudio erzeugt, keine Audiodateien |
-| 👾 **Pixel-Art** | Rakete und Ufos als echte Pixel-Sprites; die Aufgabenkästen bleiben bewusst rund und gut lesbar |
+| 👾 **Pixel-Art** | Fahrzeuge, Ufos, Jeep und Tiere als echte Pixel-Sprites; die Aufgabenkästen bleiben bewusst rund und gut lesbar |
 | 🏆 **Online-Bestenliste** | mit Spitzname und selbst gewürfeltem Pixel-Avatar (optional, siehe unten) |
 | 🎯 **Zwei Eingabearten** | **Auswahl** (vier Antworten antippen, Voreinstellung) oder großes Zahlenfeld mit Touch und Tastatur – jederzeit umschaltbar |
 | 🏅 **Gamification** | Combo-Multiplikator bis x4, Level, XP-Ränge, 10 Abzeichen, Bestenliste pro Klasse |
@@ -42,7 +46,7 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 * Ziffern antippen oder auf der Tastatur eingeben
 * `±` bzw. `-` für negative Ergebnisse (ab Klasse 5)
 * `⌫` bzw. `Backspace` löscht
-* **ABSCHIESSEN** bzw. `Enter` / `Leertaste` feuert
+* **ABSCHIESSEN** bzw. `Enter` / `Leertaste` feuert (im Safari heißt der Knopf **ANTWORTEN**)
 
 **Zwei Versuche pro Aufgabe**
 
@@ -70,9 +74,10 @@ beantwortet hat. Die Anzahl der Versuche steht in `CONFIG.maxTries` (`js/game.js
 Browser, Wischgeste) verlässt die App nicht, sondern fragt erst nach: weiterspielen oder
 zum Menü? Ein zweites Mal Zurück geht dann wirklich ins Menü.
 
-Während der Pause läuft die Rundenzeit nicht weiter – dafür stehen beim Weiterspielen
+Während der Pause läuft die Bildschirmzeit nicht weiter – dafür stehen beim Weiterspielen
 **andere Aufgaben** auf dem Feld, an derselben Stelle und in derselben Höhe. Eine Pause
-bringt also keinen Vorteil beim Nachdenken.
+bringt also keinen Vorteil beim Nachdenken. (Im Safari steht der Jeep ohnehin still, dort
+bleibt die Aufgabe dieselbe.)
 
 ---
 
@@ -91,6 +96,33 @@ Abgehakte Rechenarten kommen im Spiel nicht mehr vor.
 
 So lässt sich zum Beispiel für Klasse 3 gezielt nur das Einmaleins üben oder in Klasse 1
 das Minusrechnen erst einmal weglassen.
+
+---
+
+## Zahlenraum
+
+**Einstellungen → Zahlenraum.** Vier Haken legen fest, wie groß die Zahlen werden dürfen:
+
+| Haken | Zahlenraum | Beispiel |
+|---|---|---|
+| **1er** | bis 10 | `4 + 5` |
+| **10er** | bis 100 | `47 + 26` |
+| **100er** | bis 1000 | `347 + 216` |
+| **1000er** | bis 10 000 | `3470 + 2160` |
+
+Maßgeblich ist immer die **größte Zahl einer Aufgabe – das Ergebnis eingerechnet**. „7 + 5"
+gehört also zu den 10ern, weil 12 herauskommt, und fällt weg, wenn nur die 1er angehakt sind.
+
+* Auch hier hat jede Klassenstufe ihre eigene Auswahl, und von Haus aus ist alles an.
+  Solange alle vier Haken stehen, ändert die Einstellung gar nichts – es zählt allein die
+  Klassenstufe.
+* Mindestens ein Zahlenraum muss stehen bleiben.
+* Sind mehrere angehakt, richtet sich die Mischung nach der Klassenstufe: In Klasse 4 kommen
+  bei „1er + 10er" überwiegend 10er-Aufgaben, weil die Klasse von sich aus größere Zahlen
+  liefert.
+* Passt keine Aufgabenart der Klassenstufe in den gewählten Zahlenraum – etwa Klasse 4 mit
+  „nur 1er" – baut die App eine passende Aufgabe selbst. **Die Rechenart hat dabei Vorrang:**
+  Sind nur Brüche angehakt, bleiben es Brüche, auch wenn der Zahlenraum dann nicht exakt passt.
 
 ---
 
@@ -125,19 +157,70 @@ Obergrenze in `MiniGames.MAX_STARS`.
 
 ---
 
-## Die 10 Minuten
+## Bildschirmzeit
 
-Im HUD läuft oben links eine Restzeit mit. Bei 5 Minuten, 2 Minuten, 1 Minute und
-10 Sekunden gibt es einen kurzen Hinweis, unter 30 Sekunden wird die Anzeige rot.
-Ist die Zeit um, endet die Runde mit einem eigenen Abschluss-Bildschirm
-(„Zeit ist um!“) statt mit einem Game Over – der Punktestand zählt ganz normal
-für die Bestenliste.
+Die App bringt eine eingebaute Bildschirmzeit mit: **15 Minuten**, und zwar für das
+ganze Gerät – egal wie oft die App geöffnet und gestartet wird, egal welche Spielart.
+Die Zeit läuft nur, während wirklich gespielt wird; Menüs, Pausen, die Bonus-Station
+und der Countdown vor dem Start zählen nicht mit. Der verbrauchte Stand liegt im
+`localStorage` und übersteht das Schließen der App.
 
-Mitgezählt wird nur echte Spielzeit inklusive Bonuslevel. Pause, Menüs und die
-Bonus-Station laufen nicht mit. Wenn für das 30-Sekunden-Bonuslevel nicht mehr
-genug Zeit übrig ist, lässt es sich nicht mehr kaufen.
+Im Startmenü zeigt ein Balken, wie viel noch übrig ist. Im Spiel läuft die Restzeit
+oben links mit: bei 5 Minuten, 2 Minuten, 1 Minute und 10 Sekunden gibt es einen
+kurzen Hinweis, unter 30 Sekunden wird die Anzeige rot.
 
-Das Limit steht in `js/game.js` bei `CONFIG.sessionLimit` (in Sekunden).
+Ist die Zeit aufgebraucht, endet die Runde mit einem eigenen Abschluss-Bildschirm
+(„Zeit ist um!") statt mit einem Game Over – der Punktestand zählt ganz normal für
+die Bestenliste. Danach macht die App **30 Minuten Pause**: Der Knopf „SPIELEN"
+bleibt gesperrt und zeigt die verbleibende Zeit, ein Hinweisbildschirm erklärt die
+Regel mit laufender Uhr. Nach der Pause stehen wieder volle 15 Minuten bereit. Die
+Sperre gilt auch, wenn die App zwischendurch geschlossen wird.
+
+Reicht die Restzeit nicht mehr für ein Bonusspiel, lässt es sich nicht mehr kaufen.
+
+---
+
+## Eltern-Einstellungen
+
+Im Startmenü unter **🔒 Eltern**. Beim ersten Mal wird ein **vierstelliger Code**
+vergeben, danach fragt die App ihn jedes Mal ab. Dahinter stehen:
+
+* **Bildschirmzeit am Stück** – 5, 10, 15, 20, 30 oder 45 Minuten
+* **Danach Pause** – keine, 15, 30, 45 oder 60 Minuten
+* **Stand** – wie viel seit der letzten Pause gespielt wurde, wie viel noch übrig ist
+  und ob gerade eine Pause läuft
+* **Zeit jetzt freigeben** – setzt Verbrauch und Pause sofort zurück
+* **Code ändern**
+
+Der Code wird nicht im Klartext gespeichert, sondern als kurze Prüfsumme. Das hält
+neugierige Kinder ab – als echter Passwortschutz ist es nicht gedacht, denn die
+Browser-Daten lassen sich am Gerät ohnehin löschen.
+
+**Code vergessen?** Der Knopf darunter führt zu einer Rechenaufgabe wie `47 · 63`.
+Wer sie löst, darf einen neuen Code vergeben. So sperrt man sich nicht selbst aus,
+und für ein Grundschulkind ist die Hürde trotzdem hoch genug.
+
+---
+
+## Safari-Modus
+
+Die zweite Spielart, im Startmenü umschaltbar. Aus der Vogelperspektive fährt ein
+Jeep über eine kurvige Piste durch die Savanne – vorbei an Bäumen, Felsen,
+Wasserlöchern, Giraffen und Elefanten.
+
+* An jeder Station steht ein Holzschild mit einer Aufgabe. **Nur eine richtige
+  Antwort bringt den Jeep weiter.**
+* Auch hier gibt es zwei Versuche. Beim zweiten Fehlversuch kostet es ein ❤️, die
+  richtige Lösung wird gezeigt und an derselben Station kommt eine **neue** Aufgabe –
+  festsitzen soll niemand.
+* Nach **20 Stationen** ist das Camp erreicht: Dort wartet die gewohnte
+  Bonus-Station mit Herzen und Bonusspielen, danach geht es auf die nächste Etappe
+  mit einer neu gewürfelten Strecke.
+* **Kein Zeitdruck:** nichts fällt herunter, nichts läuft ab. Dafür gibt es nur die
+  **halben Punkte** und ein ⭐ erst für **jede zweite** richtige Aufgabe.
+
+Die Bildschirmzeit läuft im Safari ganz normal mit – sie ist eine Bildschirmzeit,
+keine Spielzeit.
 
 ---
 
@@ -354,6 +437,7 @@ mathe-app/
 │   ├── leaderboard.js       Anbindung an Supabase
 │   ├── mathgen.js           Aufgaben-Generator Klasse 1–6
 │   ├── minigames.js         die drei Bonusspiele (inkl. Dosen-Physik)
+│   ├── safari.js            Strecke, Savanne und Jeep des Safari-Modus
 │   ├── audio.js             8-Bit Sound-Engine + Chiptune
 │   ├── backgrounds.js       vier animierte Hintergründe
 │   ├── game.js              Spiel-Engine und Bonus-Station
@@ -363,7 +447,14 @@ mathe-app/
 
 ### Etwas ändern?
 
-* **Rundenlänge:** `CONFIG.sessionLimit` in `js/game.js` (Sekunden)
+* **Bildschirmzeit und Pause:** beides in den Eltern-Einstellungen; die Auswahllisten
+  dafür sind `LIMITS` und `PAUSES` in `js/main.js`, die Voreinstellung steht in
+  `DEFAULTS.time`
+* **Safari:** Stationen bis zum Camp und die Belohnung stehen in `js/game.js` unter
+  `CONFIG.safariStations`, `CONFIG.safariScore` und `CONFIG.safariStarEvery`;
+  Streckenlänge, Fahrtempo und Pistenbreite oben in `js/safari.js` (`SEG`, `DRIVE`, `ROAD`)
+* **Fahrzeug je Hintergrund:** die Tabelle `VEHICLES` in `js/game.js` – `sprite` ist ein
+  Eintrag aus `SPRITES` in `js/pixel.js`, `drive` der Antrieb (`flame`, `jet`, `rotor`, `bubbles`)
 * **Tempo-Stufen:** die Tabelle `SPEEDS` in `js/game.js` – `fall` ist die Fallzeit in
   Sekunden beim Start, `spawn` der Abstand zwischen zwei Aufgaben
 * **Standard-Tempo je Klasse:** `DEFAULTS.settings.speedByGrade` in `js/main.js`
@@ -379,6 +470,9 @@ mathe-app/
   Einstellungen auf. `min` legt fest, ab welchem Level der Typ vorkommt
 * **Neue Rechenart-Kategorie:** in `js/mathgen.js` die Liste `OPS` erweitern (ID, Name, Symbol)
   und die neuen Generatoren mit dieser ID versehen – die Checkbox baut sich von selbst
+* **Zahlenräume:** die Liste `RANGES` in `js/mathgen.js` (ID, Name, Beschriftung, `max`).
+  `bandOf()` ordnet eine Zahl einem Zahlenraum zu, `synth()` baut die Ersatzaufgaben,
+  wenn keine Aufgabenart der Klassenstufe hineinpasst
 * **Musikstücke:** die Tabelle `TRACKS` in `js/audio.js` – `melody`, `chords` und `drums`
   sind je 64 Schritte lang
 * **Pixel-Sprites:** `SPRITES` in `js/pixel.js` (`FONT` liegt dort als fertige
@@ -394,7 +488,7 @@ mathe-app/
 * Die Schriften werden von Google Fonts geladen. Ohne Internet greifen automatisch die
   System-Schriften – die App bleibt voll spielbar.
 * Der Ton startet erst nach der ersten Berührung des Bildschirms (Browser-Vorgabe).
-* Alle Spielstände **und Einstellungen** (Klasse, Rechenarten, Tempo, Hintergrund, Ton)
+* Alle Spielstände **und Einstellungen** (Klasse, Rechenarten, Zahlenraum, Tempo, Hintergrund, Ton)
   liegen im `localStorage` des Geräts. „Alle Fortschritte löschen“ in den
   Einstellungen räumt sie wieder weg – auch die abgewählten Rechenarten sind danach
   wieder alle an.

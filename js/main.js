@@ -17,8 +17,14 @@
       speedByGrade: { 1: 1, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3 },
       /* leer = alle Rechenarten dieser Klassenstufe sind an */
       opsByGrade: {},
+      /* leer = alle Zahlenräume (1er, 10er, 100er, 1000er) sind an */
+      rangeByGrade: {},
+      /* arcade = fallende Aufgaben, safari = Jeep-Tour ohne Zeitdruck */
+      playMode: 'arcade',
       nick: '', avatar: ''
     },
+    /* Bildschirmzeit für das ganze Gerät, über alle Runden hinweg */
+    time: { limitMin: 15, pauseMin: 30, usedSec: 0, lockUntil: 0, code: '' },
     scores: [],
     stats: {
       totalCorrect: 0, totalStars: 0, maxCombo: 0, maxLevel: 1, bestScore: 0,
@@ -42,6 +48,8 @@
         DB.settings = Object.assign({}, DEFAULTS.settings, p.settings || {});
         DB.settings.speedByGrade = Object.assign({}, DEFAULTS.settings.speedByGrade, (p.settings || {}).speedByGrade || {});
         DB.settings.opsByGrade = Object.assign({}, (p.settings || {}).opsByGrade || {});
+        DB.settings.rangeByGrade = Object.assign({}, (p.settings || {}).rangeByGrade || {});
+        DB.time = Object.assign({}, DEFAULTS.time, p.time || {});
         DB.stats = Object.assign({}, DEFAULTS.stats, p.stats || {});
         DB.scores = Array.isArray(p.scores) ? p.scores : [];
         /* ältere Einträge kennen das Merkmal noch nicht - die gelten als
@@ -153,10 +161,14 @@
     const mult = s.combo >= 15 ? 4 : s.combo >= 10 ? 3 : s.combo >= 5 ? 2 : 1;
     cw.hidden = mult < 2;
     $('#hudCombo').textContent = mult;
-    const done = Game.config.bonusEvery - s.untilBonus;
-    $('#bonusFill').style.width = (done / Game.config.bonusEvery * 100) + '%';
-    $('#bonusText').textContent = 'BONUS in ' + s.untilBonus;
-    $('.bonus-meter').title = 'Noch ' + s.untilBonus + ' richtige Aufgaben bis zur Bonus-Station';
+    /* Im Safari zählt der Balken die Stationen bis zum Camp */
+    const every = s.mode === 'safari' ? Game.config.safariStations : Game.config.bonusEvery;
+    const done = every - s.untilBonus;
+    $('#bonusFill').style.width = (done / every * 100) + '%';
+    $('#bonusText').textContent = (s.bonusLabel || 'BONUS in') + ' ' + s.untilBonus;
+    $('.bonus-meter').title = s.mode === 'safari'
+      ? 'Noch ' + s.untilBonus + ' Stationen bis zum Camp'
+      : 'Noch ' + s.untilBonus + ' richtige Aufgaben bis zur Bonus-Station';
 
     const left = Math.max(0, Math.ceil(s.timeLeft || 0));
     $('#hudTime').textContent = mmss(left);
@@ -216,6 +228,8 @@
 
   function applyInputMode() {
     const choice = DB.settings.inputMode === 'choice';
+    /* Im Safari wird nichts abgeschossen - der Jeep fährt einfach weiter */
+    $('#btnFire').textContent = DB.settings.playMode === 'safari' ? 'ANTWORTEN 🚙' : 'ABSCHIESSEN 🚀';
     $('#padWrap').hidden = choice;
     $('#choiceWrap').hidden = !choice;
     $('#miniHint').hidden = true;
@@ -245,6 +259,7 @@
   function quitToMenu() {
     Game.quit();
     inGameChrome(false);
+    save();                /* verbrauchte Bildschirmzeit sicher wegschreiben */
     show('menu');
     renderMenuInfo();
   }
@@ -305,6 +320,9 @@
   }
 
   function startGame() {
+    /* Erst die Bildschirmzeit prüfen - danach erst der Countdown */
+    if (isLocked()) { Sound.play('wrong'); showLocked(); return; }
+    if (leftSec() <= 0) { Sound.play('wrong'); startLock(); showLocked(); return; }
     Sound.resume();
     show(null);
     inGameChrome(true);
@@ -317,7 +335,9 @@
     countdown(() => {
       Game.start({
         grade: DB.settings.grade, theme: DB.settings.theme,
-        inputMode: DB.settings.inputMode, speed: curSpeed(), ops: curOps()
+        inputMode: DB.settings.inputMode, speed: curSpeed(),
+        ops: curOps(), ranges: curRanges(),
+        mode: DB.settings.playMode, timeLeft: leftSec()
       });
     });
   }
@@ -331,6 +351,12 @@
   function refreshBonus() {
     const info = Game.bonusInfo;
     $('#bonusStars').textContent = info.stars;
+    const safari = info.mode === 'safari';
+    $('#bonus h2').textContent = safari ? '⛺ Camp erreicht! ⛺' : '★ Bonus-Station ★';
+    $('#bonus .hint').textContent = safari
+      ? 'Alle ' + Game.config.safariStations + ' Stationen geschafft! Jetzt darfst du deine Sternchen eintauschen.'
+      : 'Für ' + Game.config.bonusEvery + ' richtig gelöste Aufgaben darfst du deine Sternchen eintauschen.';
+    $('#bonusContinue').textContent = safari ? 'Nächste Etappe' : 'Weiterrechnen';
 
     /* Herz-Pakete */
     const hs = $('#heartShop');
@@ -431,7 +457,7 @@
       ? (isBest ? '⏱ Zeit um – neuer Rekord!' : '⏱ Zeit ist um!')
       : (isBest ? '🏆 Neuer Rekord!' : 'Game Over');
     $('#goHint').textContent = timeUp
-      ? 'Die 10 Minuten sind voll. Super gespielt – Augen ausruhen und später weitermachen!'
+      ? 'Die ' + minWord(DB.time.limitMin | 0) + ' Bildschirmzeit sind aufgebraucht. Super gespielt!'
       : '';
     $('#goHint').hidden = !timeUp;
     $('#goScore').textContent = r.score;
@@ -445,7 +471,11 @@
     prepareEntry(r);
     if (fresh.length) setTimeout(() => Sound.play('badge'), 700);
     show('gameover');
+    /* Zeit aufgebraucht: Pause beginnt, "Nochmal" gibt es erst danach */
+    if (timeUp) { startLock(); tickLock(); }
+    $('#btnAgain').hidden = timeUp && isLocked();
     renderMenuInfo();
+    renderTimeStrip();
   }
 
   /* ===================== Menü-Infos ===================== */
@@ -455,11 +485,18 @@
     const opsAll = allOps().length, opsOn = curOps().length;
     $('#chipOps').textContent = opsOn === opsAll
       ? 'Alle Rechenarten' : opsOn + '/' + opsAll + ' Rechenarten';
+    const rAll = MathGen.RANGES, rOn = curRanges();
+    $('#chipRange').textContent = rOn.length === rAll.length
+      ? 'Alle Zahlenräume'
+      : rAll.filter(r => rOn.indexOf(r.id) >= 0).map(r => r.name).join(' + ');
     const sp = Game.speeds[curSpeed() - 1];
     $('#chipSpeed').textContent = sp ? sp.icon + ' ' + sp.name : '';
     const th = Backgrounds.list().find(t => t.id === DB.settings.theme);
     $('#chipTheme').textContent = th ? th.icon + ' ' + th.name : '';
     $('#chipMode').textContent = DB.settings.inputMode === 'choice' ? '🎯 Auswahl' : '🔢 Zahlenfeld';
+
+    syncPlayMode();
+    renderTimeStrip();
 
     const { rank, next } = rankFor(DB.stats.totalCorrect);
     $('#rankIcon').textContent = rank.ic;
@@ -617,6 +654,259 @@
     $('#pendingSend').disabled = flushing;
   }
 
+
+
+  /* ===================== Spielart ===================== */
+  const PLAY_MODES = {
+    arcade: 'Aufgaben fallen herab – schieß sie ab, bevor sie unten ankommen.',
+    safari: 'Ohne Zeitdruck: Der Jeep fährt nur weiter, wenn die Aufgabe stimmt. '
+      + '20 Stationen bis zum Camp – dafür weniger Punkte und Sternchen.'
+  };
+
+  function syncPlayMode() {
+    const m = DB.settings.playMode === 'safari' ? 'safari' : 'arcade';
+    $$('#playMode button').forEach(b => b.classList.toggle('active', b.dataset.play === m));
+    $('#modeDesc').textContent = PLAY_MODES[m];
+  }
+
+  /* ===================== Bildschirmzeit =====================
+     Ein Budget für das ganze Gerät: 15 Minuten am Stück, über alle Runden
+     und beide Spielarten zusammengezählt. Ist es aufgebraucht, macht die
+     App 30 Minuten Pause und fängt danach wieder bei null an. Gezählt wird
+     nur echte Spielzeit - Menüs und Pausen laufen nicht mit. */
+  function limitSec() { return Math.max(60, (DB.time.limitMin | 0) * 60); }
+  function pauseSec() { return Math.max(0, (DB.time.pauseMin | 0) * 60); }
+  function usedSec() { return Math.max(0, DB.time.usedSec || 0); }
+  function leftSec() { return Math.max(0, limitSec() - usedSec()); }
+
+  /* Läuft gerade eine Sperre? Nach ihrem Ende ist das Budget wieder voll. */
+  function lockLeft() {
+    const until = DB.time.lockUntil || 0;
+    if (!until) return 0;
+    const left = Math.ceil((until - Date.now()) / 1000);
+    if (left <= 0) {
+      DB.time.lockUntil = 0;
+      DB.time.usedSec = 0;
+      save();
+      return 0;
+    }
+    return left;
+  }
+  function isLocked() { return lockLeft() > 0; }
+
+  /* Zeit ist alle: Sperre setzen (Pause 0 = nur Hinweis, sofort weiter) */
+  function startLock() {
+    DB.time.usedSec = limitSec();
+    DB.time.lockUntil = pauseSec() > 0 ? Date.now() + pauseSec() * 1000 : 0;
+    if (!DB.time.lockUntil) DB.time.usedSec = 0;
+    save();
+  }
+
+  function addUsed(sec) {
+    if (!(sec > 0)) return;
+    DB.time.usedSec = usedSec() + sec;
+    /* nicht bei jedem Frame schreiben - einmal pro Sekunde genügt */
+    const now = Date.now();
+    if (now - (lastTimeSave || 0) > 1000) { lastTimeSave = now; save(); }
+  }
+  let lastTimeSave = 0;
+
+  function freeTime() {
+    DB.time.usedSec = 0;
+    DB.time.lockUntil = 0;
+    save();
+    renderTimeStrip();
+  }
+
+  function mmssLong(sec) {
+    sec = Math.max(0, Math.round(sec));
+    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+  }
+
+  function minWord(n) { return n === 1 ? '1 Minute' : n + ' Minuten'; }
+
+  /* Der Streifen im Startmenü zeigt, wie viel Zeit noch übrig ist. */
+  function renderTimeStrip() {
+    const strip = $('#timeStrip'), fill = $('#timeFill'), txt = $('#timeText');
+    if (!strip) return;
+    $('#limitLine').textContent = minWord(DB.time.limitMin | 0) + ' Bildschirmzeit';
+    const lock = lockLeft();
+    if (lock > 0) {
+      strip.className = 'time-strip out';
+      fill.style.width = '0%';
+      txt.textContent = 'Pause – in ' + mmssLong(lock) + ' geht es weiter.';
+      $('#btnPlay').disabled = true;
+      $('#btnPlay').textContent = 'PAUSE ' + mmssLong(lock);
+      return;
+    }
+    const left = leftSec(), pct = Math.round(left / limitSec() * 100);
+    strip.className = 'time-strip' + (pct <= 25 ? ' low' : '');
+    fill.style.width = pct + '%';
+    txt.textContent = 'Noch ' + mmssLong(left) + ' von ' + minWord(DB.time.limitMin | 0) + ' Bildschirmzeit';
+    $('#btnPlay').disabled = false;
+    $('#btnPlay').textContent = 'SPIELEN';
+  }
+
+  /* Sperrbildschirm mit laufender Uhr */
+  let lockTimer = null;
+  function showLocked() {
+    const p = DB.time.pauseMin | 0;
+    $('#lockedText').textContent =
+      'Die ' + minWord(DB.time.limitMin | 0) + ' Bildschirmzeit sind aufgebraucht. '
+      + 'Jetzt ist erst einmal ' + minWord(p) + ' Pause – Zeit für etwas anderes!';
+    $('#lockedRule').textContent =
+      'Die Bildschirmzeit gilt für das ganze Gerät, egal wie oft die App geöffnet wird. '
+      + 'Nach der Pause stehen wieder ' + minWord(DB.time.limitMin | 0) + ' bereit.';
+    show('locked');
+    tickLock();
+  }
+
+  function tickLock() {
+    clearInterval(lockTimer);
+    const run = () => {
+      const left = lockLeft();
+      $('#lockClock').textContent = mmssLong(left);
+      renderTimeStrip();
+      if (left <= 0) {
+        clearInterval(lockTimer);
+        $('#lockClock').textContent = 'Frei!';
+        if (openScreen === 'locked') {
+          $('#lockedText').textContent = 'Die Pause ist vorbei – es kann weitergehen!';
+        }
+      }
+    };
+    run();
+    lockTimer = setInterval(run, 1000);
+  }
+
+  /* ===================== Eltern-Code ===================== */
+  /* Der Code wird nicht im Klartext gespeichert, sondern als kurze Prüfsumme.
+     Das hält neugierige Kinder ab - mehr soll es auch nicht leisten. */
+  function hashCode(code) {
+    let h = 5381;
+    const str = 'mathe-app:' + String(code);
+    for (let i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
+    return h.toString(36);
+  }
+  function hasCode() { return !!DB.time.code; }
+  function checkCode(code) { return hasCode() && hashCode(code) === DB.time.code; }
+  function setCode(code) { DB.time.code = hashCode(code); save(); }
+
+  let gateMode = 'ask';        /* ask | set | math */
+  let gateThen = null;
+  let gateTask = { text: '', answer: 0 };
+
+  function openGate(then) {
+    gateThen = then || (() => show('parent'));
+    gateMode = hasCode() ? 'ask' : 'set';
+    gateTask = makeGateTask();
+    $('#gateCode').value = '';
+    $('#gateRepeat').value = '';
+    $('#gateMath').value = '';
+    $('#gateError').textContent = '';
+    syncGate();
+    show('gate');
+    setTimeout(() => { $('#gateCode').focus(); }, 120);
+  }
+
+  function makeGateTask() {
+    const a = 11 + Math.floor(Math.random() * 78);
+    const b = 12 + Math.floor(Math.random() * 78);
+    return { text: a + ' · ' + b, answer: a * b };
+  }
+
+  function syncGate() {
+    const set = gateMode === 'set', math = gateMode === 'math';
+    $('#gateTitle').textContent = set ? '🔒 Code festlegen' : '🔒 Eltern-Einstellungen';
+    $('#gateHint').textContent = set
+      ? 'Bitte einen vierstelligen Code vergeben – er schützt die Zeit-Einstellungen.'
+      : 'Bitte den vierstelligen Code eingeben.';
+    $('#gateHint').hidden = math;
+    $('#gateCode').parentNode.hidden = math;
+    $('#gateRepeatRow').hidden = !set;
+    $('#gateMathBox').hidden = !math;
+    $('#gateForgot').hidden = set || math;
+    $('#gateTask').textContent = gateTask.text;
+  }
+
+  function submitGate() {
+    const err = m => { $('#gateError').textContent = m; Sound.play('wrong'); };
+
+    if (gateMode === 'math') {
+      if (parseInt($('#gateMath').value, 10) !== gateTask.answer) {
+        gateTask = makeGateTask(); syncGate();
+        $('#gateMath').value = '';
+        return err('Leider falsch. Hier ist eine neue Aufgabe.');
+      }
+      Sound.play('badge');
+      gateMode = 'set';
+      DB.time.code = '';
+      $('#gateCode').value = ''; $('#gateError').textContent = '';
+      syncGate();
+      return;
+    }
+
+    const code = $('#gateCode').value.trim();
+    if (!/^\d{4}$/.test(code)) return err('Bitte genau vier Ziffern eingeben.');
+
+    if (gateMode === 'set') {
+      if ($('#gateRepeat').value.trim() !== code) return err('Die beiden Eingaben sind nicht gleich.');
+      setCode(code);
+      Sound.play('badge');
+      toast('Code gespeichert 🔒');
+    } else {
+      if (!checkCode(code)) return err('Der Code stimmt nicht.');
+      Sound.play('click');
+    }
+    $('#gateError').textContent = '';
+    const then = gateThen; gateThen = null;
+    if (then) then();
+  }
+
+  /* ===================== Eltern-Einstellungen ===================== */
+  const LIMITS = [5, 10, 15, 20, 30, 45];
+  const PAUSES = [0, 15, 30, 45, 60];
+
+  function buildParent() {
+    const lg = $('#limitGrid'); lg.innerHTML = '';
+    LIMITS.forEach(m => {
+      const b = document.createElement('button');
+      b.innerHTML = '<span class="ic">' + m + '</span><small>Minuten</small>';
+      b.dataset.limit = m;
+      b.addEventListener('click', () => {
+        DB.time.limitMin = m; save();
+        Sound.play('click');
+        syncParent(); renderTimeStrip();
+      });
+      lg.appendChild(b);
+    });
+    const pg = $('#pauseGrid'); pg.innerHTML = '';
+    PAUSES.forEach(m => {
+      const b = document.createElement('button');
+      b.innerHTML = '<span class="ic">' + (m || '–') + '</span><small>' + (m ? 'Minuten' : 'keine') + '</small>';
+      b.dataset.pause = m;
+      b.addEventListener('click', () => {
+        DB.time.pauseMin = m; save();
+        Sound.play('click');
+        syncParent(); renderTimeStrip();
+      });
+      pg.appendChild(b);
+    });
+    syncParent();
+  }
+
+  function syncParent() {
+    $$('#limitGrid button').forEach(b => b.classList.toggle('active', +b.dataset.limit === (DB.time.limitMin | 0)));
+    $$('#pauseGrid button').forEach(b => b.classList.toggle('active', +b.dataset.pause === (DB.time.pauseMin | 0)));
+    const lock = lockLeft();
+    $('#timeStats').innerHTML = [
+      ['Seit der letzten Pause gespielt', mmssLong(usedSec())],
+      ['Davon noch übrig', mmssLong(leftSec())],
+      ['Zustand', lock > 0 ? 'Pause, noch ' + mmssLong(lock) : 'frei']
+    ].map(x => '<div class="stat-row"><span>' + x[0] + '</span><b>' + x[1] + '</b></div>').join('');
+    $('#btnCodeChange').textContent = hasCode() ? 'Code ändern' : 'Code festlegen';
+  }
+
   /* ===================== Eintrag in die Bestenliste ===================== */
   let currentAvatar = '';
   let pendingEntry = null;
@@ -740,6 +1030,7 @@
     $$('#gradeGrid button').forEach(b => b.classList.toggle('active', +b.dataset.grade === DB.settings.grade));
     $('#gradeDesc').textContent = MathGen.GRADE_INFO[DB.settings.grade].desc;
     buildOps();
+    buildRanges();
     syncSpeeds();
   }
 
@@ -819,6 +1110,75 @@
       : active.length + ' von ' + avail.length + ' Rechenarten an (' + n + ' Aufgabenarten).';
   }
 
+  /* ---- Zahlenraum (pro Klassenstufe gemerkt) ----
+     Maßgeblich ist immer die größte Zahl der Aufgabe, das Ergebnis
+     eingeschlossen: "7 + 5 = 12" gehört damit zu den 10ern. */
+  function allRanges() { return MathGen.RANGES; }
+
+  function curRanges(grade) {
+    const g = grade || DB.settings.grade;
+    const avail = allRanges().map(r => r.id);
+    const saved = DB.settings.rangeByGrade[g];
+    if (!Array.isArray(saved) || !saved.length) return avail.slice();
+    const keep = saved.filter(id => avail.indexOf(id) >= 0);
+    return keep.length ? keep : avail.slice();
+  }
+
+  function setRanges(list) {
+    const g = DB.settings.grade;
+    if (list.length >= allRanges().length) delete DB.settings.rangeByGrade[g];
+    else DB.settings.rangeByGrade[g] = list.slice();
+    save();
+  }
+
+  function buildRanges() {
+    const grid = $('#rangeGrid');
+    const active = curRanges();
+    grid.innerHTML = '';
+    allRanges().forEach(r => {
+      const lab = document.createElement('label');
+      lab.className = 'op-item';
+      lab.innerHTML =
+        '<input type="checkbox" data-range="' + r.id + '">' +
+        '<span class="box"></span>' +
+        '<span class="txt"><b>' + r.name + '</b><small>' + r.note + '</small></span>';
+      const cb = lab.querySelector('input');
+      cb.checked = active.indexOf(r.id) >= 0;
+      lab.classList.toggle('on', cb.checked);
+      cb.addEventListener('change', () => {
+        const chosen = Array.from(grid.querySelectorAll('input:checked')).map(i => i.dataset.range);
+        if (!chosen.length) {
+          /* der letzte Zahlenraum bleibt an - sonst gäbe es keine Aufgaben */
+          cb.checked = true;
+          lab.classList.add('on');
+          Sound.play('wrong');
+          $('#rangeHint').textContent = 'Mindestens ein Zahlenraum muss angehakt bleiben.';
+          return;
+        }
+        Sound.play('click');
+        setRanges(chosen);
+        syncRanges();
+        renderMenuInfo();
+      });
+      grid.appendChild(lab);
+    });
+    syncRanges();
+  }
+
+  function syncRanges() {
+    const avail = allRanges();
+    const active = curRanges();
+    Array.from($('#rangeGrid').querySelectorAll('.op-item')).forEach(lab => {
+      const cb = lab.querySelector('input');
+      cb.checked = active.indexOf(cb.dataset.range) >= 0;
+      lab.classList.toggle('on', cb.checked);
+    });
+    const names = avail.filter(r => active.indexOf(r.id) >= 0).map(r => r.name);
+    $('#rangeHint').textContent = active.length === avail.length
+      ? 'Alle Zahlenräume sind an – die Aufgaben richten sich nach der Klassenstufe.'
+      : 'Nur ' + names.join(', ') + ': Die größte Zahl einer Aufgabe bleibt in diesem Bereich.';
+  }
+
   /* ---- Start-Tempo (pro Klassenstufe gemerkt) ---- */
   function curSpeed() {
     const v = DB.settings.speedByGrade[DB.settings.grade];
@@ -895,7 +1255,50 @@
     $('#btnSettings').addEventListener('click', () => { Sound.play('click'); show('settings'); });
     $('#btnBadges').addEventListener('click', () => { Sound.play('click'); renderBadges(); show('badges'); });
     $('#btnScores').addEventListener('click', () => { Sound.play('click'); renderScores(); show('scores'); });
+    $('#btnParent').addEventListener('click', () => { Sound.play('click'); openGate(() => { buildParent(); show('parent'); }); });
     $$('[data-close]').forEach(b => b.addEventListener('click', () => { Sound.play('back'); show('menu'); renderMenuInfo(); }));
+
+    /* Spielart */
+    $$('#playMode button').forEach(b => b.addEventListener('click', () => {
+      DB.settings.playMode = b.dataset.play; save();
+      Sound.play('click');
+      syncPlayMode();
+    }));
+
+    /* Sperrbildschirm */
+    $('#lockedOk').addEventListener('click', () => { Sound.play('back'); show('menu'); renderMenuInfo(); });
+    $('#lockedParent').addEventListener('click', () => {
+      Sound.play('click');
+      openGate(() => { buildParent(); show('parent'); });
+    });
+
+    /* Eltern-Code */
+    $('#gateOk').addEventListener('click', () => submitGate());
+    $('#gateCode').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submitGate(); } });
+    $('#gateRepeat').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submitGate(); } });
+    $('#gateMath').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submitGate(); } });
+    $('#gateForgot').addEventListener('click', () => {
+      Sound.play('click');
+      gateMode = 'math';
+      gateTask = makeGateTask();
+      $('#gateError').textContent = '';
+      syncGate();
+      setTimeout(() => $('#gateMath').focus(), 100);
+    });
+
+    /* Eltern-Einstellungen */
+    $('#btnTimeReset').addEventListener('click', () => {
+      Sound.play('badge'); freeTime(); syncParent(); toast('Bildschirmzeit freigegeben');
+    });
+    $('#btnCodeChange').addEventListener('click', () => {
+      Sound.play('click');
+      gateMode = 'set';
+      gateThen = () => { buildParent(); show('parent'); };
+      $('#gateCode').value = ''; $('#gateRepeat').value = ''; $('#gateError').textContent = '';
+      syncGate();
+      show('gate');
+      setTimeout(() => $('#gateCode').focus(), 120);
+    });
 
     /* Einstellungen */
     $$('#modeSeg button').forEach(b => b.addEventListener('click', () => {
@@ -915,8 +1318,9 @@
       DB.badges = {};
       DB.settings.speedByGrade = JSON.parse(JSON.stringify(DEFAULTS.settings.speedByGrade));
       DB.settings.opsByGrade = {};
+      DB.settings.rangeByGrade = {};
       DB.scores = [];
-      save(); buildOps(); syncSpeeds(); renderMenuInfo(); toast('Fortschritt gelöscht');
+      save(); buildOps(); buildRanges(); syncSpeeds(); renderMenuInfo(); toast('Fortschritt gelöscht');
     });
 
     /* Tastenfeld */
@@ -1036,7 +1440,7 @@
     }
   }
 
-  const APP_FALLBACK_VERSION = '1.5.1';
+  const APP_FALLBACK_VERSION = '1.7.0';
 
   function pwa() {
     $('#appVersion').textContent = APP_FALLBACK_VERSION;
@@ -1104,6 +1508,7 @@
       onChoices,
       onBonus,
       onGameOver,
+      onTimeUsed: (used) => { addUsed(used); },
       onToast: toast,
       onMiniStart: (info, inst) => {
         document.querySelector('.bonus-meter').hidden = true;
@@ -1139,8 +1544,10 @@
     $$('#modeSeg button').forEach(x => x.classList.toggle('active', x.dataset.mode === DB.settings.inputMode));
     buildGrades();
     buildOps();
+    buildRanges();
     buildSpeeds();
     buildThemes();
+    buildParent();
     syncSound();
     Backgrounds.use(DB.settings.theme);
     renderMenuInfo();
@@ -1149,6 +1556,13 @@
     pwa();
     show('menu');
     inGameChrome(false);
+    /* Läuft noch eine Pause? Dann gleich mit laufender Uhr anzeigen. */
+    if (isLocked()) { tickLock(); showLocked(); }
+    /* Der Streifen im Menü zählt auch ohne Spiel weiter */
+    setInterval(() => { if (openScreen === 'menu') renderTimeStrip(); }, 5000);
+    /* Beim Schließen der App die verbrauchte Zeit sicher wegschreiben */
+    window.addEventListener('pagehide', () => save());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
     setTimeout(() => flushPending(true), 2500);
   }
 

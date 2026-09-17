@@ -44,6 +44,84 @@
   const OP_INFO = {};
   OPS.forEach(o => { OP_INFO[o.id] = o; });
 
+  /* ===================== Zahlenräume =====================
+     Maßgeblich ist die größte Zahl, die in einer Aufgabe vorkommt -
+     einschließlich des Ergebnisses. "7 + 5" gehört also zu den 10ern,
+     weil 12 herauskommt. */
+  const RANGES = [
+    { id: '1', name: '1er', note: 'bis 10', max: 10 },
+    { id: '10', name: '10er', note: 'bis 100', max: 100 },
+    { id: '100', name: '100er', note: 'bis 1000', max: 1000 },
+    { id: '1000', name: '1000er', note: 'bis 10 000', max: 10000 }
+  ];
+  const RANGE_INFO = {};
+  RANGES.forEach(r => { RANGE_INFO[r.id] = r; });
+
+  function bandOf(v) {
+    v = Math.abs(v);
+    if (v <= 10) return '1';
+    if (v <= 100) return '10';
+    if (v <= 1000) return '100';
+    return '1000';
+  }
+
+  /* Alle Zahlen einer Aufgabe: aus dem Text plus das Ergebnis. */
+  function topNumber(p) {
+    let top = Math.abs(Math.round(p.answer)) || 0;
+    const m = String(p.text).match(/\d+/g) || [];
+    for (let i = 0; i < m.length; i++) {
+      const n = parseInt(m[i], 10);
+      if (n > top) top = n;
+    }
+    return top;
+  }
+
+  function fitsRange(p, want) {
+    return want.indexOf(bandOf(topNumber(p))) >= 0;
+  }
+
+  /* Liste säubern: nur bekannte Kennungen, leer/vollständig = egal */
+  function normRanges(list) {
+    if (!Array.isArray(list) || !list.length) return null;
+    const keep = list.filter(id => !!RANGE_INFO[id]);
+    if (!keep.length || keep.length === RANGES.length) return null;
+    return keep;
+  }
+
+  /* Notnagel: passt keine der vorhandenen Aufgabenarten in den gewählten
+     Zahlenraum, wird eine passende Aufgabe direkt gebaut. Sonst bekäme man
+     z. B. in Klasse 4 mit "nur 1er" gar nichts zu sehen. */
+  const BASIC = ['add', 'sub', 'mul', 'div'];
+
+  function synth(allowed, want) {
+    const ops = (allowed && allowed.length ? allowed : BASIC).filter(o => BASIC.indexOf(o) >= 0);
+    if (!ops.length) return null;                 /* Rechenart hat Vorrang */
+    const op = pick(ops);
+    const max = RANGE_INFO[pick(want)].max;
+    const lo = max <= 10 ? 1 : Math.floor(max / 10);
+
+    if (op === 'add') {
+      const s = ri(lo + 1, max), a = ri(1, s - 1);
+      return { text: a + ' + ' + (s - a), answer: s };
+    }
+    if (op === 'sub') {
+      const a = ri(lo + 1, max), b = ri(1, a - 1);
+      return { text: a + ' − ' + b, answer: a - b };
+    }
+    /* mul und div teilen sich dasselbe Produkt */
+    let a = 2, b = 2, prod = 4, guard = 0;
+    do {
+      b = ri(2, Math.max(2, Math.min(12, Math.floor(max / 2))));
+      a = ri(2, Math.max(2, Math.floor(max / b)));
+      prod = a * b;
+      guard++;
+    } while ((prod > max || prod <= lo) && guard < 60);
+    if (prod > max) { a = 2; b = 2; prod = 4; }
+    return op === 'mul'
+      ? { text: a + ' · ' + b, answer: prod }
+      : { text: prod + ' : ' + b, answer: a };
+  }
+
   /* ===================== Aufgaben je Klassenstufe =====================
      op   = Rechenart (zum Ein- und Ausschalten)
      min  = erst ab diesem Level                                     */
@@ -168,18 +246,27 @@
   let lastText = '';
 
   /* allowed: Liste erlaubter Rechenarten, z. B. ['add','sub'].
-     Fehlt sie oder passt nichts dazu, sind alle erlaubt. */
-  function create(grade, level, allowed) {
+     ranges:  Liste erlaubter Zahlenräume, z. B. ['1','10'].
+     Fehlt eine Liste oder passt nichts dazu, ist alles erlaubt. */
+  function create(grade, level, allowed, ranges) {
     level = level || 1;
     let pool = poolFor(grade, level, allowed);
     if (!pool.length) pool = poolFor(grade, level, null);
     if (!pool.length) pool = GENS[1];
 
-    let p, guard = 0;
-    do {
-      p = pick(pool).fn(level);
-      guard++;
-    } while (p.text === lastText && guard < 12);
+    const want = normRanges(ranges);
+    let p = null, spare = null;
+    for (let guard = 0; guard < 60 && !p; guard++) {
+      const c = pick(pool).fn(level);
+      if (c.text === lastText && guard < 40) continue;   /* nicht zweimal dasselbe */
+      if (!want || fitsRange(c, want)) p = c;
+      else if (!spare) spare = c;
+    }
+    /* Nichts Passendes dabei: eine Aufgabe im gewünschten Zahlenraum bauen.
+       Klappt auch das nicht, hat die Rechenart Vorrang vor dem Zahlenraum. */
+    if (!p && want) p = synth(allowed, want);
+    if (!p) p = spare || pick(pool).fn(level);
+
     lastText = p.text;
     p.answer = Math.round(p.answer);
     return p;
@@ -221,7 +308,9 @@
 
   global.MathGen = {
     create, choicesFor, distractors, opsFor,
-    GRADE_INFO, OPS, OP_INFO, sgn,
+    GRADE_INFO, OPS, OP_INFO, RANGES, RANGE_INFO, sgn,
+    /* Zu welchem Zahlenraum gehört diese Aufgabe? */
+    rangeOf(p) { return bandOf(topNumber(p)); },
     /* Nur zum Testen: wie viele Aufgabenarten sind gerade möglich? */
     poolSize(grade, level, allowed) { return poolFor(grade, level, allowed).length; }
   };

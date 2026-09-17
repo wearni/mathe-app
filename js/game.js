@@ -25,7 +25,17 @@
     bonusEvery: 10,      /* nach je 10 RICHTIG gelösten Aufgaben */
     maxTries: 2,         /* so oft darf pro Aufgabe daneben geraten werden */
     levelEvery: 10,      /* Level-Up nach je 10 richtigen Aufgaben */
-    sessionLimit: 600    /* Sekunden reine Spielzeit pro Runde (10 Minuten) */
+    safariStations: 20,  /* Stationen bis zum Camp */
+    safariScore: 0.5,    /* Safari ist gemütlich - dafür weniger Punkte ... */
+    safariStarEvery: 2   /* ... und nur jede zweite Aufgabe bringt ein ★ */
+  };
+
+  /* Fahrzeug je Hintergrund - mit passendem Antrieb */
+  const VEHICLES = {
+    'stadt-tag': { sprite: 'plane', drive: 'jet' },
+    'stadt-nacht': { sprite: 'heli', drive: 'rotor' },
+    'weltraum': { sprite: 'ship', drive: 'flame' },
+    'unterwasser': { sprite: 'sub', drive: 'bubbles' }
   };
 
   /* Start-Tempo. Es ist die Grundeinstellung, von der aus das Spiel mit
@@ -42,8 +52,11 @@
     canvas: null, ctx: null, W: 0, H: 0, dpr: 1,
     cb: {},
     raf: null, last: 0, time: 0,
-    state: 'idle',        /* idle | playing | paused | bonus | mini | over */
-    settings: { grade: 1, theme: 'stadt-tag', inputMode: 'choice', speed: 3, ops: null },
+    state: 'idle',        /* idle | playing | safari | paused | bonus | mini | over */
+    mode: 'arcade',       /* arcade | safari */
+    settings: { grade: 1, theme: 'stadt-tag', inputMode: 'choice', speed: 3, ops: null, ranges: null },
+    budget: 900,          /* Sekunden Bildschirmzeit, die zu Rundenbeginn übrig sind */
+    safari: null, task: null, safariStars: 0,
 
     lives: 3, maxLives: 8, stars: 0, score: 0, level: 1,
     combo: 0, bestCombo: 0, correct: 0, wrongShots: 0, resolved: 0,
@@ -171,7 +184,7 @@
   }
 
   function spawnEq() {
-    const p = MathGen.create(G.settings.grade, G.level, G.settings.ops);
+    const p = MathGen.create(G.settings.grade, G.level, G.settings.ops, G.settings.ranges);
     const m = measureEq(p.text);
     const kind = (G.correct > 0 && G.correct % 7 === 0 && Math.random() < 0.5) ? 'golden' : 'normal';
     let x = rf(m.w / 2 + 12, G.W - m.w / 2 - 12);
@@ -202,6 +215,7 @@
 
   /* ================= Schüsse ================= */
   function fire(value) {
+    if (G.state === 'safari') { safariAnswer(value); return; }
     if (G.state !== 'playing') return;
     value = Math.round(value);
     let hit = null;
@@ -317,6 +331,9 @@
     G.resolved++;
     if (!correct) return;
     G.sinceBonus++;
+    /* Im Safari zählt der Zähler nur für die Anzeige - die Bonus-Station
+       wartet am Camp und wird von dort ausgelöst. */
+    if (G.mode === 'safari') return;
     if (G.sinceBonus >= CONFIG.bonusEvery) {
       G.sinceBonus = 0;
       G.pendingBonus = true;
@@ -332,19 +349,37 @@
     if (G.cb.onToast) G.cb.onToast('Level ' + G.level + ' – jetzt wird\'s schneller!');
   }
 
+  /* Wie viele richtige Aufgaben bis zur Bonus-Station bzw. bis zum Camp? */
+  function bonusEvery() {
+    return G.mode === 'safari' ? CONFIG.safariStations : CONFIG.bonusEvery;
+  }
+
   function pushHud() {
     if (G.cb.onHud) G.cb.onHud({
       lives: G.lives, maxLives: G.maxLives, stars: G.stars, score: G.score,
       level: G.level, combo: G.combo, correct: G.correct,
-      untilBonus: CONFIG.bonusEvery - G.sinceBonus,
-      timeLeft: Math.max(0, CONFIG.sessionLimit - G.session)
+      mode: G.mode,
+      untilBonus: bonusEvery() - G.sinceBonus,
+      bonusLabel: G.mode === 'safari' ? 'ZIEL in' : 'BONUS in',
+      timeLeft: timeLeft()
     });
   }
 
-  /* ================= Zeitlimit pro Runde ================= */
+  /* ================= Bildschirmzeit =================
+     Das Budget gilt für das ganze Gerät und läuft nur, während wirklich
+     gespielt wird. Pausen und Menüs zählen nicht mit. */
+  function timeLeft() { return Math.max(0, G.budget - G.session); }
+
   function tickSession(dt) {
     G.session += dt;
-    const left = CONFIG.sessionLimit - G.session;
+    const left = G.budget - G.session;
+
+    /* verbrauchte Zeit nach außen melden, damit sie dort gespeichert wird */
+    G.sinceReport = (G.sinceReport || 0) + dt;
+    if (G.sinceReport >= 1 || left <= 0) {
+      if (G.cb.onTimeUsed) G.cb.onTimeUsed(G.sinceReport, Math.max(0, left));
+      G.sinceReport = 0;
+    }
 
     /* Anzeige nur aktualisieren, wenn sich die Sekunde ändert */
     const sec = Math.max(0, Math.ceil(left));
@@ -369,6 +404,88 @@
     return false;
   }
 
+  /* ================= Safari ================= */
+  function safariTask() {
+    const p = MathGen.create(G.settings.grade, G.level, G.settings.ops, G.settings.ranges);
+    G.task = { text: p.text, answer: p.answer, tries: 0, choices: MathGen.choicesFor(p.answer, 4) };
+    G.safari.setTask(p.text);
+    if (G.cb.onChoices) G.cb.onChoices(G.task.choices);
+    pushHud();
+  }
+
+  function safariAnswer(value) {
+    const t = G.task;
+    if (!t || G.safari.driving) return;
+
+    if (Math.round(value) === t.answer) {
+      const pts = Math.round((10 + G.level * 2) * CONFIG.safariScore);
+      G.score += pts;
+      G.correct++;
+      G.combo++;
+      G.bestCombo = Math.max(G.bestCombo, G.combo);
+
+      /* Sternchen gibt es im Safari nur jede zweite Aufgabe */
+      G.safariStars++;
+      let gained = 0;
+      if (G.safariStars % CONFIG.safariStarEvery === 0) { gained = 1; G.stars++; }
+
+      const jx = G.W / 2, jy = G.H * 0.6;
+      burst(jx, jy, ['#7CFF6B', '#FFE9A8', '#FFFFFF'], 18, 260);
+      ring(jx, jy, '#7CFF6B', 95);
+      float(jx, jy - 40, '+' + pts, '#CFFFC8', 26);
+      if (gained) float(jx, jy - 12, '+1 ★', '#FFE066', 20);
+      Sound.play('hit');
+
+      G.task = null;
+      G.safari.setTask('');
+      if (G.cb.onChoices) G.cb.onChoices([]);
+      resolveOne(true);
+      if (G.correct % CONFIG.levelEvery === 0) levelUp();
+      G.safari.drive();
+      pushHud();
+      return;
+    }
+
+    /* daneben */
+    G.wrongShots++;
+    G.combo = 0;
+    t.tries++;
+    Sound.play('wrong');
+    G.flash = 0.3; G.flashColor = '255,120,120';
+    const left = CONFIG.maxTries - t.tries;
+    if (left > 0) {
+      G.shake = Math.max(G.shake, 5);
+      float(G.W / 2, G.H * 0.38, 'Noch 1 Versuch!', '#FF8A8A', 22);
+      pushHud();
+      return;
+    }
+    /* zweimal daneben: ein Herz weg, danach eine neue Aufgabe an
+       derselben Station - festsitzen soll niemand */
+    G.lives--;
+    G.flash = 0.7; G.flashColor = '255,60,60';
+    G.shake = 14;
+    float(G.W / 2, G.H * 0.47, '= ' + MathGen.sgn(t.answer), '#FFD1D1', 26);
+    Sound.play('life');
+    resolveOne(false);
+    pushHud();
+    if (G.lives <= 0) { gameOver(); return; }
+    safariTask();
+  }
+
+  function updateSafari(dt) {
+    const ev = G.safari.update(dt, G.time);
+    if (ev === 'arrived') {
+      Sound.play('click');
+      safariTask();
+    } else if (ev === 'goal') {
+      G.task = null;
+      if (G.cb.onChoices) G.cb.onChoices([]);
+      float(G.W / 2, G.H * 0.35, 'Camp erreicht!', '#FFD166', 34);
+      G.sinceBonus = 0;
+      enterBonus();
+    }
+  }
+
   /* Reguläres Ende: Zeit ist um - das ist kein Game Over. */
   function finishSession() {
     if (G.state === 'over') return;
@@ -385,7 +502,7 @@
       reason: reason, score: G.score, level: G.level, correct: G.correct,
       bestCombo: G.bestCombo, stars: G.stars, grade: G.settings.grade,
       wrongShots: G.wrongShots, seconds: Math.round(G.session),
-      timeLeft: Math.max(0, Math.round(CONFIG.sessionLimit - G.session))
+      timeLeft: Math.round(timeLeft()), mode: G.mode
     };
   }
 
@@ -406,7 +523,7 @@
   function bonusInfo() {
     return {
       stars: G.stars, lives: G.lives, maxLives: G.maxLives,
-      timeLeft: Math.max(0, CONFIG.sessionLimit - G.session),
+      timeLeft: timeLeft(), mode: G.mode,
       packs: CONFIG.heartPacks.map(p => ({
         n: p.n, cost: p.cost,
         per: Math.round(p.cost / p.n * 10) / 10,
@@ -434,7 +551,8 @@
   }
 
   function resumeFromBonus() {
-    if (CONFIG.sessionLimit - G.session <= 0) { finishSession(); return; }
+    if (timeLeft() <= 0) { finishSession(); return; }
+    if (G.mode === 'safari') { nextLeg(); return; }
     G.state = 'playing';
     G.spawnTimer = 0.6;
     G.last = performance.now();
@@ -445,7 +563,7 @@
   /* Ein Bonusspiel lohnt sich nur, wenn die Rundenzeit noch dafür reicht. */
   function enoughTimeForMini(id) {
     const secs = id ? MiniGames.info(id).seconds : MiniGames.maxSeconds();
-    return (CONFIG.sessionLimit - G.session) >= secs + 5;
+    return timeLeft() >= secs + 5;
   }
 
   /* Umgebung, die jedes Bonusspiel bekommt */
@@ -496,23 +614,70 @@
     });
   }
 
-  /* ================= Rakete (Pixel-Art) ================= */
+  /* ================= Fahrzeug (Pixel-Art) =================
+     Welches Fahrzeug fliegt oder fährt, hängt am Hintergrund:
+     Flugzeug über der Stadt, Hubschrauber in der Neon-Nacht,
+     Rakete im Weltall, U-Boot unter Wasser. */
+  function vehicle() {
+    return VEHICLES[G.settings.theme] || VEHICLES['weltraum'];
+  }
+
   function drawShip(ctx, x, y, s, recoil) {
+    const v = vehicle();
     const sc = Math.max(2, Math.round(2.4 * (s || 1)));
     const yy = Math.round(y + (recoil || 0) * 6);
     const half = 8 * sc;   /* halbe Sprite-Höhe */
 
-    /* Antriebsflamme - flackert in ganzen Pixeln */
-    const fl = (2 + Math.floor((Math.sin(G.time * 19) * 0.5 + 0.5) * 3)) * sc;
     ctx.save();
     ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#FF8C28';
-    ctx.fillRect(Math.round(x - 1.5 * sc), yy + half - sc, 3 * sc, fl);
-    ctx.fillStyle = '#FFD166';
-    ctx.fillRect(Math.round(x - 0.5 * sc), yy + half - sc, sc, Math.round(fl * 0.6));
-    ctx.restore();
 
-    Pixel.draw(ctx, 'ship', x, yy, sc);
+    if (v.drive === 'flame') {
+      /* Antriebsflamme - flackert in ganzen Pixeln */
+      const fl = (2 + Math.floor((Math.sin(G.time * 19) * 0.5 + 0.5) * 3)) * sc;
+      ctx.fillStyle = '#FF8C28';
+      ctx.fillRect(Math.round(x - 1.5 * sc), yy + half - sc, 3 * sc, fl);
+      ctx.fillStyle = '#FFD166';
+      ctx.fillRect(Math.round(x - 0.5 * sc), yy + half - sc, sc, Math.round(fl * 0.6));
+    } else if (v.drive === 'jet') {
+      /* zwei kurze Kondensstreifen */
+      const fl = (2 + Math.floor((Math.sin(G.time * 16) * 0.5 + 0.5) * 2)) * sc;
+      ctx.globalAlpha = 0.75;
+      ctx.fillStyle = '#EAF2FF';
+      ctx.fillRect(Math.round(x - 2.5 * sc), yy + half - sc, sc, fl);
+      ctx.fillRect(Math.round(x + 1.5 * sc), yy + half - sc, sc, fl);
+      ctx.globalAlpha = 1;
+    } else if (v.drive === 'bubbles') {
+      /* aufsteigende Luftblasen */
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = '#CFF4FF';
+      for (let i = 0; i < 3; i++) {
+        const ph = G.time * 1.6 + i * 0.7;
+        const up = (ph % 1);
+        const r = Math.max(1, Math.round((1.2 - up) * sc));
+        ctx.beginPath();
+        ctx.arc(Math.round(x + Math.sin(ph * 4) * 5 * sc), Math.round(yy + half - up * 26 * sc), r, 0, TAU);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    Pixel.draw(ctx, v.sprite, x, yy, sc);
+
+    if (v.drive === 'rotor') {
+      /* Rotor über der Kabine - dreht sich sichtbar */
+      const a = G.time * 26;
+      ctx.strokeStyle = 'rgba(224,232,255,0.85)';
+      ctx.lineWidth = Math.max(2, sc);
+      const len = 9 * sc;
+      for (let i = 0; i < 2; i++) {
+        const w = a + i * Math.PI / 2;
+        ctx.beginPath();
+        ctx.moveTo(x - Math.cos(w) * len, yy - half + 2 * sc - Math.sin(w) * len * 0.25);
+        ctx.lineTo(x + Math.cos(w) * len, yy - half + 2 * sc + Math.sin(w) * len * 0.25);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
   }
 
   /* ================= Hauptschleife ================= */
@@ -543,10 +708,12 @@
       if (f.life <= 0) G.floats.splice(i, 1);
     }
 
-    /* Zeitlimit läuft nur während des Spielens - Pause und Menüs zählen nicht */
-    if (G.state === 'playing' || G.state === 'mini') {
+    /* Die Bildschirmzeit läuft nur beim Spielen - Pause und Menüs zählen nicht */
+    if (G.state === 'playing' || G.state === 'mini' || G.state === 'safari') {
       if (tickSession(dt)) return;
     }
+
+    if (G.state === 'safari') { if (G.safari) updateSafari(dt); return; }
 
     if (G.state === 'mini') {
       if (G.mini) { G.mini.update(dt); if (G.mini.done) endMini(); }
@@ -607,10 +774,14 @@
       ctx.translate(rf(-G.shake, G.shake), rf(-G.shake, G.shake));
     }
 
-    Backgrounds.draw(ctx, G.time);
+    const safariView = G.safari && G.mode === 'safari' && G.state !== 'mini';
+    if (!safariView) Backgrounds.draw(ctx, G.time);
     const ui = Backgrounds.ui();
 
-    if (G.state === 'mini' && G.mini) {
+    if (G.safari && (G.state === 'safari' ||
+        ((G.state === 'paused' || G.state === 'bonus' || G.state === 'over') && G.mode === 'safari' && !G.mini))) {
+      G.safari.render(ctx, G.time);
+    } else if (G.state === 'mini' && G.mini) {
       G.mini.render(ctx);
     } else {
       /* Schutzlinie */
@@ -815,36 +986,68 @@
     c.height = Math.round(G.H * G.dpr);
     G.ctx.setTransform(G.dpr, 0, 0, G.dpr, 0, 0);
     Backgrounds.resize(G.W, G.H);
+    if (G.safari) G.safari.resize(G.W, G.H);
   }
 
   function start(settings) {
-    Object.assign(G.settings, settings || {});
+    settings = settings || {};
+    G.mode = settings.mode === 'safari' ? 'safari' : 'arcade';
+    /* Bildschirmzeit, die zu Beginn dieser Runde noch übrig ist */
+    G.budget = Math.max(0, settings.timeLeft != null ? settings.timeLeft : 900);
+    Object.assign(G.settings, settings);
     Backgrounds.use(G.settings.theme);
     G.lives = CONFIG.startLives;
     G.maxLives = CONFIG.maxLives;
     G.stars = 0; G.score = 0; G.level = 1;
     G.combo = 0; G.bestCombo = 0; G.correct = 0; G.wrongShots = 0;
     G.resolved = 0; G.sinceBonus = 0; G.elapsed = 0;
-    G.session = 0; G.warned = {}; G.lastSec = -1;
+    G.session = 0; G.warned = {}; G.lastSec = -1; G.sinceReport = 0;
     G.eqs.length = 0; G.bullets.length = 0; G.parts.length = 0;
     G.floats.length = 0; G.rings.length = 0;
     G.pendingBonus = false; G.mini = null; G.targetId = 0;
     G.spawnTimer = 0.9;
-    G.state = 'playing';
+    G.safari = null; G.task = null; G.safariStars = 0;
     G.last = performance.now();
     Sound.setTempo(132);
     Sound.startMusic();
+
+    if (G.mode === 'safari') {
+      newLeg();
+    } else {
+      G.state = 'playing';
+    }
     pushHud();
   }
 
-  function pause() { if (G.state === 'playing' || G.state === 'mini') { G.prevState = G.state; G.state = 'paused'; } }
+  /* Eine Safari-Etappe: neue Strecke, Jeep fährt zur ersten Station */
+  function newLeg() {
+    G.safari = Safari.create({ W: G.W, H: G.H, stations: CONFIG.safariStations });
+    G.sinceBonus = 0;
+    G.task = null;
+    G.state = 'safari';
+    if (G.cb.onChoices) G.cb.onChoices([]);
+    G.safari.drive();
+  }
+
+  /* Nach der Bonus-Station am Camp geht es auf die nächste Etappe */
+  function nextLeg() {
+    newLeg();
+    G.last = performance.now();
+    pushHud();
+  }
+
+  function pause() {
+    if (G.state === 'playing' || G.state === 'mini' || G.state === 'safari') {
+      G.prevState = G.state; G.state = 'paused';
+    }
+  }
 
   /* Nach einer Pause stehen andere Aufgaben da - sonst wäre die Pause
      eine bequeme Denkpause. Höhe und Position bleiben gleich, damit
      dabei keine Zeit geschenkt wird. */
   function refreshEquations() {
     G.eqs.forEach(e => {
-      const p = MathGen.create(G.settings.grade, G.level, G.settings.ops);
+      const p = MathGen.create(G.settings.grade, G.level, G.settings.ops, G.settings.ranges);
       const m = measureEq(p.text);
       e.text = p.text; e.answer = p.answer;
       e.w = m.w; e.h = m.h; e.fs = m.fs;
@@ -859,6 +1062,14 @@
 
   function resume() {
     if (G.state !== 'paused') return;
+    /* Im Safari steht der Jeep still - eine Denkpause bringt dort nichts,
+       deshalb bleibt die Aufgabe dieselbe. */
+    if (G.prevState === 'safari') {
+      G.state = 'safari';
+      G.last = performance.now();
+      if (G.cb.onChoices) G.cb.onChoices(G.task ? G.task.choices : []);
+      return;
+    }
     if (G.prevState !== 'mini') refreshEquations();
     G.state = G.prevState || 'playing';
     G.last = performance.now();
@@ -875,6 +1086,7 @@
     G.state = 'idle';
     Sound.stopMusic();
     G.eqs.length = 0; G.bullets.length = 0;
+    G.safari = null; G.task = null;
   }
 
   function setTheme(id) { Backgrounds.use(id); G.settings.theme = id; }
@@ -891,7 +1103,8 @@
     get maxLives() { return G.maxLives; },
     get config() { return CONFIG; },
     get speeds() { return SPEEDS; },
-    get timeLeft() { return Math.max(0, CONFIG.sessionLimit - G.session); },
+    get timeLeft() { return timeLeft(); },
+    get mode() { return G.mode; },
     enoughTimeForMini,
     get bonusInfo() { return bonusInfo(); },
     /* Vorschau zum Feinjustieren: wie lange fällt eine Aufgabe bei dieser
@@ -899,6 +1112,9 @@
     fallTimeFor, spawnGapFor,
     /* Nur für Tests/Debugging: laufendes Bonusspiel */
     get miniState() { return G.mini; },
+    /* Nur für Tests/Debugging: Stand der Safari-Etappe */
+    get safariState() { return G.safari ? G.safari.debug() : null; },
+    get task() { return G.task ? { text: G.task.text, answer: G.task.answer, tries: G.task.tries } : null; },
     /* Nur für Tests/Debugging: aktuelle Aufgaben auf dem Feld */
     get equations() { return G.eqs.map(e => ({ id: e.id, text: e.text, answer: e.answer, y: e.y, tries: e.tries })); },
     demoFrame() { render(); }

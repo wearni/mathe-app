@@ -94,21 +94,32 @@
           <small id="rankNext">Noch 50 richtige Aufgaben bis zum nächsten Rang</small>
         </div>
       </div>
+      <div class="seg mode-seg" id="playMode">
+        <button data-play="arcade" class="active">🚀 Arcade</button>
+        <button data-play="safari">🦁 Safari</button>
+      </div>
+      <p class="hint small" id="modeDesc"></p>
       <button id="btnPlay" class="big-btn">SPIELEN</button>
+      <div id="timeStrip" class="time-strip">
+        <div class="time-bar"><div id="timeFill"></div></div>
+        <small id="timeText"></small>
+      </div>
       <div class="menu-row">
         <button id="btnSettings" class="mini-btn">⚙️ Einstellungen</button>
         <button id="btnBadges" class="mini-btn">🏅 Abzeichen</button>
         <button id="btnScores" class="mini-btn">🏆 Bestenliste</button>
+        <button id="btnParent" class="mini-btn">🔒 Eltern</button>
       </div>
       <div class="menu-chips">
         <span class="chip" id="chipGrade">Klasse 1</span>
         <span class="chip" id="chipOps">Alle Rechenarten</span>
+        <span class="chip" id="chipRange">Alle Zahlenräume</span>
         <span class="chip" id="chipSpeed">🚶 Normal</span>
         <span class="chip" id="chipTheme">🏙️ Stadt am Tag</span>
         <span class="chip" id="chipMode">🎯 Auswahl</span>
       </div>
       <button id="btnInstall" class="link-btn" hidden>📲 App auf dem Gerät installieren</button>
-      <p class="version-line">Version <span id="appVersion">…</span> · max. 10 Minuten pro Runde</p>
+      <p class="version-line">Version <span id="appVersion">…</span> · <span id="limitLine">15 Minuten Bildschirmzeit</span></p>
     </div>
   </section>
 
@@ -124,6 +135,10 @@
       <h3>Rechenarten <span id="opsForGrade"></span></h3>
       <div id="opGrid" class="op-grid"></div>
       <p class="hint" id="opsHint"></p>
+
+      <h3>Zahlenraum</h3>
+      <div id="rangeGrid" class="op-grid"></div>
+      <p class="hint" id="rangeHint"></p>
 
       <h3>Start-Tempo <span id="speedForGrade"></span></h3>
       <div id="speedGrid" class="speed-grid"></div>
@@ -252,6 +267,66 @@
     </div>
   </section>
 
+  <!-- ================= Pause vorbei / Sperre ================= -->
+  <section id="locked" class="overlay">
+    <div class="panel">
+      <h2>⏸ Pause für die Augen</h2>
+      <p class="hint" id="lockedText"></p>
+      <div class="lock-clock" id="lockClock">30:00</div>
+      <p class="hint small" id="lockedRule"></p>
+      <button id="lockedOk" class="big-btn">Alles klar</button>
+      <button id="lockedParent" class="link-btn">🔒 Eltern-Einstellungen</button>
+    </div>
+  </section>
+
+  <!-- ================= Eltern-Code ================= -->
+  <section id="gate" class="overlay">
+    <div class="panel">
+      <h2 id="gateTitle">🔒 Eltern-Einstellungen</h2>
+      <p class="hint" id="gateHint">Bitte den vierstelligen Code eingeben.</p>
+      <div class="code-row"><input id="gateCode" type="password" inputmode="numeric" pattern="[0-9]*"
+             maxlength="4" autocomplete="off" placeholder="••••"></div>
+      <div class="code-row" id="gateRepeatRow" hidden>
+        <input id="gateRepeat" type="password" inputmode="numeric" pattern="[0-9]*"
+               maxlength="4" autocomplete="off" placeholder="wiederholen">
+      </div>
+      <div id="gateMathBox" hidden>
+        <p class="hint">Notweg für Erwachsene – bitte ausrechnen:</p>
+        <div class="gate-task" id="gateTask">17 · 24</div>
+        <div class="code-row"><input id="gateMath" type="text" inputmode="numeric"
+               autocomplete="off" placeholder="Ergebnis"></div>
+      </div>
+      <p class="hint small danger-text" id="gateError"></p>
+      <button id="gateOk" class="big-btn">Weiter</button>
+      <button id="gateForgot" class="link-btn">Code vergessen?</button>
+      <button class="mini-btn wide" data-close="gate">Zurück</button>
+    </div>
+  </section>
+
+  <!-- ================= Eltern-Einstellungen ================= -->
+  <section id="parent" class="overlay">
+    <div class="panel">
+      <h2>🔒 Eltern-Einstellungen</h2>
+      <p class="hint">Die Bildschirmzeit gilt für das ganze Gerät – über alle Runden und
+        beide Spielarten hinweg. Sie läuft nur, während wirklich gespielt wird.</p>
+
+      <h3>Bildschirmzeit am Stück</h3>
+      <div id="limitGrid" class="speed-grid"></div>
+
+      <h3>Danach Pause</h3>
+      <div id="pauseGrid" class="speed-grid"></div>
+
+      <h3>Stand</h3>
+      <div class="stat-list" id="timeStats"></div>
+      <button id="btnTimeReset" class="mini-btn wide">Zeit jetzt freigeben</button>
+
+      <h3>Code</h3>
+      <button id="btnCodeChange" class="mini-btn wide">Code ändern</button>
+
+      <button class="big-btn" data-close="parent">Fertig</button>
+    </div>
+  </section>
+
   <div id="toast"></div>
   <div id="countdown" hidden><span></span></div>
 </div>
@@ -261,6 +336,7 @@
 <script src="js/leaderboard.js"></script>
 <script src="js/mathgen.js"></script>
 <script src="js/minigames.js"></script>
+<script src="js/safari.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/backgrounds.js"></script>
 <script src="js/game.js"></script>
