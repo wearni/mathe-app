@@ -21,6 +21,9 @@
       rangeByGrade: {},
       /* arcade = fallende Aufgaben, safari = Jeep-Tour ohne Zeitdruck */
       playMode: 'arcade',
+      /* mathe = Rechnen, hsu = Heimat- und Sachunterricht */
+      subject: 'mathe',
+      topic: 'traunstein',
       nick: '', avatar: ''
     },
     /* Bildschirmzeit für das ganze Gerät, über alle Runden hinweg */
@@ -28,7 +31,8 @@
     scores: [],
     stats: {
       totalCorrect: 0, totalStars: 0, maxCombo: 0, maxLevel: 1, bestScore: 0,
-      bestKills: 0, bestMiniStars: 0, miniPlayed: 0, games: 0, gradesPlayed: {}, bestByGrade: {}
+      bestKills: 0, bestMiniStars: 0, miniPlayed: 0, games: 0, gradesPlayed: {},
+      bestByGrade: {}, bestByTopic: {}
     },
     badges: {}
   };
@@ -215,23 +219,31 @@
   }
 
   let lastChoices = '';
+  /* Die Engine liefert [{ v, label }] - v ist der Vergleichswert, label
+     das, was auf dem Knopf steht (Zahl bei Mathe, Text bei HSU). */
   function onChoices(arr) {
-    if (DB.settings.inputMode !== 'choice') return;
-    const sig = arr.join(',');
+    if (inputMode() !== 'choice') return;
+    arr = arr || [];
+    const sig = arr.map(c => c.v + ':' + c.label).join('|');
     if (sig === lastChoices) return;
     lastChoices = sig;
     const box = $('#choices');
     box.innerHTML = '';
-    arr.forEach(v => {
+    let longest = 0;
+    arr.forEach(c => { longest = Math.max(longest, String(c.label).length); });
+    box.classList.toggle('text-choices', longest > 6);
+    box.classList.toggle('one-col', longest > 22);
+    arr.forEach(c => {
       const b = document.createElement('button');
-      b.textContent = MathGen.sgn(v);
-      b.addEventListener('click', () => { if (inRound()) Game.fire(v); });
+      b.textContent = c.label;
+      b.addEventListener('click', () => { if (inRound()) Game.fire(c.v); });
       box.appendChild(b);
     });
+    syncInset();
   }
 
   function applyInputMode() {
-    const choice = DB.settings.inputMode === 'choice';
+    const choice = inputMode() === 'choice';
     /* Im Safari wird nichts abgeschossen - der Jeep fährt einfach weiter */
     $('#btnFire').textContent = DB.settings.playMode === 'safari' ? 'ANTWORTEN 🚙' : 'ABSCHIESSEN 🚀';
     $('#padWrap').hidden = choice;
@@ -261,6 +273,7 @@
   }
 
   function quitToMenu() {
+    hideSolution();
     Game.quit();
     inGameChrome(false);
     save();                /* verbrauchte Bildschirmzeit sicher wegschreiben */
@@ -280,6 +293,15 @@
   window.addEventListener('popstate', () => {
     backArmed = false;
     const st = Game.state;
+    /* Während die Lösung steht, bringt Zurück einen weiter - sonst hinge
+       der Knopf in der Luft und beim zweiten Mal wäre die App zu. */
+    if (st === 'solution') {
+      Sound.play('back');
+      hideSolution();
+      Game.continueAfterSolution();
+      armBack();
+      return;
+    }
     if (st === 'playing' || st === 'safari' || st === 'mini') {
       Game.pause();
       Sound.play('back');
@@ -341,12 +363,42 @@
     const go = () => {
       Game.start({
         grade: DB.settings.grade, theme: DB.settings.theme,
-        inputMode: DB.settings.inputMode, speed: curSpeed(),
+        inputMode: inputMode(), speed: curSpeed(),
+        subject: DB.settings.subject, topic: DB.settings.topic,
         ops: curOps(), ranges: curRanges(),
         mode: DB.settings.playMode, timeLeft: leftSec()
       });
     };
     if (DB.settings.playMode === 'safari') go(); else countdown(go);
+  }
+
+  /* ===================== Lösungskarte =====================
+     Nach zwei Fehlversuchen wird die richtige Antwort gezeigt. Im Safari
+     bleibt sie stehen, bis jemand "Verstanden" tippt - dort drängt nichts.
+     Im Arcade blendet sie sich von selbst aus, weil weiter Aufgaben
+     herunterkommen; sie fängt dabei keine Berührungen ab. */
+  let solTimer = null;
+  function onSolution(info) {
+    clearTimeout(solTimer);
+    const box = $('#solution');
+    $('#solQuestion').textContent = info.question || '';
+    $('#solQuestion').hidden = !info.question;
+    $('#solAnswer').textContent = info.answer;
+    $('#solNote').textContent = info.note || '';
+    $('#solNote').hidden = !info.note;
+    $('#solOk').hidden = !info.blocking;
+    box.classList.toggle('blocking', !!info.blocking);
+    box.hidden = false;
+    Sound.play('back');
+    if (!info.blocking) {
+      solTimer = setTimeout(hideSolution, Math.round((info.seconds || 3) * 1000));
+    }
+  }
+
+  function hideSolution() {
+    clearTimeout(solTimer);
+    $('#solution').hidden = true;
+    $('#solution').classList.remove('blocking');
   }
 
   /* ===================== Bonus-Station ===================== */
@@ -444,6 +496,7 @@
 
   /* ===================== Game Over ===================== */
   function onGameOver(r) {
+    hideSolution();
     inGameChrome(false);
     const st = DB.stats;
     st.totalCorrect += r.correct;
@@ -452,8 +505,15 @@
     st.maxLevel = Math.max(st.maxLevel, r.level);
     st.bestScore = Math.max(st.bestScore, r.score);
     st.games++;
-    st.gradesPlayed[r.grade] = true;
-    st.bestByGrade[r.grade] = Math.max(st.bestByGrade[r.grade] || 0, r.score);
+    /* Der Bestwert je Klasse zählt nur Mathe-Runden - sonst stünde ein
+       HSU-Ergebnis unter einer Klassenstufe, zu der es nicht gehört. */
+    if (r.subject === 'hsu') {
+      st.bestByTopic = st.bestByTopic || {};
+      st.bestByTopic[r.topic] = Math.max(st.bestByTopic[r.topic] || 0, r.score);
+    } else {
+      st.gradesPlayed[r.grade] = true;
+      st.bestByGrade[r.grade] = Math.max(st.bestByGrade[r.grade] || 0, r.score);
+    }
     save();
 
     const fresh = checkBadges();
@@ -498,9 +558,11 @@
       : rAll.filter(r => rOn.indexOf(r.id) >= 0).map(r => r.name).join(' + ');
     const sp = Game.speeds[curSpeed() - 1];
     $('#chipSpeed').textContent = sp ? sp.icon + ' ' + sp.name : '';
-    $('#chipMode').textContent = DB.settings.inputMode === 'choice' ? '🎯 Auswahl' : '🔢 Zahlenfeld';
+    $('#chipMode').textContent = inputMode() === 'choice' ? '🎯 Auswahl' : '🔢 Zahlenfeld';
+    $('#chipMode').hidden = isHsu();
 
     syncPlayMode();
+    syncSubject();
     renderTimeStrip();
 
     const { rank, next } = rankFor(DB.stats.totalCorrect);
@@ -583,6 +645,11 @@
       rows.push('<div class="score-row"><span>' + MathGen.GRADE_INFO[g].name + '</span><b>' +
         (DB.stats.bestByGrade[g] || 0) + '</b></div>');
     }
+    HSU.list().forEach(t => {
+      const best = (DB.stats.bestByTopic || {})[t.id] || 0;
+      if (best > 0) rows.push('<div class="score-row"><span>' + t.icon + ' ' + t.name +
+        '</span><b>' + best + '</b></div>');
+    });
     $('#scoreList').innerHTML = rows.join('');
     $('#statList').innerHTML = [
       ['Richtige Aufgaben gesamt', DB.stats.totalCorrect],
@@ -669,6 +736,74 @@
   };
 
   function isSafari() { return DB.settings.playMode === 'safari'; }
+  function isHsu() { return DB.settings.subject === 'hsu'; }
+
+  /* Im HSU-Fach sind die Antworten Texte - das Zahlenfeld hilft da nicht. */
+  function inputMode() { return isHsu() ? 'choice' : DB.settings.inputMode; }
+
+  const SUBJECT_DESC = {
+    mathe: 'Rechnen von Klasse 1 bis 6.',
+    hsu: 'Heimat- und Sachunterricht: Fragen zum Thema deiner nächsten Probe.'
+  };
+
+  function setSubject(id) {
+    DB.settings.subject = id === 'hsu' ? 'hsu' : 'mathe';
+    save();
+    buildTopics();
+    applyInputMode();
+    syncSubject();
+    renderMenuInfo();
+  }
+
+  function syncSubject() {
+    const hsu = isHsu();
+    $$('#subjectSeg button, #subjectSet button').forEach(b =>
+      b.classList.toggle('active', (b.dataset.subject === 'hsu') === hsu));
+    $('#matheSection').hidden = hsu;
+    syncSpeeds();
+    $('#hsuSection').hidden = !hsu;
+    /* Bei HSU wird immer ausgewählt statt getippt */
+    $('#inputSection').hidden = hsu;
+    $('#tagline').textContent = hsu ? 'Wissen im Weltraum-Tempo' : 'Rechnen im Weltraum-Tempo';
+    $('#chipGrade').hidden = hsu;
+    $('#chipOps').hidden = hsu;
+    $('#chipRange').hidden = hsu;
+    $('#chipTopic').hidden = !hsu;
+    if (hsu) {
+      const t = HSU.topic(DB.settings.topic);
+      $('#chipTopic').textContent = t.icon + ' ' + t.name;
+    }
+  }
+
+  /* ---- Themen (HSU) ---- */
+  function buildTopics() {
+    const grid = $('#topicGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    HSU.list().forEach(t => {
+      const b = document.createElement('button');
+      b.className = 'topic-card';
+      b.dataset.topic = t.id;
+      b.innerHTML = '<span class="ic">' + t.icon + '</span>' +
+        '<span class="txt"><b>' + t.name + '</b><small>' + t.desc + '</small></span>' +
+        '<span class="cnt">' + t.count + '</span>';
+      b.addEventListener('click', () => {
+        DB.settings.topic = t.id; save();
+        Sound.play('click');
+        syncTopics(); syncSubject(); renderMenuInfo();
+      });
+      grid.appendChild(b);
+    });
+    syncTopics();
+  }
+
+  function syncTopics() {
+    const cur = DB.settings.topic;
+    $$('#topicGrid .topic-card').forEach(b => b.classList.toggle('active', b.dataset.topic === cur));
+    const t = HSU.topic(cur);
+    $('#topicHint').textContent = t.questions.length + ' Fragen aus den Bereichen: '
+      + HSU.groups(cur).join(', ') + '.';
+  }
 
   function syncPlayMode() {
     const m = isSafari() ? 'safari' : 'arcade';
@@ -678,6 +813,9 @@
 
     /* Das Start-Tempo gibt es nur im Arcade - im Safari fällt nichts. */
     $('#speedSection').hidden = isSafari();
+    if ($('#inputHint')) {
+      $('#inputHint').textContent = 'Im Zahlenfeld tippst du die Lösung ein, bei Auswahl tippst du eine von vier Antworten an.';
+    }
     $('#chipSpeed').hidden = isSafari();
 
     const t = themeList().find(x => x.id === DB.settings.theme);
@@ -695,6 +833,7 @@
     buildThemes();
     applyInputMode();
     syncPlayMode();
+    syncSubject();
     renderMenuInfo();
   }
 
@@ -1257,7 +1396,8 @@
     const cur = curSpeed();
     $$('#speedGrid button').forEach(b => b.classList.toggle('active', +b.dataset.speed === cur));
     const sp = Game.speeds[cur - 1];
-    $('#speedForGrade').textContent = '· ' + MathGen.GRADE_INFO[DB.settings.grade].name;
+    /* Im HSU-Fach gibt es keine Klassenstufe - dann auch kein Zusatz */
+    $('#speedForGrade').textContent = isHsu() ? '' : '· ' + MathGen.GRADE_INFO[DB.settings.grade].name;
     $('#speedDesc').textContent = sp
       ? sp.icon + ' ' + sp.name + ' – ' + sp.desc + '. Ab hier wird es mit jedem Level und jeder Spielminute schneller.'
       : '';
@@ -1323,10 +1463,21 @@
     $$('[data-close]').forEach(b => b.addEventListener('click', () => { Sound.play('back'); show('menu'); renderMenuInfo(); }));
 
     /* Spielart */
+    $$('#subjectSeg button, #subjectSet button').forEach(b => b.addEventListener('click', () => {
+      Sound.play('click');
+      setSubject(b.dataset.subject);
+    }));
     $$('#playMode button, #playModeSet button').forEach(b => b.addEventListener('click', () => {
       Sound.play('click');
       setPlayMode(b.dataset.play);
     }));
+
+    /* Lösungskarte */
+    $('#solOk').addEventListener('click', () => {
+      Sound.play('click');
+      hideSolution();
+      Game.continueAfterSolution();
+    });
 
     /* Sperrbildschirm */
     $('#lockedOk').addEventListener('click', () => { Sound.play('back'); show('menu'); renderMenuInfo(); });
@@ -1382,8 +1533,10 @@
       DB.settings.speedByGrade = JSON.parse(JSON.stringify(DEFAULTS.settings.speedByGrade));
       DB.settings.opsByGrade = {};
       DB.settings.rangeByGrade = {};
+      DB.settings.subject = 'mathe';
+      DB.settings.topic = 'traunstein';
       DB.scores = [];
-      save(); buildOps(); buildRanges(); syncSpeeds(); renderMenuInfo(); toast('Fortschritt gelöscht');
+      save(); buildOps(); buildRanges(); buildTopics(); syncSpeeds(); renderMenuInfo(); toast('Fortschritt gelöscht');
     });
 
     /* Tastenfeld */
@@ -1442,11 +1595,12 @@
     /* Tastatur */
     window.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
-        if (inRound() || Game.state === 'mini') { Game.pause(); show('pause'); }
+        if (Game.state === 'solution') { hideSolution(); Game.continueAfterSolution(); }
+        else if (inRound() || Game.state === 'mini') { Game.pause(); show('pause'); }
         else if (openScreen === 'pause') { show(null); Game.resume(); }
         return;
       }
-      if (!inRound() || DB.settings.inputMode !== 'keypad') return;
+      if (!inRound() || inputMode() !== 'keypad') return;
       if (e.key >= '0' && e.key <= '9') { key(e.key); e.preventDefault(); }
       else if (e.key === 'Backspace') { key('del'); e.preventDefault(); }
       else if (e.key === '-') { key('neg'); e.preventDefault(); }
@@ -1517,7 +1671,7 @@
     }
   }
 
-  const APP_FALLBACK_VERSION = '1.8.0';
+  const APP_FALLBACK_VERSION = '2.1.0';
 
   function pwa() {
     $('#appVersion').textContent = APP_FALLBACK_VERSION;
@@ -1586,6 +1740,7 @@
       onBonus,
       onGameOver,
       onTimeUsed: (used) => { addUsed(used); },
+      onSolution,
       onToast: toast,
       onMiniStart: (info, inst) => {
         document.querySelector('.bonus-meter').hidden = true;
@@ -1622,6 +1777,7 @@
     buildGrades();
     buildOps();
     buildRanges();
+    buildTopics();
     buildSpeeds();
     buildThemes();
     buildParent();

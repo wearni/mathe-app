@@ -1,8 +1,12 @@
-# 🚀 Mathe App
+# 🚀 Schul App
 
-Eine Mathe-Arcade als **installierbare PWA** – im Stil von *Math Blaster* und *Space Invaders*.
-Die Rechenaufgaben schweben von oben herab und werden mit der richtigen Lösung abgeschossen.
+Eine Übungs-Arcade als **installierbare PWA** – im Stil von *Math Blaster* und *Space Invaders*.
+Die Aufgaben schweben von oben herab und werden mit der richtigen Lösung abgeschossen.
 Was die Schutzlinie erreicht, kostet ein ❤️.
+
+Zwei Fächer: **Mathe** (Klasse 1–6, Aufgaben werden erzeugt) und **HSU** (Heimat- und
+Sachunterricht, Fragen zum Thema der nächsten Probe). Beide Fächer lassen sich in beiden
+Spielarten üben – Arcade und Safari.
 
 Alles läuft **komplett offline im Browser** – kein Server, kein Build-Schritt, keine Tracker,
 keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
@@ -13,7 +17,11 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 
 | | |
 |---|---|
+| 📐🌍 **Zwei Fächer** | **Mathe** mit erzeugten Rechenaufgaben und **HSU** mit einem Fragenkatalog je Thema |
 | 🎯 **Klasse 1–6** | Aufgabentypen passen sich der gewählten Klassenstufe an – von „3 + 4“ bis „3/4 von 24“ und „(−7) · (−4)“ |
+| 🏰 **HSU-Themen** | erstes Thema: **Stadtgeschichte Traunstein** mit 59 Fragen aus fünf Bereichen |
+| 💡 **Lösung zum Lernen** | nach zwei Fehlversuchen erscheint die richtige Antwort – im Safari so lange, bis man weitertippt |
+| 🔁 **Wiederholung** | was danebenging, kommt in derselben Runde noch einmal dran |
 | ✅ **Rechenarten wählbar** | Plus, Minus, Mal, Geteilt … einzeln per Haken an- und abschalten – **pro Klassenstufe** gespeichert, von Haus aus ist alles an |
 | 🔟 **Zahlenraum wählbar** | 1er, 10er, 100er, 1000er einzeln an- und abschalten – ebenfalls pro Klassenstufe gespeichert |
 | 🐌 **Start-Tempo** | fünf Stufen von *Schnecke* bis *Rakete*, **pro Klassenstufe** gespeichert – Klasse 1 startet automatisch auf *Schnecke* |
@@ -80,6 +88,89 @@ Während der Pause läuft die Bildschirmzeit nicht weiter – dafür stehen beim
 **andere Aufgaben** auf dem Feld, an derselben Stelle und in derselben Höhe. Eine Pause
 bringt also keinen Vorteil beim Nachdenken. (Im Safari steht der Jeep ohnehin still, dort
 bleibt die Aufgabe dieselbe.)
+
+---
+
+## HSU – Heimat- und Sachunterricht
+
+**Einstellungen → Fach → 🌍 HSU.** Statt erzeugter Rechenaufgaben kommen dann Fragen aus
+einem Katalog. Alles andere bleibt gleich: fallende Kästen im Arcade, Schilder an den
+Stationen im Safari, zwei Versuche, Herzen, Sternchen und Bonus-Station.
+
+Weil die Antworten Texte sind, wird im HSU-Fach immer **ausgewählt** statt getippt – der
+Umschalter für das Zahlenfeld verschwindet. Lange Fragen werden automatisch auf zwei
+Zeilen umbrochen, lange Antworten bekommen kleinere Knöpfe.
+
+### Lernen statt Punkte sammeln
+
+HSU ist zum Üben da, nicht zum Punktejagen. Deshalb fällt die Belohnung kleiner aus:
+
+| | Mathe | HSU |
+|---|---|---|
+| Punkte je Aufgabe | voll | **halb** |
+| Sternchen | eines je richtige Aufgabe | **eines je zweite** |
+| Combo-Multiplikator | bis x4 | **höchstens x2** |
+| Goldene Aufgaben (x3) | ja | **nein** |
+
+Im Safari kommt dessen halbe Wertung noch dazu – im gemütlichen HSU-Safari gibt es also
+am wenigsten Punkte. Die Sternchen bleiben davon unberührt: Nach 20 richtigen Antworten
+sind 10 ★ zusammen, ein Bonusspiel kostet 8 ★. Die Bonus-Station bleibt also in
+Reichweite, nur eben über das Lernen und nicht über schnelles Klicken.
+
+### Die Lösung sehen – und die Frage wiederbekommen
+
+Nach dem **zweiten Fehlversuch** erscheint eine Lösungskarte mit der Frage, der richtigen
+Antwort und – wo hinterlegt – einer kurzen Notiz dazu.
+
+* Im **Safari** bleibt sie stehen, bis jemand *Verstanden* antippt. Die Bildschirmzeit
+  läuft währenddessen nicht weiter; dort drängt ohnehin nichts.
+* Im **Arcade** blendet sie sich nach gut drei Sekunden von selbst aus und fängt keine
+  Berührungen ab, weil weiter Aufgaben herunterkommen.
+
+Eine Frage, die danebenging, landet außerdem auf einem **Wiederholungs-Stapel** und kommt
+in derselben Runde noch einmal dran – sie fliegt erst wieder herunter, wenn sie zweimal
+richtig beantwortet wurde. Der Stapel gilt für die laufende Runde und wird beim Schließen
+der App nicht gespeichert.
+
+### Erstes Thema: Stadtgeschichte Traunstein
+
+59 Fragen aus fünf Bereichen:
+
+| Bereich | Inhalt |
+|---|---|
+| **Steckbrief** | Farben, Einwohner, Größe, Lage, Oberbürgermeister, Kennzeichen, berühmte Personen |
+| **Geschichte** | erste Erwähnung, Stadtrecht, Saline, Stadtbrände, Feuerwehr, Eingemeindungen, Wahrzeichen |
+| **Gemeinde** | Kommune, Bürger, Gemeinderat, Ortsteile, Rathaus, Ämter |
+| **Aufgaben** | Pflichtaufgaben und freiwillige Aufgaben |
+| **Geld** | Steuern, Gebühren, sonstige Einnahmen, Haushaltsplan |
+
+Vier Angaben aus dem Arbeitsblatt waren nicht richtig und wurden nach den Angaben der
+Stadt Traunstein korrigiert:
+
+| Frage | im Heft | richtig |
+|---|---|---|
+| Ende der Salzproduktion | 1972 | **1912** |
+| Große Kreisstadt seit | 1922 | **1972** (Gebietsreform) |
+| Eingemeindung Kammer und Hochberg | 1952 | **1972** |
+| Eingemeindung Haslach und Wolkersdorf | – | **1978** |
+
+Dazu ergänzt: erste urkundliche Erwähnung **1245** als *Trauwenstain*, Stadtrecht **1375**,
+Eingemeindung von Au **1914**.
+
+### Ein neues Thema anlegen
+
+In `js/hsu.js` in `TOPICS` einen weiteren Eintrag ergänzen. Eine Frage sieht so aus:
+
+```js
+{ g: 'Geschichte',                       // Bereich, nur für die Anzeige
+  q: 'Wann bekam Traunstein das Stadtrecht?',
+  a: '1375',                             // richtige Antwort
+  w: ['1275', '1475', '1575'],           // drei falsche, plausible Antworten
+  n: 'Verliehen von Herzog Friedrich.' } // optionale Notiz nach der Aufgabe
+```
+
+Auswahl im Menü, Fortschritt und beide Spielarten kommen von selbst mit. Fragen sollten
+höchstens etwa 50 Zeichen lang sein, damit sie gut in den Kasten passen.
 
 ---
 
@@ -468,7 +559,7 @@ Deploy kurz zu prüfen, ob die neue Fassung angekommen ist.
 ## Projektstruktur
 
 ```
-mathe-app/
+schul-app/
 ├── index.html               Aufbau aller Bildschirme
 ├── manifest.webmanifest     PWA-Manifest
 ├── sw.js                    Service Worker (Offline-Cache + Auto-Update)
@@ -479,6 +570,8 @@ mathe-app/
 │   ├── pixel.js             Pixel-Sprites, Pixelschrift, Avatare
 │   ├── leaderboard.js       Anbindung an Supabase
 │   ├── mathgen.js           Aufgaben-Generator Klasse 1–6
+│   ├── hsu.js               Fragenkataloge für HSU (Themen)
+│   ├── quiz.js              gemeinsame Schnittstelle für Mathe und HSU
 │   ├── minigames.js         die drei Bonusspiele (inkl. Dosen-Physik)
 │   ├── safari.js            Strecke, Savanne und Jeep des Safari-Modus
 │   ├── audio.js             8-Bit Sound-Engine + Chiptune
@@ -501,6 +594,9 @@ mathe-app/
 * **Safari-Welten:** die Tabelle `WORLDS` in `js/safari.js` – Farben, Landschaftsarten
   (`kinds`, `rare`), Ziel (`goal`) und Fahrzeug (`vehicle`, `paint`) je Hintergrund
 * **Sperre nach einer Antwort:** `ANSWER_LOCK` in `js/game.js` (Sekunden)
+* **HSU-Wertung:** `CONFIG.hsuScore`, `CONFIG.hsuStarEvery` und `CONFIG.hsuMaxCombo`
+  in `js/game.js`; wie lange die Lösung im Arcade stehen bleibt: `CONFIG.solutionHold`
+* **Wiederholung falscher Fragen:** `REPEAT_CHANCE` in `js/hsu.js`
 * **Tempo-Stufen:** die Tabelle `SPEEDS` in `js/game.js` – `fall` ist die Fallzeit in
   Sekunden beim Start, `spawn` der Abstand zwischen zwei Aufgaben
 * **Standard-Tempo je Klasse:** `DEFAULTS.settings.speedByGrade` in `js/main.js`
@@ -510,6 +606,7 @@ mathe-app/
 * **Neues Bonusspiel:** in `js/minigames.js` eine Funktion nach dem Muster der drei
   vorhandenen ergänzen und in `GAMES` und `LIST` eintragen
 * **Bonus seltener/öfter:** `CONFIG.bonusEvery` in `js/game.js` (zählt nur richtige Antworten)
+* **Neues HSU-Thema:** in `js/hsu.js` in `TOPICS` ergänzen (siehe oben)
 * **Neue Aufgabentypen:** in `js/mathgen.js` in der Tabelle `GENS` bei der passenden Klasse
   einen Eintrag `{ op: '…', fn: level => ({ text, answer }) }` ergänzen. `op` ist eine der IDs
   aus `OPS` – dadurch taucht der Typ automatisch unter der richtigen Rechenart in den

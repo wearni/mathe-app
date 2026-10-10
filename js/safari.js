@@ -286,12 +286,38 @@
   }
 
   /* Schild mit der Aufgabe - steht neben der Station */
-  function signpost(ctx, x, y, text, fs, highlight, t) {
+  /* Schildtext auf höchstens drei Zeilen umbrechen und so weit
+     verkleinern, dass er auf den Bildschirm passt. */
+  function fitSign(ctx, text, maxText, fs) {
+    const words = String(text).split(' ');
+    let size = fs, lines;
+    for (;;) {
+      ctx.font = '800 ' + size + 'px "Baloo 2", system-ui, sans-serif';
+      lines = [];
+      let cur = '';
+      words.forEach(word => {
+        const probe = cur ? cur + ' ' + word : word;
+        if (cur && ctx.measureText(probe).width > maxText) { lines.push(cur); cur = word; }
+        else cur = probe;
+      });
+      if (cur) lines.push(cur);
+      const widest = Math.max.apply(null, lines.map(l => ctx.measureText(l).width));
+      if ((lines.length <= 3 && widest <= maxText) || size <= 13) break;
+      size--;
+    }
+    return { lines, size };
+  }
+
+  function signpost(ctx, x, y, text, fs, highlight, t, maxW) {
     const pad = 18;
     ctx.save();
+    const fit = fitSign(ctx, text, Math.max(120, (maxW || 360) - 2 * pad - 16), fs);
+    const lines = fit.lines;
+    fs = fit.size;
     ctx.font = '800 ' + fs + 'px "Baloo 2", system-ui, sans-serif';
-    const w = Math.max(96, ctx.measureText(text).width + pad * 2);
-    const h = fs * 1.7;
+    const widest = Math.max.apply(null, lines.map(l => ctx.measureText(l).width));
+    const w = Math.max(96, widest + pad * 2);
+    const h = fs * 1.35 * lines.length + 14;
     const by = y - 96 - h;
 
     /* Pfosten */
@@ -312,7 +338,9 @@
     }
     ctx.fillStyle = '#3B2A12';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(text, x, by + h / 2 + 1);
+    const lh = fs * 1.35;
+    const top = by + h / 2 - (lines.length - 1) * lh / 2 + 1;
+    lines.forEach((ln, i) => ctx.fillText(ln, x, top + i * lh));
     ctx.restore();
   }
 
@@ -582,7 +610,9 @@
       if (world.task && !world.atGoal) {
         const st = posAt(path, path.marks[Math.min(world.index, path.marks.length - 1)]);
         const fs = clamp(Math.round(Math.min(W, H) * 0.052), 18, 30);
-        signpost(ctx, st.x - cam.x, st.y - cam.y, world.task, fs, !world.driving, time);
+        /* bei breiten Schildern zur Bildmitte rücken, damit nichts abgeschnitten wird */
+        st.x = clamp(st.x - cam.x, W * 0.5 - 6, W * 0.5 + 6) + cam.x;
+        signpost(ctx, st.x - cam.x, st.y - cam.y, world.task, fs, !world.driving, time, W);
       }
     };
 

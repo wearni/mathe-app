@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Mathe App</title>
-<meta name="description" content="Mathe App – Mathe-Arcade für Klasse 1 bis 6. Löse die herabfallenden Aufgaben, bevor sie den Boden erreichen!">
+<title>Schul App</title>
+<meta name="description" content="Schul App – Übungs-Arcade für Mathe und HSU. Löse die herabfallenden Aufgaben, bevor sie den Boden erreichen!">
 <meta name="theme-color" content="#0d1030">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Mathe App">
+<meta name="apple-mobile-web-app-title" content="Schul App">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" sizes="192x192">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -83,8 +83,8 @@
     <div class="panel menu-panel">
       <div class="logo">
         <div class="logo-rocket">🚀</div>
-        <h1>MATHE <span>APP</span></h1>
-        <p class="tagline">Rechnen im Weltraum-Tempo</p>
+        <h1>SCHUL <span>APP</span></h1>
+        <p class="tagline" id="tagline">Üben im Weltraum-Tempo</p>
       </div>
       <div class="rank-strip">
         <span id="rankIcon">🐣</span>
@@ -93,6 +93,10 @@
           <div class="rank-bar"><div id="rankFill"></div></div>
           <small id="rankNext">Noch 50 richtige Aufgaben bis zum nächsten Rang</small>
         </div>
+      </div>
+      <div class="seg mode-seg" id="subjectSeg">
+        <button data-subject="mathe" class="active">📐 Mathe</button>
+        <button data-subject="hsu">🌍 HSU</button>
       </div>
       <div class="seg mode-seg" id="playMode">
         <button data-play="arcade" class="active">🚀 Arcade</button>
@@ -112,6 +116,7 @@
       </div>
       <div class="menu-chips">
         <span class="chip" id="chipGrade">Klasse 1</span>
+        <span class="chip" id="chipTopic" hidden>Thema</span>
         <span class="chip" id="chipOps">Alle Rechenarten</span>
         <span class="chip" id="chipRange">Alle Zahlenräume</span>
         <span class="chip" id="chipSpeed">🚶 Normal</span>
@@ -128,6 +133,12 @@
     <div class="panel">
       <h2>Einstellungen</h2>
 
+      <h3>Fach</h3>
+      <div class="seg mode-seg" id="subjectSet">
+        <button data-subject="mathe">📐 Mathe</button>
+        <button data-subject="hsu">🌍 HSU</button>
+      </div>
+
       <h3>Spielart</h3>
       <div class="seg mode-seg" id="playModeSet">
         <button data-play="arcade">🚀 Arcade</button>
@@ -135,17 +146,25 @@
       </div>
       <p class="hint" id="modeDescSet"></p>
 
-      <h3>Klassenstufe</h3>
-      <div id="gradeGrid" class="grade-grid"></div>
-      <p class="hint" id="gradeDesc"></p>
+      <div id="matheSection">
+        <h3>Klassenstufe</h3>
+        <div id="gradeGrid" class="grade-grid"></div>
+        <p class="hint" id="gradeDesc"></p>
 
-      <h3>Rechenarten <span id="opsForGrade"></span></h3>
-      <div id="opGrid" class="op-grid"></div>
-      <p class="hint" id="opsHint"></p>
+        <h3>Rechenarten <span id="opsForGrade"></span></h3>
+        <div id="opGrid" class="op-grid"></div>
+        <p class="hint" id="opsHint"></p>
 
-      <h3>Zahlenraum</h3>
-      <div id="rangeGrid" class="op-grid"></div>
-      <p class="hint" id="rangeHint"></p>
+        <h3>Zahlenraum</h3>
+        <div id="rangeGrid" class="op-grid"></div>
+        <p class="hint" id="rangeHint"></p>
+      </div>
+
+      <div id="hsuSection" hidden>
+        <h3>Thema</h3>
+        <div id="topicGrid" class="topic-grid"></div>
+        <p class="hint" id="topicHint"></p>
+      </div>
 
       <div id="speedSection">
         <h3>Start-Tempo <span id="speedForGrade"></span></h3>
@@ -157,10 +176,13 @@
       <div id="themeGrid" class="theme-grid"></div>
       <p class="hint" id="themeDesc"></p>
 
-      <h3>Eingabe</h3>
-      <div class="seg" id="modeSeg">
-        <button data-mode="keypad">🔢 Zahlenfeld</button>
-        <button data-mode="choice" class="active">🎯 Auswahl</button>
+      <div id="inputSection">
+        <h3>Eingabe</h3>
+        <div class="seg" id="modeSeg">
+          <button data-mode="keypad">🔢 Zahlenfeld</button>
+          <button data-mode="choice" class="active">🎯 Auswahl</button>
+        </div>
+        <p class="hint" id="inputHint"></p>
       </div>
 
       <h3>Ton</h3>
@@ -337,6 +359,17 @@
     </div>
   </section>
 
+  <!-- ================= Lösung nach zwei Fehlversuchen ================= -->
+  <div id="solution" hidden>
+    <div class="sol-card">
+      <p class="sol-q" id="solQuestion"></p>
+      <p class="sol-label">Richtig wäre</p>
+      <p class="sol-a" id="solAnswer"></p>
+      <p class="sol-note" id="solNote" hidden></p>
+      <button id="solOk" class="big-btn" hidden>Verstanden</button>
+    </div>
+  </div>
+
   <div id="toast"></div>
   <div id="countdown" hidden><span></span></div>
 </div>
@@ -345,6 +378,8 @@
 <script src="js/pixel.js"></script>
 <script src="js/leaderboard.js"></script>
 <script src="js/mathgen.js"></script>
+<script src="js/hsu.js"></script>
+<script src="js/quiz.js"></script>
 <script src="js/minigames.js"></script>
 <script src="js/safari.js"></script>
 <script src="js/audio.js"></script>

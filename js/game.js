@@ -27,7 +27,15 @@
     levelEvery: 10,      /* Level-Up nach je 10 richtigen Aufgaben */
     safariStations: 20,  /* Stationen bis zum Camp */
     safariScore: 0.5,    /* Safari ist gemütlich - dafür weniger Punkte ... */
-    safariStarEvery: 2   /* ... und nur jede zweite Aufgabe bringt ein ★ */
+    safariStarEvery: 2,  /* ... und nur jede zweite Aufgabe bringt ein ★ */
+
+    /* HSU ist zum Lernen da, nicht zum Punktesammeln: halbe Punkte,
+       Sternchen nur für jede zweite richtige Antwort, gedeckelte Combo
+       und keine goldenen Aufgaben. */
+    hsuScore: 0.5,
+    hsuStarEvery: 2,
+    hsuMaxCombo: 2,
+    solutionHold: 3.4    /* Sekunden, die die Lösung im Arcade stehen bleibt */
   };
 
   /* Fahrzeug je Hintergrund - mit passendem Antrieb */
@@ -54,7 +62,8 @@
     raf: null, last: 0, time: 0,
     state: 'idle',        /* idle | playing | safari | paused | bonus | mini | over */
     mode: 'arcade',       /* arcade | safari */
-    settings: { grade: 1, theme: 'stadt-tag', inputMode: 'choice', speed: 3, ops: null, ranges: null },
+    settings: { subject: 'mathe', topic: 'traunstein', grade: 1, theme: 'stadt-tag',
+      inputMode: 'choice', speed: 3, ops: null, ranges: null },
     budget: 900,          /* Sekunden Bildschirmzeit, die zu Rundenbeginn übrig sind */
     safari: null, task: null, safariStars: 0,
 
@@ -129,6 +138,22 @@
     });
   }
 
+  /* Nach dem zweiten Fehlversuch wird die richtige Lösung gezeigt - das ist
+     der Moment, in dem man etwas lernt. Im Safari bleibt die Karte stehen,
+     bis jemand weitertippt; im Arcade blendet sie sich von selbst aus, weil
+     dort weiter Aufgaben herunterkommen. */
+  function showAnswer(q, blocking) {
+    const info = {
+      question: q.text,
+      answer: q.answerLabel != null ? q.answerLabel : String(q.answer),
+      note: q.note || '',
+      blocking: !!blocking,
+      seconds: CONFIG.solutionHold
+    };
+    if (G.cb.onSolution) G.cb.onSolution(info);
+    return info;
+  }
+
   /* ================= Aufgaben ================= */
   /* Die Schutzlinie liegt immer knapp über der Steuerung am unteren Rand. */
   function groundY() { return Math.max(G.H * 0.45, G.H - G.bottomInset - 34); }
@@ -158,6 +183,8 @@
   }
 
   function maxOnScreen() {
+    /* HSU-Fragen sind lange Kästen - mehr als zwei auf einmal wird unleserlich */
+    if (G.settings.subject === 'hsu') return 2;
     const slow = G.settings.speed <= 2;
     return clamp(2 + Math.floor(G.level / (slow ? 5 : 3)), 2, slow ? 3 : 4);
   }
@@ -168,25 +195,67 @@
 
   /* Die Schrift wird nur so weit verkleinert, dass auch lange Terme
      aus Klasse 6 noch auf den Bildschirm passen. */
+  const EQ_FONT = size => '700 ' + size + 'px "Baloo 2", system-ui, sans-serif';
+
+  /* Text auf höchstens zwei Zeilen umbrechen - HSU-Fragen sind länger
+     als "7 + 5" und sollen trotzdem gut lesbar bleiben. */
+  function wrapEq(ctx, text, maxText, fs) {
+    ctx.font = EQ_FONT(fs);
+    if (ctx.measureText(text).width <= maxText) return [text];
+    const words = String(text).split(' ');
+    if (words.length < 2) return [text];
+    /* Trennstelle suchen, die beide Zeilen möglichst gleich lang macht */
+    let best = null;
+    for (let i = 1; i < words.length; i++) {
+      const a = words.slice(0, i).join(' '), b = words.slice(i).join(' ');
+      const wa = ctx.measureText(a).width, wb = ctx.measureText(b).width;
+      const score = Math.max(wa, wb);
+      if (!best || score < best.score) best = { a, b, score };
+    }
+    return [best.a, best.b];
+  }
+
   function measureEq(text) {
     const ctx = G.ctx;
-    const maxBox = G.W - 20;
-    const font = size => '700 ' + size + 'px "Baloo 2", system-ui, sans-serif';
+    const maxBox = G.W - 20, maxText = maxBox - 44;
     let fs = eqFont();
-    ctx.font = font(fs);
+    let lines = [text];
+    ctx.font = EQ_FONT(fs);
     let w = ctx.measureText(text).width;
-    while (w + 44 > maxBox && fs > 14) {
-      fs--;
-      ctx.font = font(fs);
-      w = ctx.measureText(text).width;
+
+    if (w > maxText) {
+      /* erst kleiner, dann umbrechen, dann notfalls noch kleiner */
+      while (w > maxText && fs > 17) { fs--; ctx.font = EQ_FONT(fs); w = ctx.measureText(text).width; }
+      if (w > maxText) {
+        lines = wrapEq(ctx, text, maxText, fs);
+        w = Math.max.apply(null, lines.map(l => ctx.measureText(l).width));
+        while (w > maxText && fs > 13) {
+          fs--;
+          lines = wrapEq(ctx, text, maxText, fs);
+          ctx.font = EQ_FONT(fs);
+          w = Math.max.apply(null, lines.map(l => ctx.measureText(l).width));
+        }
+      }
     }
-    return { w: Math.min(maxBox, Math.max(w + 44, 92)), h: Math.round(eqFont() * 1.85), fs };
+    const h = lines.length > 1
+      ? Math.round(fs * 1.35 * lines.length + 16)
+      : Math.round(eqFont() * 1.85);
+    return { w: Math.min(maxBox, Math.max(w + 44, 92)), h, fs, lines };
+  }
+
+  function quizSettings() {
+    return {
+      subject: G.settings.subject, topic: G.settings.topic,
+      grade: G.settings.grade, level: G.level,
+      ops: G.settings.ops, ranges: G.settings.ranges
+    };
   }
 
   function spawnEq() {
-    const p = MathGen.create(G.settings.grade, G.level, G.settings.ops, G.settings.ranges);
+    const id = G.idc;
+    const p = Quiz.create(quizSettings(), id);
     const m = measureEq(p.text);
-    const kind = (G.correct > 0 && G.correct % 7 === 0 && Math.random() < 0.5) ? 'golden' : 'normal';
+    const kind = (!isHsu() && G.correct > 0 && G.correct % 7 === 0 && Math.random() < 0.5) ? 'golden' : 'normal';
     let x = rf(m.w / 2 + 12, G.W - m.w / 2 - 12);
     /* nicht direkt übereinander spawnen */
     for (let tries = 0; tries < 6; tries++) {
@@ -194,11 +263,12 @@
       if (!close) break;
       x = rf(m.w / 2 + 12, G.W - m.w / 2 - 12);
     }
+    G.idc++;
     G.eqs.push({
-      id: G.idc++, text: p.text, answer: p.answer,
-      x, y: spawnY(), w: m.w, h: m.h, fs: m.fs,
+      id: id, text: p.text, answer: p.answer, answerLabel: p.answerLabel, note: p.note,
+      x, y: spawnY(), w: m.w, h: m.h, fs: m.fs, lines: m.lines,
       kind, locked: false, tries: 0, ph: Math.random() * TAU,
-      choices: MathGen.choicesFor(p.answer, 4)
+      choices: p.choices
     });
     updateTarget(true);
   }
@@ -277,28 +347,22 @@
   }
 
   function onHit(e) {
-    const mult = G.combo >= 15 ? 4 : G.combo >= 10 ? 3 : G.combo >= 5 ? 2 : 1;
     const gold = e.kind === 'golden';
-    const pts = (10 + G.level * 2) * mult * (gold ? 3 : 1);
-    G.score += pts;
-    G.combo++;
-    G.bestCombo = Math.max(G.bestCombo, G.combo);
-    G.correct++;
-
-    let gained = 1 + (G.combo >= 5 ? 1 : 0) + (gold ? 2 : 0);
-    G.stars += gained;
+    const r = reward(gold);
+    const pts = r.pts, gained = r.gained;
+    Quiz.markResult(quizSettings(), e.text, true);
 
     const col = gold ? ['#FFD166', '#FFE9A8', '#FFAE2B'] : ['#7CFF6B', '#B8FFB0', '#FFFFFF', '#5BC0EB'];
     burst(e.x, e.y, col, gold ? 34 : 22, 320);
     ring(e.x, e.y, gold ? '#FFD166' : '#7CFF6B', gold ? 130 : 95);
     float(e.x, e.y - 10, '+' + pts, gold ? '#FFD166' : '#CFFFC8', 26);
-    float(e.x, e.y + 18, '+' + gained + ' ★', '#FFE066', 18);
+    if (gained) float(e.x, e.y + 18, '+' + gained + ' ★', '#FFE066', 18);
     G.shake = Math.max(G.shake, gold ? 8 : 4);
 
     Sound.play(gold ? 'golden' : 'hit');
     if (G.combo >= 3) Sound.play('combo', G.combo);
-    if (G.combo === 5 || G.combo === 10 || G.combo === 15) {
-      float(G.W / 2, G.H * 0.4, 'COMBO x' + (G.combo >= 15 ? 4 : G.combo >= 10 ? 3 : 2) + '!', '#FFD166', 34);
+    if ((G.combo === 5 || G.combo === 10 || G.combo === 15) && comboMult() > 1) {
+      float(G.W / 2, G.H * 0.4, 'COMBO x' + comboMult() + '!', '#FFD166', 34);
     }
 
     resolveOne(true);
@@ -316,7 +380,8 @@
     burst(e.x, atY, ['#FF5D73', '#FF9E9E', '#FFFFFF'], 30, 420);
     ring(e.x, atY, '#FF5D73', 150);
     if (note) float(e.x, atY - 78, note, '#FF8A8A', 20);
-    float(e.x, atY - 50, '= ' + MathGen.sgn(e.answer), '#FFD1D1', 26);
+    showAnswer(e, false);
+    Quiz.markResult(quizSettings(), e.text, false);
     Sound.play('life');
     resolveOne(false);
     pushHud();
@@ -358,6 +423,53 @@
     float(G.W / 2, G.H * 0.33, 'LEVEL ' + G.level + '!', '#FFD166', 40);
     ring(G.W / 2, G.H * 0.33, '#FFD166', 260);
     if (G.cb.onToast) G.cb.onToast('Level ' + G.level + ' – jetzt wird\'s schneller!');
+  }
+
+  function isHsu() { return G.settings.subject === 'hsu'; }
+
+  /* Punkte-Faktor. Beides zusammen zählt: Safari ist gemütlich, HSU ist zum
+     Lernen da - im gemütlichen HSU-Safari gibt es also am wenigsten Punkte.
+     Die Sternchen bleiben davon unberührt, damit die Bonus-Station in
+     Reichweite bleibt. */
+  function scoreFactor() {
+    let f = 1;
+    if (G.mode === 'safari') f *= CONFIG.safariScore;
+    if (isHsu()) f *= CONFIG.hsuScore;
+    return f;
+  }
+
+  /* Nach wie vielen richtigen Antworten gibt es ein Sternchen? */
+  function starEvery() {
+    let n = 1;
+    if (G.mode === 'safari') n = Math.max(n, CONFIG.safariStarEvery);
+    if (isHsu()) n = Math.max(n, CONFIG.hsuStarEvery);
+    return n;
+  }
+
+  function comboMult() {
+    const m = G.combo >= 15 ? 4 : G.combo >= 10 ? 3 : G.combo >= 5 ? 2 : 1;
+    return isHsu() ? Math.min(m, CONFIG.hsuMaxCombo) : m;
+  }
+
+  /* Eine richtige Antwort verbuchen: Punkte, Combo, Sternchen. */
+  function reward(gold) {
+    const mult = comboMult();
+    const pts = Math.max(1, Math.round((10 + G.level * 2) * mult * (gold ? 3 : 1) * scoreFactor()));
+    G.score += pts;
+    G.combo++;
+    G.bestCombo = Math.max(G.bestCombo, G.combo);
+    G.correct++;
+
+    let gained;
+    const every = starEvery();
+    if (every > 1) {
+      G.starTick = (G.starTick || 0) + 1;
+      gained = (G.starTick % every === 0) ? 1 : 0;
+    } else {
+      gained = 1 + (G.combo >= 5 ? 1 : 0) + (gold ? 2 : 0);
+    }
+    G.stars += gained;
+    return { pts, gained, mult };
   }
 
   /* Wie viele richtige Aufgaben bis zur Bonus-Station bzw. bis zum Camp? */
@@ -417,8 +529,11 @@
 
   /* ================= Safari ================= */
   function safariTask() {
-    const p = MathGen.create(G.settings.grade, G.level, G.settings.ops, G.settings.ranges);
-    G.task = { text: p.text, answer: p.answer, tries: 0, choices: MathGen.choicesFor(p.answer, 4) };
+    const p = Quiz.create(quizSettings(), ++G.idc);
+    G.task = {
+      text: p.text, answer: p.answer, answerLabel: p.answerLabel, note: p.note,
+      tries: 0, choices: p.choices
+    };
     G.safari.setTask(p.text);
     if (G.cb.onChoices) G.cb.onChoices(G.task.choices);
     pushHud();
@@ -429,16 +544,9 @@
     if (!t || G.safari.driving) return;
 
     if (Math.round(value) === t.answer) {
-      const pts = Math.round((10 + G.level * 2) * CONFIG.safariScore);
-      G.score += pts;
-      G.correct++;
-      G.combo++;
-      G.bestCombo = Math.max(G.bestCombo, G.combo);
-
-      /* Sternchen gibt es im Safari nur jede zweite Aufgabe */
-      G.safariStars++;
-      let gained = 0;
-      if (G.safariStars % CONFIG.safariStarEvery === 0) { gained = 1; G.stars++; }
+      const r = reward(false);
+      const pts = r.pts, gained = r.gained;
+      Quiz.markResult(quizSettings(), t.text, true);
 
       const jx = G.W / 2, jy = G.H * 0.6;
       burst(jx, jy, ['#7CFF6B', '#FFE9A8', '#FFFFFF'], 18, 260);
@@ -475,11 +583,28 @@
     G.lives--;
     G.flash = 0.7; G.flashColor = '255,60,60';
     G.shake = 14;
-    float(G.W / 2, G.H * 0.47, '= ' + MathGen.sgn(t.answer), '#FFD1D1', 26);
     Sound.play('life');
     resolveOne(false);
+    Quiz.markResult(quizSettings(), t.text, false);
     pushHud();
-    if (G.lives <= 0) { gameOver(); return; }
+
+    /* Im Safari drängt nichts - die Lösung bleibt stehen, bis weitergetippt
+       wird. Erst danach kommt die nächste Aufgabe (oder das Spielende). */
+    G.overAfterSolution = G.lives <= 0;
+    G.state = 'solution';
+    G.task = null;
+    G.safari.setTask('');
+    if (G.cb.onChoices) G.cb.onChoices([]);
+    showAnswer(t, true);
+  }
+
+  /* "Weiter" auf der Lösungskarte */
+  function continueAfterSolution() {
+    if (G.state !== 'solution') return;
+    if (G.overAfterSolution) { G.overAfterSolution = false; gameOver(); return; }
+    G.state = 'safari';
+    G.last = performance.now();
+    G.answerLock = 0;
     safariTask();
   }
 
@@ -513,7 +638,8 @@
       reason: reason, score: G.score, level: G.level, correct: G.correct,
       bestCombo: G.bestCombo, stars: G.stars, grade: G.settings.grade,
       wrongShots: G.wrongShots, seconds: Math.round(G.session),
-      timeLeft: Math.round(timeLeft()), mode: G.mode
+      timeLeft: Math.round(timeLeft()), mode: G.mode,
+      subject: G.settings.subject, topic: G.settings.topic
     };
   }
 
@@ -786,10 +912,11 @@
     }
 
     const safariView = G.safari && G.mode === 'safari' && G.state !== 'mini';
+
     if (!safariView) Backgrounds.draw(ctx, G.time);
     const ui = Backgrounds.ui();
 
-    if (G.safari && (G.state === 'safari' ||
+    if (G.safari && (G.state === 'safari' || G.state === 'solution' ||
         ((G.state === 'paused' || G.state === 'bonus' || G.state === 'over') && G.mode === 'safari' && !G.mini))) {
       G.safari.render(ctx, G.time);
     } else if (G.state === 'mini' && G.mini) {
@@ -845,9 +972,12 @@
         }
 
         ctx.fillStyle = e.kind === 'golden' ? '#4A2C00' : ui.eqText;
-        ctx.font = '700 ' + (e.fs || eqFont()) + 'px "Baloo 2", system-ui, sans-serif';
+        ctx.font = EQ_FONT(e.fs || eqFont());
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(e.text, e.x, y + e.h / 2 + 1);
+        const lines = e.lines && e.lines.length ? e.lines : [e.text];
+        const lh = (e.fs || eqFont()) * 1.32;
+        const top = y + e.h / 2 - (lines.length - 1) * lh / 2 + 1;
+        lines.forEach((ln, i) => ctx.fillText(ln, e.x, top + i * lh));
         ctx.restore();
       });
 
@@ -1017,7 +1147,7 @@
     G.floats.length = 0; G.rings.length = 0;
     G.pendingBonus = false; G.mini = null; G.targetId = 0;
     G.spawnTimer = 0.9;
-    G.safari = null; G.task = null; G.safariStars = 0; G.answerLock = 0;
+    G.safari = null; G.task = null; G.safariStars = 0; G.starTick = 0; G.answerLock = 0;
     G.last = performance.now();
     Sound.setTempo(132);
     Sound.startMusic();
@@ -1061,11 +1191,11 @@
      dabei keine Zeit geschenkt wird. */
   function refreshEquations() {
     G.eqs.forEach(e => {
-      const p = MathGen.create(G.settings.grade, G.level, G.settings.ops, G.settings.ranges);
+      const p = Quiz.create(quizSettings(), e.id);
       const m = measureEq(p.text);
-      e.text = p.text; e.answer = p.answer;
-      e.w = m.w; e.h = m.h; e.fs = m.fs;
-      e.choices = MathGen.choicesFor(p.answer, 4);
+      e.text = p.text; e.answer = p.answer; e.answerLabel = p.answerLabel; e.note = p.note;
+      e.w = m.w; e.h = m.h; e.fs = m.fs; e.lines = m.lines;
+      e.choices = p.choices;
       e.locked = false;
       e.tries = 0;
       e.x = clamp(e.x, e.w / 2 + 10, G.W - e.w / 2 - 10);
@@ -1112,9 +1242,12 @@
 
   global.Game = {
     init, start, pause, resume, quit, fire, resize, setTheme, setBottomInset,
+    continueAfterSolution,
     buyHearts, startMini, resumeFromBonus,
     get state() { return G.state; },
     get stars() { return G.stars; },
+    get score() { return G.score; },
+    get correct() { return G.correct; },
     get lives() { return G.lives; },
     get maxLives() { return G.maxLives; },
     get config() { return CONFIG; },
@@ -1130,7 +1263,12 @@
     get miniState() { return G.mini; },
     /* Nur für Tests/Debugging: Stand der Safari-Etappe */
     get safariState() { return G.safari ? G.safari.debug() : null; },
-    get task() { return G.task ? { text: G.task.text, answer: G.task.answer, tries: G.task.tries } : null; },
+    get task() {
+      return G.task ? {
+        text: G.task.text, answer: G.task.answer, answerLabel: G.task.answerLabel,
+        tries: G.task.tries, choices: G.task.choices.slice()
+      } : null;
+    },
     /* Nur für Tests/Debugging: aktuelle Aufgaben auf dem Feld */
     get equations() { return G.eqs.map(e => ({ id: e.id, text: e.text, answer: e.answer, y: e.y, tries: e.tries })); },
     demoFrame() { render(); }
