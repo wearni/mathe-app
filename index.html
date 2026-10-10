@@ -62,6 +62,27 @@
       <p class="choice-hint">Tippe die richtige Lösung an!</p>
       <div id="choices"></div>
     </div>
+    <div id="letterWrap" hidden>
+      <div id="letterRow">
+        <div id="letterWord">_</div>
+        <button id="letterDel" class="k-alt pad-btn" aria-label="Letzten Buchstaben zurück">⌫</button>
+      </div>
+      <div id="letterTray"></div>
+    </div>
+    <div id="textWrap" hidden>
+      <div id="textRow">
+        <input id="textInput" type="text" autocomplete="off" autocorrect="off"
+               autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="Antwort schreiben">
+        <button id="textSend" class="fire-btn">OK</button>
+      </div>
+    </div>
+    <div id="orderWrap" hidden>
+      <p class="choice-hint">Tippe sie der Reihe nach an – ältestes zuerst!</p>
+      <div id="orderList"></div>
+    </div>
+    <div id="thinkWrap" hidden>
+      <p id="thinkText">Erst nachdenken …</p>
+    </div>
     <div id="miniHint" hidden>
       <p id="miniHintText">🚀 Ziehe mit dem Finger (oder ◀ ▶) – geschossen wird automatisch!</p>
     </div>
@@ -177,12 +198,20 @@
       <p class="hint" id="themeDesc"></p>
 
       <div id="inputSection">
-        <h3>Eingabe</h3>
-        <div class="seg" id="modeSeg">
-          <button data-mode="keypad">🔢 Zahlenfeld</button>
-          <button data-mode="choice" class="active">🎯 Auswahl</button>
-        </div>
+        <h3>Antwortart</h3>
+        <div id="formGrid" class="topic-grid"></div>
         <p class="hint" id="inputHint"></p>
+
+        <h3>Denkzeit</h3>
+        <div id="thinkGrid" class="speed-grid"></div>
+        <p class="hint" id="thinkHint"></p>
+
+        <div id="timelineRow">
+          <div class="switch-row">
+            <label class="switch"><input type="checkbox" id="swTimeline"><span></span> 🕰️ Zeitstrahl einstreuen</label>
+          </div>
+          <p class="hint" id="timelineHint"></p>
+        </div>
       </div>
 
       <h3>Ton</h3>

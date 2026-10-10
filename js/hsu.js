@@ -56,31 +56,31 @@
       w: ['Thomas Mann', 'Erich Kästner', 'Wilhelm Busch'] },
 
     /* ---------- Geschichte ---------- */
-    { g: 'Geschichte', q: 'Wann wurde Traunstein erstmals urkundlich erwähnt?', a: '1245',
+    { g: 'Geschichte', q: 'Wann wurde Traunstein erstmals urkundlich erwähnt?', a: '1245', ev: 'erste urkundliche Erwähnung',
       w: ['1145', '1345', '1445'], n: 'Als Gericht und Amt des Klosters Baumburg.' },
     { g: 'Geschichte', q: 'Wie hieß Traunstein in der ersten Urkunde?', a: 'Trauwenstain',
       w: ['Traunburg', 'Trunstat', 'Traunfels'] },
-    { g: 'Geschichte', q: 'Wann bekam Traunstein das Stadtrecht?', a: '1375',
+    { g: 'Geschichte', q: 'Wann bekam Traunstein das Stadtrecht?', a: '1375', ev: 'Stadtrecht',
       w: ['1275', '1475', '1575'], n: 'Verliehen von Herzog Friedrich.' },
-    { g: 'Geschichte', q: 'Wann wurde ein Rathaus erstmals erwähnt?', a: '1486',
+    { g: 'Geschichte', q: 'Wann wurde ein Rathaus erstmals erwähnt?', a: '1486', ev: 'erstes Rathaus erwähnt',
       w: ['1286', '1686', '1886'], n: 'Das Rathaus am Stadtplatz wurde 1576 vollendet.' },
-    { g: 'Geschichte', q: 'Wann begann die Salzproduktion in der Saline?', a: '1619',
+    { g: 'Geschichte', q: 'Wann begann die Salzproduktion in der Saline?', a: '1619', ev: 'Saline beginnt',
       w: ['1519', '1719', '1819'] },
-    { g: 'Geschichte', q: 'Wann endete die Salzproduktion in der Saline?', a: '1912',
+    { g: 'Geschichte', q: 'Wann endete die Salzproduktion in der Saline?', a: '1912', ev: 'Saline endet',
       w: ['1972', '1812', '1862'], n: 'Geprüft bei der Stadt Traunstein: 1912.' },
     { g: 'Geschichte', q: 'Wer legte 1704 die Stadt in Brand?', a: 'ungarische Panduren',
       w: ['französische Soldaten', 'schwedische Reiter', 'bayerische Truppen'] },
-    { g: 'Geschichte', q: 'Wann brannte die Altstadt von Traunstein?', a: '1851',
+    { g: 'Geschichte', q: 'Wann brannte die Altstadt von Traunstein?', a: '1851', ev: 'Altstadtbrand',
       w: ['1751', '1801', '1901'], n: 'In der Nacht vom 25. auf den 26. April.' },
-    { g: 'Geschichte', q: 'Wann wurde die Freiwillige Feuerwehr gegründet?', a: '1859',
+    { g: 'Geschichte', q: 'Wann wurde die Freiwillige Feuerwehr gegründet?', a: '1859', ev: 'Feuerwehr gegründet',
       w: ['1759', '1889', '1919'] },
-    { g: 'Geschichte', q: 'Wann wurde Traunstein Große Kreisstadt?', a: '1972',
+    { g: 'Geschichte', q: 'Wann wurde Traunstein Große Kreisstadt?', a: '1972', ev: 'Große Kreisstadt',
       w: ['1922', '1952', '1992'], n: 'Bei der Gebietsreform 1972.' },
-    { g: 'Geschichte', q: 'Wann wurden Kammer und Hochberg eingemeindet?', a: '1972',
+    { g: 'Geschichte', q: 'Wann wurden Kammer und Hochberg eingemeindet?', a: '1972', ev: 'Kammer und Hochberg dazu',
       w: ['1952', '1914', '1978'] },
-    { g: 'Geschichte', q: 'Wann wurden Haslach und Wolkersdorf eingemeindet?', a: '1978',
+    { g: 'Geschichte', q: 'Wann wurden Haslach und Wolkersdorf eingemeindet?', a: '1978', ev: 'Haslach und Wolkersdorf dazu',
       w: ['1972', '1914', '1952'] },
-    { g: 'Geschichte', q: 'Wann wurde Au eingemeindet?', a: '1914',
+    { g: 'Geschichte', q: 'Wann wurde Au eingemeindet?', a: '1914', ev: 'Au dazu',
       w: ['1972', '1978', '1851'] },
     { g: 'Geschichte', q: 'Wie heißt die Stadtpfarrkirche?', a: 'St. Oswald',
       w: ['St. Michael', 'St. Georg', 'St. Martin'] },
@@ -222,6 +222,47 @@
 
   /* Eine Frage ziehen. uid macht die Antwortwerte eindeutig, damit zwei
      Aufgaben auf dem Feld sich nicht gegenseitig abschießen. */
+  /* Welche Antwortarten passen zu dieser Frage? Nicht jede Antwort lässt
+     sich eintippen oder aus Buchstaben zusammensetzen. */
+  function formsFor(q) {
+    const a = String(q.a).trim();
+    const out = ['choice', 'truefalse'];
+    if (/^\d{1,6}$/.test(a)) out.push('number');
+    if (/^[A-Za-zÄÖÜäöüß-]{3,14}$/.test(a)) out.push('letters');
+    if (a.length <= 22) out.push('text');
+    return out;
+  }
+
+  /* Wie viele Jahreszahl-Ereignisse hat das Thema? (für den Zeitstrahl) */
+  function events(topicId) {
+    return topic(topicId).questions
+      .filter(q => q.ev && /^\d{3,4}$/.test(String(q.a)))
+      .map(q => ({ label: q.ev, year: parseInt(q.a, 10), note: q.n || '' }));
+  }
+
+  /* Eine Zeitstrahl-Aufgabe: n Ereignisse, die in die richtige Reihenfolge
+     gebracht werden müssen. Gleiche Jahre werden ausgelassen, sonst gäbe es
+     mehr als eine richtige Lösung. */
+  function timeline(topicId, n) {
+    const all = events(topicId);
+    if (all.length < 3) return null;
+    n = Math.min(Math.max(n || 3, 3), 4);
+
+    let pick_, guard = 0;
+    do {
+      pick_ = shuffle(all.slice()).slice(0, n);
+      guard++;
+    } while (guard < 30 && new Set(pick_.map(e => e.year)).size !== pick_.length);
+    if (new Set(pick_.map(e => e.year)).size !== pick_.length) return null;
+
+    const sorted = pick_.slice().sort((a, b) => a.year - b.year);
+    return {
+      items: shuffle(pick_.slice()).map(e => ({ label: e.label, year: e.year })),
+      order: sorted.map(e => e.year),
+      answerLabel: sorted.map(e => e.year + ' ' + e.label).join('  ·  ')
+    };
+  }
+
   function create(topicId, uid) {
     const t = topic(topicId);
     const all = t.questions;
@@ -252,9 +293,13 @@
       answerLabel: q.a,
       note: q.n || '',
       group: q.g || '',
-      choices: choices
+      choices: choices,
+      forms: formsFor(q),
+      /* für Wahr/Falsch: ein Vorschlag, der stimmen kann oder nicht */
+      wrongOne: q.w[Math.floor(Math.random() * q.w.length)]
     };
   }
 
-  global.HSU = { TOPICS, list, topic, groups, create, markResult, openRepeats, resetRepeats };
+  global.HSU = { TOPICS, list, topic, groups, create, markResult, openRepeats, resetRepeats,
+    formsFor, events, timeline };
 })(window);

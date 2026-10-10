@@ -24,6 +24,10 @@
       /* mathe = Rechnen, hsu = Heimat- und Sachunterricht */
       subject: 'mathe',
       topic: 'traunstein',
+      /* wie geantwortet wird: choice | number | truefalse | letters | text | mixed */
+      answerMode: 'choice',
+      thinkTime: 0,        /* Sekunden, in denen nur die Frage zu sehen ist */
+      timeline: true,      /* ab und zu eine Reihenfolge-Aufgabe einstreuen */
       nick: '', avatar: ''
     },
     /* Bildschirmzeit für das ganze Gerät, über alle Runden hinweg */
@@ -54,6 +58,10 @@
         DB.settings.opsByGrade = Object.assign({}, (p.settings || {}).opsByGrade || {});
         DB.settings.rangeByGrade = Object.assign({}, (p.settings || {}).rangeByGrade || {});
         DB.time = Object.assign({}, DEFAULTS.time, p.time || {});
+        /* Früher hieß die Einstellung inputMode (keypad/choice) */
+        if (!(p.settings || {}).answerMode && (p.settings || {}).inputMode) {
+          DB.settings.answerMode = p.settings.inputMode === 'keypad' ? 'number' : 'choice';
+        }
         DB.stats = Object.assign({}, DEFAULTS.stats, p.stats || {});
         DB.scores = Array.isArray(p.scores) ? p.scores : [];
         /* ältere Einträge kennen das Merkmal noch nicht - die gelten als
@@ -219,40 +227,173 @@
   }
 
   let lastChoices = '';
-  /* Die Engine liefert [{ v, label }] - v ist der Vergleichswert, label
-     das, was auf dem Knopf steht (Zahl bei Mathe, Text bei HSU). */
-  function onChoices(arr) {
-    if (inputMode() !== 'choice') return;
-    arr = arr || [];
-    const sig = arr.map(c => c.v + ':' + c.label).join('|');
+  let curAsk = null;           /* die Aufgabe, die gerade beantwortet wird */
+  let thinkTimer = null;
+
+  /* Die Engine meldet, wie die aktuelle Aufgabe beantwortet wird.
+     info = { form, choices, letters, items, solutionLength } oder null. */
+  function onChoices(info) {
+    clearInterval(thinkTimer);
+    if (!info) {
+      curAsk = null; lastChoices = '';
+      showPad(null);
+      return;
+    }
+    const sig = JSON.stringify(info);
     if (sig === lastChoices) return;
     lastChoices = sig;
+    curAsk = info;
+
+    const think = Math.max(0, DB.settings.thinkTime | 0);
+    if (think > 0) startThinking(think);
+    else buildPad(info);
+  }
+
+  /* Denkzeit: erst steht nur die Frage da, die Antworten kommen danach. */
+  function startThinking(secs) {
+    let left = secs;
+    const paint = () => {
+      $('#thinkText').textContent = left > 0
+        ? 'Erst nachdenken … ' + left
+        : 'Los!';
+    };
+    showPad('#thinkWrap');
+    paint();
+    thinkTimer = setInterval(() => {
+      left--;
+      paint();
+      if (left <= 0) {
+        clearInterval(thinkTimer);
+        if (curAsk) buildPad(curAsk);
+      }
+    }, 1000);
+  }
+
+  /* ---------- die einzelnen Eingabefelder ---------- */
+  function buildPad(info) {
+    if (info.form === 'number') { answer = ''; negative = false; renderAnswer(); showPad('#padWrap'); return; }
+    if (info.form === 'letters') { buildLetters(info); return; }
+    if (info.form === 'text') { buildText(info); return; }
+    if (info.form === 'timeline') { buildOrder(info); return; }
+    buildChoices(info);     /* choice und truefalse */
+  }
+
+  function send(value) { if (inRound()) Game.fire(value); }
+
+  function buildChoices(info) {
     const box = $('#choices');
     box.innerHTML = '';
+    const arr = info.choices || [];
     let longest = 0;
     arr.forEach(c => { longest = Math.max(longest, String(c.label).length); });
     box.classList.toggle('text-choices', longest > 6);
     box.classList.toggle('one-col', longest > 22);
+    box.classList.toggle('two-big', info.form === 'truefalse');
+    $('#choiceWrap .choice-hint').textContent = info.form === 'truefalse'
+      ? 'Stimmt die vorgeschlagene Antwort?'
+      : 'Tippe die richtige Lösung an!';
     arr.forEach(c => {
       const b = document.createElement('button');
       b.textContent = c.label;
-      b.addEventListener('click', () => { if (inRound()) Game.fire(c.v); });
+      b.addEventListener('click', () => send(c.v));
       box.appendChild(b);
     });
+    showPad('#choiceWrap');
+  }
+
+  let builtWord = [];
+  function buildLetters(info) {
+    builtWord = [];
+    const tray = $('#letterTray');
+    tray.innerHTML = '';
+    (info.letters || []).forEach(l => {
+      const b = document.createElement('button');
+      b.textContent = l.ch.toUpperCase();
+      b.dataset.idx = l.i;
+      b.addEventListener('click', () => {
+        if (b.classList.contains('used')) return;
+        b.classList.add('used');
+        builtWord.push({ ch: l.ch, btn: b });
+        Sound.play('type');
+        paintWord();
+        /* vollständig? dann abschicken */
+        if (builtWord.length === (info.letters || []).length) {
+          setTimeout(() => send(builtWord.map(x => x.ch).join('')), 160);
+        }
+      });
+      tray.appendChild(b);
+    });
+    paintWord();
+    showPad('#letterWrap');
+  }
+
+  function paintWord() {
+    const el = $('#letterWord');
+    const txt = builtWord.map(x => x.ch.toUpperCase()).join('');
+    el.textContent = txt || 'Buchstaben antippen';
+    el.classList.toggle('empty', !txt);
+  }
+
+  function undoLetter() {
+    const last = builtWord.pop();
+    if (last) { last.btn.classList.remove('used'); Sound.play('type'); }
+    paintWord();
+  }
+
+  function buildText(info) {
+    const inp = $('#textInput');
+    inp.value = '';
+    inp.placeholder = info.solutionLength
+      ? 'Antwort (' + info.solutionLength + ' Zeichen)'
+      : 'Antwort schreiben';
+    showPad('#textWrap');
+  }
+
+  function sendText() {
+    const v = $('#textInput').value.trim();
+    if (!v) return;
+    $('#textInput').value = '';
+    send(v);
+  }
+
+  let orderPick = [];
+  function buildOrder(info) {
+    orderPick = [];
+    const box = $('#orderList');
+    box.innerHTML = '';
+    (info.items || []).forEach(it => {
+      const b = document.createElement('button');
+      b.innerHTML = '<span class="num">–</span><span>' + escapeHtml(it.label) + '</span>';
+      b.addEventListener('click', () => {
+        if (b.classList.contains('picked')) return;
+        b.classList.add('picked');
+        orderPick.push(it.year);
+        b.querySelector('.num').textContent = orderPick.length;
+        Sound.play('type');
+        if (orderPick.length === (info.items || []).length) {
+          setTimeout(() => send(orderPick.slice()), 200);
+        }
+      });
+      box.appendChild(b);
+    });
+    showPad('#orderWrap');
+  }
+
+  /* Alle Eingabefelder, die es gibt - immer ist höchstens eines sichtbar. */
+  const PADS = ['#padWrap', '#choiceWrap', '#letterWrap', '#textWrap', '#orderWrap',
+    '#thinkWrap', '#miniHint', '#cannonPad'];
+
+  function showPad(which) {
+    PADS.forEach(id => { $(id).hidden = (id !== which); });
     syncInset();
   }
 
   function applyInputMode() {
-    const choice = inputMode() === 'choice';
     /* Im Safari wird nichts abgeschossen - der Jeep fährt einfach weiter */
     $('#btnFire').textContent = DB.settings.playMode === 'safari' ? 'ANTWORTEN 🚙' : 'ABSCHIESSEN 🚀';
-    $('#padWrap').hidden = choice;
-    $('#choiceWrap').hidden = !choice;
-    $('#miniHint').hidden = true;
-    $('#cannonPad').hidden = true;
     document.querySelector('.bonus-meter').hidden = false;
     lastChoices = '';
-    syncInset();
+    showPad(DB.settings.answerMode === 'number' ? '#padWrap' : '#choiceWrap');
   }
 
   /* Die Schutzlinie muss über der Steuerung liegen - Höhe messen und melden. */
@@ -365,6 +506,8 @@
         grade: DB.settings.grade, theme: DB.settings.theme,
         inputMode: inputMode(), speed: curSpeed(),
         subject: DB.settings.subject, topic: DB.settings.topic,
+        answerMode: DB.settings.answerMode,
+        timeline: !!DB.settings.timeline && Quiz.hasTimeline({ subject: DB.settings.subject, topic: DB.settings.topic }),
         ops: curOps(), ranges: curRanges(),
         mode: DB.settings.playMode, timeLeft: leftSec()
       });
@@ -558,8 +701,9 @@
       : rAll.filter(r => rOn.indexOf(r.id) >= 0).map(r => r.name).join(' + ');
     const sp = Game.speeds[curSpeed() - 1];
     $('#chipSpeed').textContent = sp ? sp.icon + ' ' + sp.name : '';
-    $('#chipMode').textContent = inputMode() === 'choice' ? '🎯 Auswahl' : '🔢 Zahlenfeld';
-    $('#chipMode').hidden = isHsu();
+    const fm = Quiz.FORM_INFO[DB.settings.answerMode] || Quiz.FORM_INFO.choice;
+    $('#chipMode').textContent = fm.icon + ' ' + fm.name;
+    $('#chipMode').hidden = false;
 
     syncPlayMode();
     syncSubject();
@@ -738,8 +882,8 @@
   function isSafari() { return DB.settings.playMode === 'safari'; }
   function isHsu() { return DB.settings.subject === 'hsu'; }
 
-  /* Im HSU-Fach sind die Antworten Texte - das Zahlenfeld hilft da nicht. */
-  function inputMode() { return isHsu() ? 'choice' : DB.settings.inputMode; }
+  /* Nur noch für die Tastatur: Ziffern zählen bloß im Zahlenfeld. */
+  function inputMode() { return DB.settings.answerMode === 'number' ? 'keypad' : 'choice'; }
 
   const SUBJECT_DESC = {
     mathe: 'Rechnen von Klasse 1 bis 6.',
@@ -761,9 +905,9 @@
       b.classList.toggle('active', (b.dataset.subject === 'hsu') === hsu));
     $('#matheSection').hidden = hsu;
     syncSpeeds();
+    buildForms();
     $('#hsuSection').hidden = !hsu;
-    /* Bei HSU wird immer ausgewählt statt getippt */
-    $('#inputSection').hidden = hsu;
+    $('#inputSection').hidden = false;
     $('#tagline').textContent = hsu ? 'Wissen im Weltraum-Tempo' : 'Rechnen im Weltraum-Tempo';
     $('#chipGrade').hidden = hsu;
     $('#chipOps').hidden = hsu;
@@ -773,6 +917,69 @@
       const t = HSU.topic(DB.settings.topic);
       $('#chipTopic').textContent = t.icon + ' ' + t.name;
     }
+  }
+
+  /* ---- Antwortart, Denkzeit, Zeitstrahl ---- */
+  const THINK_TIMES = [0, 2, 4];
+
+  function curForms() { return Quiz.formsFor({ subject: DB.settings.subject }); }
+
+  function buildForms() {
+    const grid = $('#formGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    curForms().forEach(f => {
+      const b = document.createElement('button');
+      b.className = 'topic-card';
+      b.dataset.form = f.id;
+      b.innerHTML = '<span class="ic">' + f.icon + '</span>' +
+        '<span class="txt"><b>' + f.name + '</b><small>' + f.desc + '</small></span>';
+      b.addEventListener('click', () => {
+        DB.settings.answerMode = f.id; save();
+        Sound.play('click');
+        applyInputMode();
+        syncForms(); renderMenuInfo();
+      });
+      grid.appendChild(b);
+    });
+
+    const tg = $('#thinkGrid');
+    tg.innerHTML = '';
+    THINK_TIMES.forEach(t => {
+      const b = document.createElement('button');
+      b.innerHTML = '<span class="ic">' + (t ? t + 's' : '\u2013') + '</span><small>' +
+        (t ? 'Denkzeit' : 'sofort') + '</small>';
+      b.dataset.think = t;
+      b.addEventListener('click', () => {
+        DB.settings.thinkTime = t; save();
+        Sound.play('click');
+        syncForms();
+      });
+      tg.appendChild(b);
+    });
+    syncForms();
+  }
+
+  function syncForms() {
+    const avail = curForms().map(f => f.id);
+    if (avail.indexOf(DB.settings.answerMode) < 0) { DB.settings.answerMode = 'choice'; save(); }
+    $$('#formGrid .topic-card').forEach(b => b.classList.toggle('active', b.dataset.form === DB.settings.answerMode));
+    $$('#thinkGrid button').forEach(b => b.classList.toggle('active', +b.dataset.think === (DB.settings.thinkTime | 0)));
+
+    const f = Quiz.FORM_INFO[DB.settings.answerMode] || Quiz.FORM_INFO.choice;
+    $('#inputHint').textContent = f.id === 'mixed'
+      ? 'Wechselt pro Aufgabe durch alles, was zur Frage passt.'
+      : f.desc + '. Passt die Art einmal nicht zur Frage, gibt es dort die Auswahl.';
+    const t = DB.settings.thinkTime | 0;
+    $('#thinkHint').textContent = t
+      ? 'Die Antworten erscheinen erst nach ' + t + ' Sekunden \u2013 so wird nicht einfach wiedererkannt.'
+      : 'Die Antworten stehen sofort da.';
+
+    const canTime = Quiz.hasTimeline({ subject: DB.settings.subject, topic: DB.settings.topic });
+    $('#timelineRow').hidden = !canTime;
+    $('#swTimeline').checked = !!DB.settings.timeline;
+    $('#timelineHint').textContent =
+      'Etwa jede sechste Aufgabe ist dann eine Reihenfolge: drei Ereignisse vom \u00e4ltesten zum j\u00fcngsten.';
   }
 
   /* ---- Themen (HSU) ---- */
@@ -1472,6 +1679,18 @@
       setPlayMode(b.dataset.play);
     }));
 
+    /* Buchstabensalat, Freitext, Zeitstrahl */
+    $('#letterDel').addEventListener('click', undoLetter);
+    $('#textSend').addEventListener('click', sendText);
+    $('#textInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); sendText(); }
+      e.stopPropagation();
+    });
+    $('#swTimeline').addEventListener('change', e => {
+      DB.settings.timeline = e.target.checked; save();
+      Sound.play('click'); syncForms();
+    });
+
     /* Lösungskarte */
     $('#solOk').addEventListener('click', () => {
       Sound.play('click');
@@ -1515,12 +1734,6 @@
     });
 
     /* Einstellungen */
-    $$('#modeSeg button').forEach(b => b.addEventListener('click', () => {
-      DB.settings.inputMode = b.dataset.mode; save();
-      Sound.play('click');
-      $$('#modeSeg button').forEach(x => x.classList.toggle('active', x === b));
-      applyInputMode(); renderMenuInfo();
-    }));
     $('#swSfx').addEventListener('change', e => { DB.settings.sfx = e.target.checked; save(); Sound.setSfx(e.target.checked); Sound.play('click'); });
     $('#swMusic').addEventListener('change', e => {
       DB.settings.music = e.target.checked; save(); Sound.setMusic(e.target.checked);
@@ -1535,8 +1748,10 @@
       DB.settings.rangeByGrade = {};
       DB.settings.subject = 'mathe';
       DB.settings.topic = 'traunstein';
+      DB.settings.answerMode = 'choice';
+      DB.settings.thinkTime = 0;
       DB.scores = [];
-      save(); buildOps(); buildRanges(); buildTopics(); syncSpeeds(); renderMenuInfo(); toast('Fortschritt gelöscht');
+      save(); buildOps(); buildRanges(); buildTopics(); buildForms(); syncSpeeds(); renderMenuInfo(); toast('Fortschritt gelöscht');
     });
 
     /* Tastenfeld */
@@ -1671,7 +1886,7 @@
     }
   }
 
-  const APP_FALLBACK_VERSION = '2.1.0';
+  const APP_FALLBACK_VERSION = '2.2.0';
 
   function pwa() {
     $('#appVersion').textContent = APP_FALLBACK_VERSION;
@@ -1773,11 +1988,11 @@
       }
     });
 
-    $$('#modeSeg button').forEach(x => x.classList.toggle('active', x.dataset.mode === DB.settings.inputMode));
     buildGrades();
     buildOps();
     buildRanges();
     buildTopics();
+    buildForms();
     buildSpeeds();
     buildThemes();
     buildParent();

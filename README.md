@@ -40,36 +40,78 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | 🔊 **8-Bit Sound** | Effekte und **drei** Chiptune-Stücke mit Bass, Arpeggio, Melodie und Schlagzeug – alles per WebAudio erzeugt, keine Audiodateien |
 | 👾 **Pixel-Art** | Fahrzeuge, Ufos, Jeep und Tiere als echte Pixel-Sprites; die Aufgabenkästen bleiben bewusst rund und gut lesbar |
 | 🏆 **Online-Bestenliste** | mit Spitzname und selbst gewürfeltem Pixel-Avatar (optional, siehe unten) |
-| 🎯 **Zwei Eingabearten** | **Auswahl** (vier Antworten antippen, Voreinstellung) oder großes Zahlenfeld mit Touch und Tastatur – jederzeit umschaltbar |
+| 🎲 **Sechs Antwortarten** | Auswahl, Zahlenfeld, Wahr/Falsch, Buchstabensalat, Freitext – oder **Gemischt**, das durchwechselt |
+| ⏳ **Denkzeit** | die Antworten erscheinen erst nach ein paar Sekunden – gegen reines Wiedererkennen |
+| 🕰️ **Zeitstrahl** | etwa jede sechste Aufgabe: drei Ereignisse vom ältesten zum jüngsten ordnen |
 | 🏅 **Gamification** | Combo-Multiplikator bis x4, Level, XP-Ränge, 10 Abzeichen, Bestenliste pro Klasse |
 | 🔄 **Selbst-Update** | eine neue Fassung auf GitHub landet beim nächsten Öffnen automatisch auf dem Gerät |
 | 📲 **PWA** | installierbar auf Handy, Tablet und Desktop, funktioniert offline |
 
 ---
 
+## Antwortarten
+
+**Einstellungen → Antwortart.** Sechs Arten, in beiden Fächern und beiden Spielarten:
+
+| | | passt zu |
+|---|---|---|
+| 🎯 **Auswahl** | vier Antworten, eine antippen | allem |
+| 🔢 **Zahlenfeld** | die Zahl selbst eintippen | Rechnen und Jahreszahlen |
+| ✓✗ **Wahr oder falsch** | stimmt die vorgeschlagene Antwort? | allem |
+| 🔤 **Buchstabensalat** | Buchstaben der Reihe nach antippen | kurzen Wörtern (3–14 Buchstaben) |
+| ⌨️ **Freitext** | Antwort mit der Tastatur schreiben | Antworten bis 22 Zeichen |
+| 🎲 **Gemischt** | wechselt pro Aufgabe durch | allem |
+
+Passt die eingestellte Art einmal nicht zur Frage – „Woher bekommt die Gemeinde ihr
+Geld?" lässt sich schlecht aus Buchstaben legen – gibt es dort automatisch die Auswahl.
+Von den 59 Traunstein-Fragen eignen sich 12 fürs Zahlenfeld (die Jahreszahlen), 13 für
+den Buchstabensalat und 50 für Freitext.
+
+**Freitext wird großzügig verglichen:** Groß- und Kleinschreibung, Umlaute, Leerzeichen
+und Satzzeichen sind egal, und ab fünf Buchstaben ist ein Tippfehler erlaubt. Die
+Rechtschreibung soll nicht die eigentliche Hürde sein. `buergermeister`,
+`BÜRGERMEISTER` und `Bürgermeistr` gelten alle.
+
+### Denkzeit
+
+**Einstellungen → Denkzeit:** aus, 2 oder 4 Sekunden. So lange steht nur die Frage da,
+die Antworten erscheinen erst danach. Das nimmt den Effekt, die richtige Antwort bloß
+wiederzuerkennen, statt sie zu wissen – und kostet nichts außer ein paar Sekunden.
+
+### Zeitstrahl
+
+**Einstellungen → Zeitstrahl einstreuen.** Etwa jede sechste Aufgabe ist dann keine
+Frage, sondern eine Reihenfolge: Drei Ereignisse werden vom ältesten zum jüngsten
+angetippt. Gebaut wird sie aus den Jahreszahl-Fragen des Themas – jede davon hat dafür
+ein kurzes Ereignis-Label (`ev` in `js/hsu.js`). Ereignisse mit gleichem Jahr kommen nie
+zusammen vor, sonst gäbe es mehr als eine richtige Lösung. Der Schalter erscheint nur
+bei Themen mit mindestens drei Jahreszahlen.
+
+---
+
 ## Steuerung
 
-Beide Spielarten nehmen dieselben Eingaben entgegen.
+Beide Spielarten und beide Fächer nehmen dieselben Eingaben entgegen.
 
-**Zahlenfeld-Modus**
+**Zahlenfeld**
 
 * Ziffern antippen oder auf der Tastatur eingeben
 * `±` bzw. `-` für negative Ergebnisse (ab Klasse 5)
 * `⌫` bzw. `Backspace` löscht
 * **ABSCHIESSEN** bzw. `Enter` / `Leertaste` feuert (im Safari heißt der Knopf **ANTWORTEN**)
 
+**Buchstabensalat**
+
+* Buchstaben der Reihe nach antippen, `⌫` nimmt den letzten zurück
+* Sobald das Wort vollständig ist, wird es von selbst abgeschickt
+
 **Zwei Versuche pro Aufgabe**
 
-Bei einer falschen Antwort wird die Eingabe gelöscht, ein Hinweis meldet „Noch 1 Versuch!“
+Bei einer falschen Antwort wird die Eingabe gelöscht, ein Hinweis meldet „Noch 1 Versuch!"
 und die Aufgabe fällt weiter – man darf es also noch einmal probieren. Ist auch die zweite
-Antwort falsch, zählt die Aufgabe als Fehler: Sie verschwindet, die richtige Lösung wird
-kurz eingeblendet und es kostet ein ❤️ – genau wie bei einer Aufgabe, die man gar nicht
+Antwort falsch, zählt die Aufgabe als Fehler: Sie verschwindet, die **Lösungskarte**
+erscheint und es kostet ein ❤️ – genau wie bei einer Aufgabe, die man gar nicht
 beantwortet hat. Die Anzahl der Versuche steht in `CONFIG.maxTries` (`js/game.js`).
-
-**Auswahl-Modus** (Voreinstellung)
-
-* Vier Antwortmöglichkeiten antippen – sie gehören immer zur untersten Aufgabe
-* Umschalten unter *Einstellungen → Eingabe*
 
 **Bonusspiele**
 
@@ -82,12 +124,13 @@ beantwortet hat. Die Anzahl der Versuche steht in `CONFIG.maxTries` (`js/game.js
 
 `Esc` oder der Pause-Knopf halten das Spiel an. Der Zurück-Knopf des Geräts (Android,
 Browser, Wischgeste) verlässt die App nicht, sondern fragt erst nach: weiterspielen oder
-zum Menü? Ein zweites Mal Zurück geht dann wirklich ins Menü.
+zum Menü? Ein zweites Mal Zurück geht dann wirklich ins Menü. Steht gerade die
+Lösungskarte, tippt Zurück sie weg und spielt weiter.
 
 Während der Pause läuft die Bildschirmzeit nicht weiter – dafür stehen beim Weiterspielen
 **andere Aufgaben** auf dem Feld, an derselben Stelle und in derselben Höhe. Eine Pause
-bringt also keinen Vorteil beim Nachdenken. (Im Safari steht der Jeep ohnehin still, dort
-bleibt die Aufgabe dieselbe.)
+bringt also keinen Vorteil beim Nachdenken. (Im Safari steht das Fahrzeug ohnehin still,
+dort bleibt die Aufgabe dieselbe.)
 
 ---
 
@@ -97,8 +140,8 @@ bleibt die Aufgabe dieselbe.)
 einem Katalog. Alles andere bleibt gleich: fallende Kästen im Arcade, Schilder an den
 Stationen im Safari, zwei Versuche, Herzen, Sternchen und Bonus-Station.
 
-Weil die Antworten Texte sind, wird im HSU-Fach immer **ausgewählt** statt getippt – der
-Umschalter für das Zahlenfeld verschwindet. Lange Fragen werden automatisch auf zwei
+Wie geantwortet wird, steht unter *Einstellungen → Antwortart* (siehe oben) – von der
+Auswahl über Wahr/Falsch bis zum Freitext. Lange Fragen werden automatisch auf zwei
 Zeilen umbrochen, lange Antworten bekommen kleinere Knöpfe.
 
 ### Lernen statt Punkte sammeln
@@ -165,6 +208,7 @@ In `js/hsu.js` in `TOPICS` einen weiteren Eintrag ergänzen. Eine Frage sieht so
 { g: 'Geschichte',                       // Bereich, nur für die Anzeige
   q: 'Wann bekam Traunstein das Stadtrecht?',
   a: '1375',                             // richtige Antwort
+  ev: 'Stadtrecht',                      // kurzes Label für den Zeitstrahl (nur Jahreszahlen)
   w: ['1275', '1475', '1575'],           // drei falsche, plausible Antworten
   n: 'Verliehen von Herzog Friedrich.' } // optionale Notiz nach der Aufgabe
 ```
@@ -597,6 +641,12 @@ schul-app/
 * **HSU-Wertung:** `CONFIG.hsuScore`, `CONFIG.hsuStarEvery` und `CONFIG.hsuMaxCombo`
   in `js/game.js`; wie lange die Lösung im Arcade stehen bleibt: `CONFIG.solutionHold`
 * **Wiederholung falscher Fragen:** `REPEAT_CHANCE` in `js/hsu.js`
+* **Antwortarten:** die Liste `FORMS` in `js/quiz.js`; welche Art zu welcher Frage passt,
+  entscheidet `formsFor()` in `js/hsu.js`. Wie großzügig Freitext verglichen wird,
+  steht in `sameText()` in `js/quiz.js`
+* **Denkzeit:** die Liste `THINK_TIMES` in `js/main.js`
+* **Zeitstrahl:** `CONFIG.timelineEvery` in `js/game.js` (nach wie vielen Aufgaben einer kommt),
+  gebaut wird er in `HSU.timeline()`
 * **Tempo-Stufen:** die Tabelle `SPEEDS` in `js/game.js` – `fall` ist die Fallzeit in
   Sekunden beim Start, `spawn` der Abstand zwischen zwei Aufgaben
 * **Standard-Tempo je Klasse:** `DEFAULTS.settings.speedByGrade` in `js/main.js`

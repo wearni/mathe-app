@@ -35,7 +35,8 @@
     hsuScore: 0.5,
     hsuStarEvery: 2,
     hsuMaxCombo: 2,
-    solutionHold: 3.4    /* Sekunden, die die Lösung im Arcade stehen bleibt */
+    solutionHold: 3.4,   /* Sekunden, die die Lösung im Arcade stehen bleibt */
+    timelineEvery: 6     /* nach so vielen Aufgaben ein Zeitstrahl */
   };
 
   /* Fahrzeug je Hintergrund - mit passendem Antrieb */
@@ -243,17 +244,43 @@
     return { w: Math.min(maxBox, Math.max(w + 44, 92)), h, fs, lines };
   }
 
-  function quizSettings() {
+  function quizSettings(due) {
     return {
       subject: G.settings.subject, topic: G.settings.topic,
       grade: G.settings.grade, level: G.level,
-      ops: G.settings.ops, ranges: G.settings.ranges
+      ops: G.settings.ops, ranges: G.settings.ranges,
+      answerMode: G.settings.answerMode || 'choice',
+      timeline: !!G.settings.timeline,
+      timelineDue: !!due
     };
   }
 
+  /* Der Zeitstrahl wird nur ab und zu eingestreut - sonst wäre er kein
+     Zwischenspiel mehr, sondern die Regel. */
+  function timelineDue() {
+    if (!G.settings.timeline) return false;
+    G.sinceTimeline = (G.sinceTimeline || 0) + 1;
+    if (G.sinceTimeline < CONFIG.timelineEvery) return false;
+    G.sinceTimeline = 0;
+    return true;
+  }
+
+  /* Alles, was die Steuerung zur aktuellen Aufgabe wissen muss */
+  function askInfo(q) {
+    return {
+      form: q.form,
+      choices: q.choices || [],
+      letters: q.letters || null,
+      items: q.items || null,
+      solutionLength: q.solution ? String(q.solution).length : 0
+    };
+  }
+
+  function ask(q) { if (G.cb.onChoices) G.cb.onChoices(q ? askInfo(q) : null); }
+
   function spawnEq() {
     const id = G.idc;
-    const p = Quiz.create(quizSettings(), id);
+    const p = Quiz.create(quizSettings(timelineDue()), id);
     const m = measureEq(p.text);
     const kind = (!isHsu() && G.correct > 0 && G.correct % 7 === 0 && Math.random() < 0.5) ? 'golden' : 'normal';
     let x = rf(m.w / 2 + 12, G.W - m.w / 2 - 12);
@@ -265,7 +292,7 @@
     }
     G.idc++;
     G.eqs.push({
-      id: id, text: p.text, answer: p.answer, answerLabel: p.answerLabel, note: p.note,
+      id: id, q: p, text: p.text, answer: p.answer, answerLabel: p.answerLabel, note: p.note,
       x, y: spawnY(), w: m.w, h: m.h, fs: m.fs, lines: m.lines,
       kind, locked: false, tries: 0, ph: Math.random() * TAU,
       choices: p.choices
@@ -279,7 +306,7 @@
     const id = best ? best.id : 0;
     if (id !== G.targetId || force) {
       G.targetId = id;
-      if (G.cb.onChoices) G.cb.onChoices(best ? best.choices : []);
+      ask(best ? best.q : null);
     }
   }
 
@@ -294,15 +321,16 @@
     return false;
   }
 
+  /* value ist je nach Antwortart eine Zahl, ein Text oder eine Reihenfolge -
+     geprüft wird deshalb nicht hier, sondern in Quiz.check(). */
   function fire(value) {
     if (answerBlocked()) return;
     if (G.state === 'safari') { safariAnswer(value); return; }
     if (G.state !== 'playing') return;
-    value = Math.round(value);
     let hit = null;
     for (const e of G.eqs) {
       if (e.locked) continue;
-      if (e.answer === value && (!hit || e.y > hit.y)) hit = e;
+      if (Quiz.check(e.q, value) && (!hit || e.y > hit.y)) hit = e;
     }
     Sound.play('shoot');
     const sx = G.W / 2, sy = groundY() - 26;
@@ -529,13 +557,13 @@
 
   /* ================= Safari ================= */
   function safariTask() {
-    const p = Quiz.create(quizSettings(), ++G.idc);
+    const p = Quiz.create(quizSettings(timelineDue()), ++G.idc);
     G.task = {
-      text: p.text, answer: p.answer, answerLabel: p.answerLabel, note: p.note,
+      q: p, text: p.text, answer: p.answer, answerLabel: p.answerLabel, note: p.note,
       tries: 0, choices: p.choices
     };
-    G.safari.setTask(p.text);
-    if (G.cb.onChoices) G.cb.onChoices(G.task.choices);
+    G.safari.setTask(p.form === 'timeline' ? 'Reihenfolge?' : p.text);
+    ask(p);
     pushHud();
   }
 
@@ -543,7 +571,7 @@
     const t = G.task;
     if (!t || G.safari.driving) return;
 
-    if (Math.round(value) === t.answer) {
+    if (Quiz.check(t.q, value)) {
       const r = reward(false);
       const pts = r.pts, gained = r.gained;
       Quiz.markResult(quizSettings(), t.text, true);
@@ -557,7 +585,7 @@
 
       G.task = null;
       G.safari.setTask('');
-      if (G.cb.onChoices) G.cb.onChoices([]);
+      ask(null);
       resolveOne(true);
       if (G.correct % CONFIG.levelEvery === 0) levelUp();
       G.safari.drive();
@@ -594,7 +622,7 @@
     G.state = 'solution';
     G.task = null;
     G.safari.setTask('');
-    if (G.cb.onChoices) G.cb.onChoices([]);
+    ask(null);
     showAnswer(t, true);
   }
 
@@ -615,7 +643,7 @@
       safariTask();
     } else if (ev === 'goal') {
       G.task = null;
-      if (G.cb.onChoices) G.cb.onChoices([]);
+      ask(null);
       float(G.W / 2, G.H * 0.35, 'Camp erreicht!', '#FFD166', 34);
       G.sinceBonus = 0;
       enterBonus();
@@ -1148,6 +1176,7 @@
     G.pendingBonus = false; G.mini = null; G.targetId = 0;
     G.spawnTimer = 0.9;
     G.safari = null; G.task = null; G.safariStars = 0; G.starTick = 0; G.answerLock = 0;
+    G.sinceTimeline = 0;
     G.last = performance.now();
     Sound.setTempo(132);
     Sound.startMusic();
@@ -1166,7 +1195,7 @@
     G.sinceBonus = 0;
     G.task = null;
     G.state = 'safari';
-    if (G.cb.onChoices) G.cb.onChoices([]);
+    ask(null);
     G.safari.drive();
   }
 
@@ -1193,6 +1222,7 @@
     G.eqs.forEach(e => {
       const p = Quiz.create(quizSettings(), e.id);
       const m = measureEq(p.text);
+      e.q = p;
       e.text = p.text; e.answer = p.answer; e.answerLabel = p.answerLabel; e.note = p.note;
       e.w = m.w; e.h = m.h; e.fs = m.fs; e.lines = m.lines;
       e.choices = p.choices;
@@ -1212,7 +1242,7 @@
       G.state = 'safari';
       G.last = performance.now();
       Sound.startMusic();
-      if (G.cb.onChoices) G.cb.onChoices(G.task ? G.task.choices : []);
+      ask(G.task ? G.task.q : null);
       return;
     }
     if (G.prevState !== 'mini') refreshEquations();
@@ -1266,11 +1296,12 @@
     get task() {
       return G.task ? {
         text: G.task.text, answer: G.task.answer, answerLabel: G.task.answerLabel,
-        tries: G.task.tries, choices: G.task.choices.slice()
+        tries: G.task.tries, choices: (G.task.choices || []).slice(),
+        q: G.task.q
       } : null;
     },
     /* Nur für Tests/Debugging: aktuelle Aufgaben auf dem Feld */
-    get equations() { return G.eqs.map(e => ({ id: e.id, text: e.text, answer: e.answer, y: e.y, tries: e.tries })); },
+    get equations() { return G.eqs.map(e => ({ id: e.id, text: e.text, answer: e.answer, y: e.y, tries: e.tries, q: e.q })); },
     demoFrame() { render(); }
   };
 })(window);
