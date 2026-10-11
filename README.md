@@ -102,8 +102,19 @@ Beide Spielarten und beide Fächer nehmen dieselben Eingaben entgegen.
 
 **Buchstabensalat**
 
-* Buchstaben der Reihe nach antippen, `⌫` nimmt den letzten zurück
-* Sobald das Wort vollständig ist, wird es von selbst abgeschickt
+* Buchstaben der Reihe nach antippen; jeder gesetzte Buchstabe ist selbst ein
+  Knopf – noch einmal antippen und er wandert zurück in die Reihe
+* `⌫` nimmt den letzten zurück
+* Sobald das Wort vollständig ist, wird es von selbst abgeschickt – der letzte
+  Buchstabe lässt sich also nicht mehr zurücknehmen
+
+**Zeitstrahl**
+
+* Ereignisse vom ältesten zum jüngsten antippen, die Nummer zeigt die Position
+* Ein schon angetippter Eintrag lässt sich durch erneutes Antippen wieder
+  zurücknehmen – die Nummern rücken dann nach
+* War die Reihenfolge falsch, liegen für den zweiten Versuch alle Einträge
+  wieder frei (dasselbe gilt für den Buchstabensalat)
 
 **Zwei Versuche pro Aufgabe**
 

@@ -278,7 +278,20 @@
     buildChoices(info);     /* choice und truefalse */
   }
 
-  function send(value) { if (inRound()) Game.fire(value); }
+  /* Noch ein Versuch auf dieselbe Aufgabe: Eingabefeld frisch aufbauen,
+     ohne erneute Denkzeit - die gab es ja schon. */
+  function onRetry(info) {
+    clearInterval(thinkTimer);
+    if (info) curAsk = info;
+    if (curAsk) buildPad(curAsk);
+  }
+
+  function send(value) {
+    if (!inRound()) return;
+    /* Kam die Antwort gar nicht erst durch (Sperre nach dem letzten
+       Antippen), darf das Feld nicht halbfertig stehen bleiben. */
+    if (Game.fire(value) === false) onRetry(null);
+  }
 
   function buildChoices(info) {
     const box = $('#choices');
@@ -327,18 +340,36 @@
     showPad('#letterWrap');
   }
 
+  /* Jeder gesetzte Buchstabe ist selbst ein Knopf: noch einmal antippen und
+     er wandert zurück in die Reihe. Genau wie beim Zeitstrahl - verklicken
+     darf man sich. Nur der letzte Buchstabe geht nicht mehr zurück, weil das
+     volle Wort sofort abgeschickt wird. */
   function paintWord() {
     const el = $('#letterWord');
-    const txt = builtWord.map(x => x.ch.toUpperCase()).join('');
-    el.textContent = txt || 'Buchstaben antippen';
-    el.classList.toggle('empty', !txt);
+    el.innerHTML = '';
+    if (!builtWord.length) {
+      el.classList.add('empty');
+      el.textContent = 'Buchstaben antippen';
+      return;
+    }
+    el.classList.remove('empty');
+    builtWord.forEach((x, i) => {
+      const c = document.createElement('button');
+      c.className = 'wchip';
+      c.textContent = x.ch.toUpperCase();
+      c.setAttribute('aria-label', x.ch.toUpperCase() + ' zurücknehmen');
+      c.addEventListener('click', () => takeBack(i));
+      el.appendChild(c);
+    });
   }
 
-  function undoLetter() {
-    const last = builtWord.pop();
-    if (last) { last.btn.classList.remove('used'); Sound.play('type'); }
+  function takeBack(i) {
+    const x = builtWord.splice(i, 1)[0];
+    if (x) { x.btn.classList.remove('used'); Sound.play('type'); }
     paintWord();
   }
+
+  function undoLetter() { if (builtWord.length) takeBack(builtWord.length - 1); }
 
   function buildText(info) {
     const inp = $('#textInput');
@@ -361,21 +392,34 @@
     orderPick = [];
     const box = $('#orderList');
     box.innerHTML = '';
-    (info.items || []).forEach(it => {
+    const items = info.items || [];
+
+    const paint = () => {
+      Array.from(box.children).forEach(btn => {
+        const pos = orderPick.indexOf(+btn.dataset.year);
+        btn.classList.toggle('picked', pos >= 0);
+        btn.querySelector('.num').textContent = pos >= 0 ? (pos + 1) : '–';
+      });
+    };
+
+    items.forEach(it => {
       const b = document.createElement('button');
+      b.dataset.year = it.year;
       b.innerHTML = '<span class="num">–</span><span>' + escapeHtml(it.label) + '</span>';
       b.addEventListener('click', () => {
-        if (b.classList.contains('picked')) return;
-        b.classList.add('picked');
+        const pos = orderPick.indexOf(it.year);
+        /* schon angetippt? dann wieder zurücknehmen - verklicken darf man sich */
+        if (pos >= 0) { orderPick.splice(pos, 1); paint(); Sound.play('type'); return; }
         orderPick.push(it.year);
-        b.querySelector('.num').textContent = orderPick.length;
+        paint();
         Sound.play('type');
-        if (orderPick.length === (info.items || []).length) {
-          setTimeout(() => send(orderPick.slice()), 200);
+        if (orderPick.length === items.length) {
+          setTimeout(() => send(orderPick.slice()), 220);
         }
       });
       box.appendChild(b);
     });
+    paint();
     showPad('#orderWrap');
   }
 
@@ -1886,7 +1930,7 @@
     }
   }
 
-  const APP_FALLBACK_VERSION = '2.2.0';
+  const APP_FALLBACK_VERSION = '2.2.2';
 
   function pwa() {
     $('#appVersion').textContent = APP_FALLBACK_VERSION;
@@ -1955,6 +1999,7 @@
       onBonus,
       onGameOver,
       onTimeUsed: (used) => { addUsed(used); },
+      onRetry,
       onSolution,
       onToast: toast,
       onMiniStart: (info, inst) => {

@@ -278,6 +278,11 @@
 
   function ask(q) { if (G.cb.onChoices) G.cb.onChoices(q ? askInfo(q) : null); }
 
+  /* Noch ein Versuch auf dieselbe Aufgabe: Buchstabensalat und Zeitstrahl
+     sind nach dem Abschicken "aufgebraucht" und müssen neu aufgebaut
+     werden - sonst lässt sich nichts mehr antippen. */
+  function retry(q) { if (G.cb.onRetry) G.cb.onRetry(q ? askInfo(q) : null); }
+
   function spawnEq() {
     const id = G.idc;
     const p = Quiz.create(quizSettings(timelineDue()), id);
@@ -324,9 +329,12 @@
   /* value ist je nach Antwortart eine Zahl, ein Text oder eine Reihenfolge -
      geprüft wird deshalb nicht hier, sondern in Quiz.check(). */
   function fire(value) {
-    if (answerBlocked()) return;
-    if (G.state === 'safari') { safariAnswer(value); return; }
-    if (G.state !== 'playing') return;
+    /* false heißt: die Antwort wurde gar nicht erst angenommen. Die
+       Steuerung baut ihr Eingabefeld dann wieder auf, sonst bliebe es
+       in seinem halbfertigen Zustand stecken. */
+    if (answerBlocked()) return false;
+    if (G.state === 'safari') { safariAnswer(value); return true; }
+    if (G.state !== 'playing') return false;
     let hit = null;
     for (const e of G.eqs) {
       if (e.locked) continue;
@@ -347,6 +355,7 @@
       onWrong();
     }
     G.recoil = 1;
+    return true;
   }
 
   /* Ein Fehlversuch geht immer auf die Aufgabe, die gerade als Ziel
@@ -371,6 +380,7 @@
 
     float(tgt.x, tgt.y - tgt.h, left === 1 ? 'Noch 1 Versuch!' : 'Noch ' + left + ' Versuche!',
       '#FF8A8A', 20);
+    retry(tgt.q);
     pushHud();
   }
 
@@ -603,6 +613,7 @@
     if (left > 0) {
       G.shake = Math.max(G.shake, 5);
       float(G.W / 2, G.H * 0.38, 'Noch 1 Versuch!', '#FF8A8A', 22);
+      retry(t.q);
       pushHud();
       return;
     }
