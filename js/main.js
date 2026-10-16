@@ -21,9 +21,11 @@
       rangeByGrade: {},
       /* arcade = fallende Aufgaben, safari = Jeep-Tour ohne Zeitdruck */
       playMode: 'arcade',
-      /* mathe = Rechnen, hsu = Heimat- und Sachunterricht */
+      /* mathe = Rechnen, hsu = Heimat- und Sachunterricht, deutsch = Sprache */
       subject: 'mathe',
       topic: 'traunstein',
+      /* zuletzt gewähltes Thema je Fach - beim Umschalten kommt es zurück */
+      topicBySubject: { hsu: 'traunstein', deutsch: 'probe-2110' },
       /* wie geantwortet wird: choice | number | truefalse | letters | text | mixed */
       answerMode: 'choice',
       thinkTime: 0,        /* Sekunden, in denen nur die Frage zu sehen ist */
@@ -57,6 +59,7 @@
         DB.settings.speedByGrade = Object.assign({}, DEFAULTS.settings.speedByGrade, (p.settings || {}).speedByGrade || {});
         DB.settings.opsByGrade = Object.assign({}, (p.settings || {}).opsByGrade || {});
         DB.settings.rangeByGrade = Object.assign({}, (p.settings || {}).rangeByGrade || {});
+        DB.settings.topicBySubject = Object.assign({}, DEFAULTS.settings.topicBySubject, (p.settings || {}).topicBySubject || {});
         DB.time = Object.assign({}, DEFAULTS.time, p.time || {});
         /* Früher hieß die Einstellung inputMode (keypad/choice) */
         if (!(p.settings || {}).answerMode && (p.settings || {}).inputMode) {
@@ -694,7 +697,7 @@
     st.games++;
     /* Der Bestwert je Klasse zählt nur Mathe-Runden - sonst stünde ein
        HSU-Ergebnis unter einer Klassenstufe, zu der es nicht gehört. */
-    if (r.subject === 'hsu') {
+    if (r.subject !== 'mathe') {
       st.bestByTopic = st.bestByTopic || {};
       st.bestByTopic[r.topic] = Math.max(st.bestByTopic[r.topic] || 0, r.score);
     } else {
@@ -833,11 +836,11 @@
       rows.push('<div class="score-row"><span>' + MathGen.GRADE_INFO[g].name + '</span><b>' +
         (DB.stats.bestByGrade[g] || 0) + '</b></div>');
     }
-    HSU.list().forEach(t => {
+    LEARN_SUBJECTS.forEach(sub => Quiz.topics(sub).forEach(t => {
       const best = (DB.stats.bestByTopic || {})[t.id] || 0;
       if (best > 0) rows.push('<div class="score-row"><span>' + t.icon + ' ' + t.name +
         '</span><b>' + best + '</b></div>');
-    });
+    }));
     $('#scoreList').innerHTML = rows.join('');
     $('#statList').innerHTML = [
       ['Richtige Aufgaben gesamt', DB.stats.totalCorrect],
@@ -924,18 +927,39 @@
   };
 
   function isSafari() { return DB.settings.playMode === 'safari'; }
-  function isHsu() { return DB.settings.subject === 'hsu'; }
+  /* Fächer mit Fragenkatalog - dort gibt es ein Thema statt einer Klassenstufe */
+  const LEARN_SUBJECTS = ['hsu', 'deutsch'];
+  function isLearn() { return LEARN_SUBJECTS.indexOf(DB.settings.subject) >= 0; }
+  function isHsu() { return isLearn(); }
+  function curSubject() { return Quiz.SUBJECTS.find(x => x.id === DB.settings.subject) || Quiz.SUBJECTS[0]; }
 
   /* Nur noch für die Tastatur: Ziffern zählen bloß im Zahlenfeld. */
   function inputMode() { return DB.settings.answerMode === 'number' ? 'keypad' : 'choice'; }
 
   const SUBJECT_DESC = {
     mathe: 'Rechnen von Klasse 1 bis 6.',
-    hsu: 'Heimat- und Sachunterricht: Fragen zum Thema deiner nächsten Probe.'
+    hsu: 'Heimat- und Sachunterricht: Fragen zum Thema deiner nächsten Probe.',
+    deutsch: 'Deutsch 4. Klasse: der Stoff für deine nächste Probe.'
+  };
+
+  const TAGLINES = {
+    mathe: 'Rechnen im Weltraum-Tempo',
+    hsu: 'Wissen im Weltraum-Tempo',
+    deutsch: 'Sprache im Weltraum-Tempo'
   };
 
   function setSubject(id) {
-    DB.settings.subject = id === 'hsu' ? 'hsu' : 'mathe';
+    if (!Quiz.SUBJECTS.some(x => x.id === id)) id = 'mathe';
+    DB.settings.subject = id;
+    /* Jedes Lernfach merkt sich sein eigenes Thema. */
+    if (isLearn()) {
+      DB.settings.topicBySubject = DB.settings.topicBySubject || {};
+      const known = Quiz.topics(id).map(t => t.id);
+      let want = DB.settings.topicBySubject[id];
+      if (known.indexOf(want) < 0) want = known[0];
+      DB.settings.topicBySubject[id] = want;
+      DB.settings.topic = want;
+    }
     save();
     buildTopics();
     applyInputMode();
@@ -944,22 +968,24 @@
   }
 
   function syncSubject() {
-    const hsu = isHsu();
+    const learn = isLearn();
+    const cur = DB.settings.subject;
     $$('#subjectSeg button, #subjectSet button').forEach(b =>
-      b.classList.toggle('active', (b.dataset.subject === 'hsu') === hsu));
-    $('#matheSection').hidden = hsu;
+      b.classList.toggle('active', b.dataset.subject === cur));
+    $('#matheSection').hidden = learn;
     syncSpeeds();
     buildForms();
-    $('#hsuSection').hidden = !hsu;
+    $('#hsuSection').hidden = !learn;
     $('#inputSection').hidden = false;
-    $('#tagline').textContent = hsu ? 'Wissen im Weltraum-Tempo' : 'Rechnen im Weltraum-Tempo';
-    $('#chipGrade').hidden = hsu;
-    $('#chipOps').hidden = hsu;
-    $('#chipRange').hidden = hsu;
-    $('#chipTopic').hidden = !hsu;
-    if (hsu) {
-      const t = HSU.topic(DB.settings.topic);
-      $('#chipTopic').textContent = t.icon + ' ' + t.name;
+    $('#tagline').textContent = TAGLINES[cur] || TAGLINES.mathe;
+    $('#chipGrade').hidden = learn;
+    $('#chipOps').hidden = learn;
+    $('#chipRange').hidden = learn;
+    $('#chipTopic').hidden = !learn;
+    if (learn) {
+      const t = Quiz.topicOf(DB.settings);
+      if (t) $('#chipTopic').textContent = t.icon + ' ' + t.name;
+      $('#topicTitle').textContent = 'Thema · ' + curSubject().name;
     }
   }
 
@@ -1031,7 +1057,7 @@
     const grid = $('#topicGrid');
     if (!grid) return;
     grid.innerHTML = '';
-    HSU.list().forEach(t => {
+    Quiz.topics(DB.settings.subject).forEach(t => {
       const b = document.createElement('button');
       b.className = 'topic-card';
       b.dataset.topic = t.id;
@@ -1039,7 +1065,10 @@
         '<span class="txt"><b>' + t.name + '</b><small>' + t.desc + '</small></span>' +
         '<span class="cnt">' + t.count + '</span>';
       b.addEventListener('click', () => {
-        DB.settings.topic = t.id; save();
+        DB.settings.topic = t.id;
+        DB.settings.topicBySubject = DB.settings.topicBySubject || {};
+        DB.settings.topicBySubject[DB.settings.subject] = t.id;
+        save();
         Sound.play('click');
         syncTopics(); syncSubject(); renderMenuInfo();
       });
@@ -1051,9 +1080,10 @@
   function syncTopics() {
     const cur = DB.settings.topic;
     $$('#topicGrid .topic-card').forEach(b => b.classList.toggle('active', b.dataset.topic === cur));
-    const t = HSU.topic(cur);
+    const t = Quiz.topicOf(DB.settings);
+    if (!t) return;
     $('#topicHint').textContent = t.questions.length + ' Fragen aus den Bereichen: '
-      + HSU.groups(cur).join(', ') + '.';
+      + Quiz.groupsOf(DB.settings).join(', ') + '.';
   }
 
   function syncPlayMode() {
@@ -1647,8 +1677,8 @@
     const cur = curSpeed();
     $$('#speedGrid button').forEach(b => b.classList.toggle('active', +b.dataset.speed === cur));
     const sp = Game.speeds[cur - 1];
-    /* Im HSU-Fach gibt es keine Klassenstufe - dann auch kein Zusatz */
-    $('#speedForGrade').textContent = isHsu() ? '' : '· ' + MathGen.GRADE_INFO[DB.settings.grade].name;
+    /* In den Lernfächern gibt es keine Klassenstufe - dann auch kein Zusatz */
+    $('#speedForGrade').textContent = isLearn() ? '' : '· ' + MathGen.GRADE_INFO[DB.settings.grade].name;
     $('#speedDesc').textContent = sp
       ? sp.icon + ' ' + sp.name + ' – ' + sp.desc + '. Ab hier wird es mit jedem Level und jeder Spielminute schneller.'
       : '';
@@ -1792,6 +1822,7 @@
       DB.settings.rangeByGrade = {};
       DB.settings.subject = 'mathe';
       DB.settings.topic = 'traunstein';
+      DB.settings.topicBySubject = JSON.parse(JSON.stringify(DEFAULTS.settings.topicBySubject));
       DB.settings.answerMode = 'choice';
       DB.settings.thinkTime = 0;
       DB.scores = [];
@@ -1930,7 +1961,7 @@
     }
   }
 
-  const APP_FALLBACK_VERSION = '2.2.2';
+  const APP_FALLBACK_VERSION = '2.4.0';
 
   function pwa() {
     $('#appVersion').textContent = APP_FALLBACK_VERSION;

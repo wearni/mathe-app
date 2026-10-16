@@ -118,6 +118,7 @@
       <div class="seg mode-seg" id="subjectSeg">
         <button data-subject="mathe" class="active">📐 Mathe</button>
         <button data-subject="hsu">🌍 HSU</button>
+        <button data-subject="deutsch">✍️ Deutsch</button>
       </div>
       <div class="seg mode-seg" id="playMode">
         <button data-play="arcade" class="active">🚀 Arcade</button>
@@ -158,6 +159,7 @@
       <div class="seg mode-seg" id="subjectSet">
         <button data-subject="mathe">📐 Mathe</button>
         <button data-subject="hsu">🌍 HSU</button>
+        <button data-subject="deutsch">✍️ Deutsch</button>
       </div>
 
       <h3>Spielart</h3>
@@ -182,7 +184,7 @@
       </div>
 
       <div id="hsuSection" hidden>
-        <h3>Thema</h3>
+        <h3 id="topicTitle">Thema</h3>
         <div id="topicGrid" class="topic-grid"></div>
         <p class="hint" id="topicHint"></p>
       </div>
@@ -407,7 +409,9 @@
 <script src="js/pixel.js"></script>
 <script src="js/leaderboard.js"></script>
 <script src="js/mathgen.js"></script>
+<script src="js/bank.js"></script>
 <script src="js/hsu.js"></script>
+<script src="js/deutsch.js"></script>
 <script src="js/quiz.js"></script>
 <script src="js/minigames.js"></script>
 <script src="js/safari.js"></script>

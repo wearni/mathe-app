@@ -4,9 +4,10 @@ Eine Übungs-Arcade als **installierbare PWA** – im Stil von *Math Blaster* un
 Die Aufgaben schweben von oben herab und werden mit der richtigen Lösung abgeschossen.
 Was die Schutzlinie erreicht, kostet ein ❤️.
 
-Zwei Fächer: **Mathe** (Klasse 1–6, Aufgaben werden erzeugt) und **HSU** (Heimat- und
-Sachunterricht, Fragen zum Thema der nächsten Probe). Beide Fächer lassen sich in beiden
-Spielarten üben – Arcade und Safari.
+Drei Fächer: **Mathe** (Klasse 1–6, Aufgaben werden erzeugt), **HSU** (Heimat- und
+Sachunterricht) und **Deutsch** (4. Klasse) – die beiden letzten mit einem Fragenkatalog
+zum Thema der nächsten Probe. Alle Fächer lassen sich in beiden Spielarten üben –
+Arcade und Safari.
 
 Alles läuft **komplett offline im Browser** – kein Server, kein Build-Schritt, keine Tracker,
 keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
@@ -17,9 +18,10 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 
 | | |
 |---|---|
-| 📐🌍 **Zwei Fächer** | **Mathe** mit erzeugten Rechenaufgaben und **HSU** mit einem Fragenkatalog je Thema |
+| 📐🌍✍️ **Drei Fächer** | **Mathe** mit erzeugten Rechenaufgaben, **HSU** und **Deutsch** mit je einem Fragenkatalog zum Thema |
 | 🎯 **Klasse 1–6** | Aufgabentypen passen sich der gewählten Klassenstufe an – von „3 + 4“ bis „3/4 von 24“ und „(−7) · (−4)“ |
-| 🏰 **HSU-Themen** | erstes Thema: **Stadtgeschichte Traunstein** mit 59 Fragen aus fünf Bereichen |
+| 🏰 **HSU-Themen** | erstes Thema: **Stadtgeschichte Traunstein** mit 87 Fragen aus sieben Bereichen |
+| ✍️ **Deutsch-Themen** | erstes Thema: **Deutschprobe 21.10.** mit 100 Fragen aus fünf Bereichen |
 | 💡 **Lösung zum Lernen** | nach zwei Fehlversuchen erscheint die richtige Antwort – im Safari so lange, bis man weitertippt |
 | 🔁 **Wiederholung** | was danebenging, kommt in derselben Runde noch einmal dran |
 | ✅ **Rechenarten wählbar** | Plus, Minus, Mal, Geteilt … einzeln per Haken an- und abschalten – **pro Klassenstufe** gespeichert, von Haus aus ist alles an |
@@ -64,8 +66,8 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 
 Passt die eingestellte Art einmal nicht zur Frage – „Woher bekommt die Gemeinde ihr
 Geld?" lässt sich schlecht aus Buchstaben legen – gibt es dort automatisch die Auswahl.
-Von den 59 Traunstein-Fragen eignen sich 12 fürs Zahlenfeld (die Jahreszahlen), 13 für
-den Buchstabensalat und 50 für Freitext.
+Von den 87 Traunstein-Fragen eignen sich 13 fürs Zahlenfeld (Jahreszahlen und die Zahl
+der Stadträte), 26 für den Buchstabensalat und 74 für Freitext.
 
 **Freitext wird großzügig verglichen:** Groß- und Kleinschreibung, Umlaute, Leerzeichen
 und Satzzeichen sind egal, und ab fünf Buchstaben ist ein Tippfehler erlaubt. Die
@@ -159,7 +161,7 @@ Zeilen umbrochen, lange Antworten bekommen kleinere Knöpfe.
 
 HSU ist zum Üben da, nicht zum Punktejagen. Deshalb fällt die Belohnung kleiner aus:
 
-| | Mathe | HSU |
+| | Mathe | HSU und Deutsch |
 |---|---|---|
 | Punkte je Aufgabe | voll | **halb** |
 | Sternchen | eines je richtige Aufgabe | **eines je zweite** |
@@ -188,7 +190,7 @@ der App nicht gespeichert.
 
 ### Erstes Thema: Stadtgeschichte Traunstein
 
-59 Fragen aus fünf Bereichen:
+87 Fragen aus sieben Bereichen:
 
 | Bereich | Inhalt |
 |---|---|
@@ -197,6 +199,8 @@ der App nicht gespeichert.
 | **Gemeinde** | Kommune, Bürger, Gemeinderat, Ortsteile, Rathaus, Ämter |
 | **Aufgaben** | Pflichtaufgaben und freiwillige Aufgaben |
 | **Geld** | Steuern, Gebühren, sonstige Einnahmen, Haushaltsplan |
+| **Ämter** | Einwohnermelde-, Fund-, Standes-, Pass-, Steuer-, Gewerbe-, Ordnungs- und Ausländeramt, dazu Kämmerei, Bauamt, Kulturamt, Jugendamt |
+| **Entscheiden** | Bürgermeister und Gemeinderat, Stadtrat, Kommunalwahl, Vorsitz und Kontrolle |
 
 Vier Angaben aus dem Arbeitsblatt waren nicht richtig und wurden nach den Angaben der
 Stadt Traunstein korrigiert:
@@ -210,6 +214,9 @@ Stadt Traunstein korrigiert:
 
 Dazu ergänzt: erste urkundliche Erwähnung **1245** als *Trauwenstain*, Stadtrecht **1375**,
 Eingemeindung von Au **1914**.
+
+Die Zahl **30 Stadträte** ist geprüft: Die Hauptsatzung der Stadt Traunstein (§ 1) nennt
+„den berufsmäßigen Oberbürgermeister und 30 ehrenamtliche Mitglieder".
 
 ### Ein neues Thema anlegen
 
@@ -226,6 +233,55 @@ In `js/hsu.js` in `TOPICS` einen weiteren Eintrag ergänzen. Eine Frage sieht so
 
 Auswahl im Menü, Fortschritt und beide Spielarten kommen von selbst mit. Fragen sollten
 höchstens etwa 50 Zeichen lang sein, damit sie gut in den Kasten passen.
+
+---
+
+## Deutsch – 4. Klasse
+
+**Einstellungen → Fach → ✍️ Deutsch.** Funktioniert genau wie HSU: derselbe Unterbau,
+dieselben Antwortarten, dieselbe Lösungskarte und derselbe Wiederholungs-Stapel. Auch
+hier gibt es die halbe Wertung – das Lernen zählt, nicht das Punktesammeln.
+
+### Erstes Thema: Deutschprobe 21.10.
+
+100 Fragen aus fünf Bereichen:
+
+| Bereich | Inhalt |
+|---|---|
+| **Wörtliche Rede** | Begleitsatz vorangestellt (Doppelpunkt) und nachgestellt (Komma), Anführungszeichen, was mit dem Punkt passiert, Frage- und Ausrufezeichen |
+| **Wortarten** | Nomen, Verb, Adjektiv, Artikel, Pronomen – samt Merkfragen („Wer oder was?“) und Grundform |
+| **1. Vergangenheit** | Präteritum regelmäßiger und unregelmäßiger Verben, 20 Beispiele zum Umformen |
+| **Rechtschreiben** | die Strategien Schwingen, Verlängern, Ableiten, Merkwörter und Nachschlagen |
+| **Abschreiben** | die Schritte der Abschreibtechnik: lesen, einprägen, abdecken, schreiben, vergleichen |
+
+### Genau schreiben, wo es darauf ankommt
+
+Beim Freitext wird sonst ein Tippfehler verziehen. Bei Zeitformen und Rechtschreibung
+wäre das aber falsch: *ich spiele* und *ich spielte* trennt nur ein Buchstabe – und genau
+darum geht es ja. Solche Fragen tragen in `js/deutsch.js` ein `x: 1`; dann zählt nur die
+exakte Schreibweise.
+
+```js
+{ g: '1. Vergangenheit',
+  q: '1. Vergangenheit von „ich spiele“?',
+  a: 'ich spielte', x: 1,                // x: 1 = genau schreiben
+  w: ['ich spiele', 'ich habe gespielt', 'ich werde spielen'] }
+```
+
+### Ein neues Fach anlegen
+
+Die Mechanik hinter HSU und Deutsch steckt in **`js/bank.js`** und ist für beide dieselbe.
+Ein weiteres Fach braucht deshalb nur eine eigene Fragendatei:
+
+1. `js/deutsch.js` als Vorlage kopieren, Fragen und `TOPICS` ersetzen und am Ende
+   `global.Englisch = Bank.make('englisch', TOPICS);` schreiben
+2. die Datei in `index.html` und in der Liste `ASSETS` in `sw.js` eintragen
+3. in `js/quiz.js` einen Eintrag in `SUBJECTS` ergänzen
+4. in `js/main.js` das Kürzel in `LEARN_SUBJECTS`, `SUBJECT_DESC` und `TAGLINES` ergänzen
+   und in `index.html` je einen Knopf in `#subjectSeg` und `#subjectSet`
+
+Themenauswahl, Fortschritt, Bestwerte, Antwortarten und beide Spielarten kommen von
+selbst mit.
 
 ---
 
@@ -625,8 +681,10 @@ schul-app/
 │   ├── pixel.js             Pixel-Sprites, Pixelschrift, Avatare
 │   ├── leaderboard.js       Anbindung an Supabase
 │   ├── mathgen.js           Aufgaben-Generator Klasse 1–6
-│   ├── hsu.js               Fragenkataloge für HSU (Themen)
-│   ├── quiz.js              gemeinsame Schnittstelle für Mathe und HSU
+│   ├── bank.js              Unterbau für alle Fächer mit Fragenkatalog
+│   ├── hsu.js               Fragen für HSU (Themen)
+│   ├── deutsch.js           Fragen für Deutsch 4. Klasse
+│   ├── quiz.js              gemeinsame Schnittstelle für alle Fächer
 │   ├── minigames.js         die drei Bonusspiele (inkl. Dosen-Physik)
 │   ├── safari.js            Strecke, Savanne und Jeep des Safari-Modus
 │   ├── audio.js             8-Bit Sound-Engine + Chiptune
@@ -649,15 +707,16 @@ schul-app/
 * **Safari-Welten:** die Tabelle `WORLDS` in `js/safari.js` – Farben, Landschaftsarten
   (`kinds`, `rare`), Ziel (`goal`) und Fahrzeug (`vehicle`, `paint`) je Hintergrund
 * **Sperre nach einer Antwort:** `ANSWER_LOCK` in `js/game.js` (Sekunden)
-* **HSU-Wertung:** `CONFIG.hsuScore`, `CONFIG.hsuStarEvery` und `CONFIG.hsuMaxCombo`
+* **Wertung der Lernfächer:** `CONFIG.hsuScore`, `CONFIG.hsuStarEvery` und `CONFIG.hsuMaxCombo`
   in `js/game.js`; wie lange die Lösung im Arcade stehen bleibt: `CONFIG.solutionHold`
-* **Wiederholung falscher Fragen:** `REPEAT_CHANCE` in `js/hsu.js`
+* **Wiederholung falscher Fragen:** `REPEAT_CHANCE` in `js/bank.js`
 * **Antwortarten:** die Liste `FORMS` in `js/quiz.js`; welche Art zu welcher Frage passt,
-  entscheidet `formsFor()` in `js/hsu.js`. Wie großzügig Freitext verglichen wird,
-  steht in `sameText()` in `js/quiz.js`
+  entscheidet `formsFor()` in `js/bank.js`. Wie großzügig Freitext verglichen wird,
+  steht in `sameText()` in `js/quiz.js` – mit `x: 1` an einer Frage zählt dort nur die
+  exakte Schreibweise
 * **Denkzeit:** die Liste `THINK_TIMES` in `js/main.js`
 * **Zeitstrahl:** `CONFIG.timelineEvery` in `js/game.js` (nach wie vielen Aufgaben einer kommt),
-  gebaut wird er in `HSU.timeline()`
+  gebaut wird er in `timeline()` in `js/bank.js`
 * **Tempo-Stufen:** die Tabelle `SPEEDS` in `js/game.js` – `fall` ist die Fallzeit in
   Sekunden beim Start, `spawn` der Abstand zwischen zwei Aufgaben
 * **Standard-Tempo je Klasse:** `DEFAULTS.settings.speedByGrade` in `js/main.js`
@@ -667,7 +726,8 @@ schul-app/
 * **Neues Bonusspiel:** in `js/minigames.js` eine Funktion nach dem Muster der drei
   vorhandenen ergänzen und in `GAMES` und `LIST` eintragen
 * **Bonus seltener/öfter:** `CONFIG.bonusEvery` in `js/game.js` (zählt nur richtige Antworten)
-* **Neues HSU-Thema:** in `js/hsu.js` in `TOPICS` ergänzen (siehe oben)
+* **Neues Thema:** in `js/hsu.js` bzw. `js/deutsch.js` in `TOPICS` ergänzen (siehe oben)
+* **Neues Fach:** `js/deutsch.js` als Vorlage nehmen (siehe oben)
 * **Neue Aufgabentypen:** in `js/mathgen.js` in der Tabelle `GENS` bei der passenden Klasse
   einen Eintrag `{ op: '…', fn: level => ({ text, answer }) }` ergänzen. `op` ist eine der IDs
   aus `OPS` – dadurch taucht der Typ automatisch unter der richtigen Rechenart in den

@@ -184,8 +184,8 @@
   }
 
   function maxOnScreen() {
-    /* HSU-Fragen sind lange Kästen - mehr als zwei auf einmal wird unleserlich */
-    if (G.settings.subject === 'hsu') return 2;
+    /* Sachfragen sind lange Kästen - mehr als zwei auf einmal wird unleserlich */
+    if (isHsu()) return 2;
     const slow = G.settings.speed <= 2;
     return clamp(2 + Math.floor(G.level / (slow ? 5 : 3)), 2, slow ? 3 : 4);
   }
@@ -463,7 +463,9 @@
     if (G.cb.onToast) G.cb.onToast('Level ' + G.level + ' – jetzt wird\'s schneller!');
   }
 
-  function isHsu() { return G.settings.subject === 'hsu'; }
+  /* "Lernfach" = ein Fach mit festem Fragenkatalog (HSU, Deutsch, ...).
+     Dort geht es ums Lernen: weniger Punkte, ruhigeres Feld. */
+  function isHsu() { return Quiz.isBank(G.settings); }
 
   /* Punkte-Faktor. Beides zusammen zählt: Safari ist gemütlich, HSU ist zum
      Lernen da - im gemütlichen HSU-Safari gibt es also am wenigsten Punkte.

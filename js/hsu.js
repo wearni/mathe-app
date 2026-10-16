@@ -1,7 +1,11 @@
 /* ============================================================
    Schul App - HSU-Fragen (Heimat- und Sachunterricht)
 
-   Jedes Thema ist eine Liste von Fragen:
+   Hier stehen nur die Fragen. Die Mechanik dahinter - Themenliste,
+   Ziehen, Wiederholungs-Stapel, Antwortarten, Zeitstrahl - kommt aus
+   js/bank.js und ist für alle Fächer mit Fragenkatalog dieselbe.
+
+   Jede Frage:
      q = Frage (kurz halten, sie muss in den Kasten passen)
      a = richtige Antwort
      w = drei falsche, aber plausible Antworten
@@ -12,14 +16,6 @@
    ============================================================ */
 (function (global) {
   'use strict';
-
-  function shuffle(a) {
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
 
   /* ===================== Stadtgeschichte Traunstein =====================
      Quelle der geprüften Zahlen: Stadt Traunstein (Stadtgeschichte,
@@ -118,17 +114,17 @@
       w: ['Pflichtaufgaben', 'Notaufgaben', 'Zusatzsteuern'] },
     { g: 'Aufgaben', q: 'Was ist eine Pflichtaufgabe?', a: 'Müllbeseitigung',
       w: ['Schwimmbad', 'Bücherei', 'Museum'] },
-    { g: 'Aufgaben', q: 'Was ist eine Pflichtaufgabe?', a: 'Trinkwasserversorgung',
+    { g: 'Aufgaben', q: 'Welche Pflichtaufgabe hat mit Wasser zu tun?', a: 'Trinkwasserversorgung',
       w: ['Sportanlage', 'Spielplatz', 'Konzert'] },
-    { g: 'Aufgaben', q: 'Was ist eine Pflichtaufgabe?', a: 'Feuerwehr und Feuerschutz',
+    { g: 'Aufgaben', q: 'Welche Pflichtaufgabe schützt vor Feuer?', a: 'Feuerwehr und Feuerschutz',
       w: ['Stadtfest', 'Kino', 'Museum'] },
-    { g: 'Aufgaben', q: 'Was ist eine Pflichtaufgabe?', a: 'Schulen und Kindergärten',
+    { g: 'Aufgaben', q: 'Welche Pflichtaufgabe betrifft Kinder?', a: 'Schulen und Kindergärten',
       w: ['Bücherei', 'Schwimmbad', 'Spielplatz'] },
     { g: 'Aufgaben', q: 'Was ist eine freiwillige Aufgabe?', a: 'Bau von Spielplätzen',
       w: ['Straßenbau', 'Friedhof', 'Abwasserbeseitigung'] },
-    { g: 'Aufgaben', q: 'Was ist eine freiwillige Aufgabe?', a: 'Bücherei und Museen',
+    { g: 'Aufgaben', q: 'Welche freiwillige Aufgabe ist zum Lesen?', a: 'Bücherei und Museen',
       w: ['Trinkwasser', 'Müllabfuhr', 'Feuerwehr'] },
-    { g: 'Aufgaben', q: 'Was ist eine freiwillige Aufgabe?', a: 'Bau eines Schwimmbads',
+    { g: 'Aufgaben', q: 'Welchen Bau muss die Gemeinde nicht machen?', a: 'Bau eines Schwimmbads',
       w: ['Bau einer Schule', 'Bau einer Straße', 'Bau eines Friedhofs'] },
     { g: 'Aufgaben', q: 'Was braucht die Gemeinde für ihre Aufgaben?', a: 'Geld',
       w: ['Ferien', 'Gäste', 'Glück'] },
@@ -155,7 +151,67 @@
     { g: 'Geld', q: 'Wie heißt der Plan für Einnahmen und Ausgaben?', a: 'Haushaltsplan',
       w: ['Stadtplan', 'Bebauungsplan', 'Stundenplan'] },
     { g: 'Geld', q: 'Wie hoch dürfen die Ausgaben sein?', a: 'nicht höher als die Einnahmen',
-      w: ['doppelt so hoch', 'beliebig hoch', 'halb so hoch'] }
+      w: ['doppelt so hoch', 'beliebig hoch', 'halb so hoch'] },
+
+    /* ---------- Ämter einer Gemeinde ---------- */
+    { g: 'Ämter', q: 'Wohin geht man, wenn man umgezogen ist?', a: 'Einwohnermeldeamt',
+      w: ['Fundamt', 'Standesamt', 'Passamt'] },
+    { g: 'Ämter', q: 'Wo meldet man einen verlorenen Schirm?', a: 'Fundamt',
+      w: ['Ordnungsamt', 'Passamt', 'Steueramt'] },
+    { g: 'Ämter', q: 'Welches Amt ist für Hochzeiten zuständig?', a: 'Standesamt',
+      w: ['Ordnungsamt', 'Einwohnermeldeamt', 'Jugendamt'] },
+    { g: 'Ämter', q: 'Wo holt man seinen neuen Pass ab?', a: 'Passamt',
+      w: ['Fundamt', 'Standesamt', 'Gewerbeamt'] },
+    { g: 'Ämter', q: 'Wer kümmert sich um zu viel bezahlte Steuer?', a: 'Steueramt',
+      w: ['Kämmerei', 'Ordnungsamt', 'Bauamt'] },
+    { g: 'Ämter', q: 'Wohin geht man, um ein Geschäft zu eröffnen?', a: 'Gewerbeamt',
+      w: ['Steueramt', 'Bauamt', 'Kulturamt'] },
+    { g: 'Ämter', q: 'Der Nachbarhund läuft frei herum. Welches Amt?', a: 'Ordnungsamt',
+      w: ['Fundamt', 'Jugendamt', 'Standesamt'] },
+    { g: 'Ämter', q: 'Welches Amt hilft Menschen aus dem Ausland?', a: 'Ausländeramt',
+      w: ['Passamt', 'Ordnungsamt', 'Einwohnermeldeamt'] },
+    { g: 'Ämter', q: 'Welches Amt verwaltet das Geld der Gemeinde?', a: 'Kämmerei',
+      w: ['Steueramt', 'Bauamt', 'Kulturamt'] },
+    { g: 'Ämter', q: 'Welches Amt genehmigt den Bau eines Hauses?', a: 'Bauamt',
+      w: ['Ordnungsamt', 'Gewerbeamt', 'Kämmerei'] },
+    { g: 'Ämter', q: 'Welches Amt kümmert sich um Feste und Kultur?', a: 'Kulturamt',
+      w: ['Jugendamt', 'Bauamt', 'Fundamt'] },
+    { g: 'Ämter', q: 'Welches Amt ist für Kinder und Jugendliche da?', a: 'Jugendamt',
+      w: ['Kulturamt', 'Standesamt', 'Ordnungsamt'] },
+    { g: 'Ämter', q: 'Wo sitzen die Ämter einer Gemeinde?', a: 'im Rathaus',
+      w: ['im Landratsamt', 'in der Schule', 'im Finanzamt'] },
+
+    /* ---------- Wer entscheidet in einer Gemeinde? ---------- */
+    { g: 'Entscheiden', q: 'Wer trifft die wichtigen Entscheidungen?', a: 'Bürgermeister und Gemeinderat',
+      w: ['nur der Bürgermeister', 'nur der Gemeinderat', 'der Landrat'] },
+    { g: 'Entscheiden', q: 'Wie heißt der Gemeinderat in einer Stadt?', a: 'Stadtrat',
+      w: ['Ortsrat', 'Kreistag', 'Landtag'] },
+    { g: 'Entscheiden', q: 'Wie viele Stadträte hat Traunstein?', a: '30',
+      w: ['20', '40', '12'], n: 'Dazu kommt der Oberbürgermeister.' },
+    { g: 'Entscheiden', q: 'Wovon hängt die Zahl der Gemeinderäte ab?', a: 'von der Größe der Gemeinde',
+      w: ['vom Alter der Gemeinde', 'vom Geld der Gemeinde', 'vom Bürgermeister'] },
+    { g: 'Entscheiden', q: 'Wie heißt der Bürgermeister in großen Städten?', a: 'Oberbürgermeister',
+      w: ['Hauptbürgermeister', 'Stadtdirektor', 'Landrat'] },
+    { g: 'Entscheiden', q: 'Alle wie viele Jahre wird gewählt?', a: 'alle 6 Jahre',
+      w: ['alle 4 Jahre', 'alle 5 Jahre', 'alle 8 Jahre'] },
+    { g: 'Entscheiden', q: 'Wie nennt man die Wahl in einer Gemeinde?', a: 'Kommunalwahl',
+      w: ['Bundestagswahl', 'Landtagswahl', 'Europawahl'] },
+    { g: 'Entscheiden', q: 'Ab welchem Alter darf man wählen?', a: 'ab 18 Jahren',
+      w: ['ab 14 Jahren', 'ab 16 Jahren', 'ab 21 Jahren'] },
+    { g: 'Entscheiden', q: 'Was für eine Wahl ist die Kommunalwahl?', a: 'eine demokratische Wahl',
+      w: ['eine geheime Losung', 'eine Abstimmung im Landtag', 'eine Ernennung'] },
+    { g: 'Entscheiden', q: 'Wer hat den Vorsitz des Gemeinderates?', a: 'der Bürgermeister',
+      w: ['der älteste Gemeinderat', 'der Landrat', 'der Kämmerer'] },
+    { g: 'Entscheiden', q: 'Wer leitet den Gemeinderat?', a: 'der Bürgermeister',
+      w: ['der Stadtrat', 'der Landrat', 'die Verwaltung'] },
+    { g: 'Entscheiden', q: 'Wer kontrolliert den Bürgermeister?', a: 'der Gemeinderat',
+      w: ['die Bürger', 'der Landrat', 'das Ordnungsamt'] },
+    { g: 'Entscheiden', q: 'Wessen Interessen vertreten die beiden?', a: 'die der Einwohner',
+      w: ['die der Firmen', 'die eigenen', 'die des Landkreises'] },
+    { g: 'Entscheiden', q: 'Worüber entscheiden sie gemeinsam?', a: 'über Anträge',
+      w: ['über Hausaufgaben', 'über Gesetze', 'über Steuersätze im Bund'] },
+    { g: 'Entscheiden', q: 'Was machen Bürgermeister und Gemeinderat?', a: 'Aufgaben für uns alle übernehmen',
+      w: ['nur Geld verteilen', 'Gesetze für Bayern machen', 'die Schule leiten'] }
   ];
 
   const TOPICS = [
@@ -168,138 +224,5 @@
     }
   ];
 
-  const BY_ID = {};
-  TOPICS.forEach(t => { BY_ID[t.id] = t; });
-
-  function topic(id) { return BY_ID[id] || TOPICS[0]; }
-
-  function list() {
-    return TOPICS.map(t => ({
-      id: t.id, name: t.name, icon: t.icon, desc: t.desc, count: t.questions.length
-    }));
-  }
-
-  /* Welche Themenbereiche stecken drin? Nur für die Anzeige. */
-  function groups(id) {
-    const seen = [];
-    topic(id).questions.forEach(q => { if (seen.indexOf(q.g) < 0) seen.push(q.g); });
-    return seen;
-  }
-
-  let lastQ = '';
-
-  /* ---------- Wiederholung ----------
-     Was einmal danebenging, kommt in dieser Runde noch einmal dran - und
-     fliegt erst wieder raus, wenn es zweimal richtig beantwortet wurde.
-     Genau dafür ist das Fach da. */
-  const missed = {};            /* topicId -> [{ q, left }] */
-  const REPEAT_CHANCE = 0.45;
-
-  function bucket(id) {
-    if (!missed[id]) missed[id] = [];
-    return missed[id];
-  }
-
-  function markResult(topicId, text, correct) {
-    const id = topic(topicId).id;
-    const b = bucket(id);
-    const i = b.findIndex(x => x.q === text);
-    if (correct) {
-      if (i >= 0 && --b[i].left <= 0) b.splice(i, 1);
-      return;
-    }
-    if (i >= 0) b[i].left = 2;
-    else b.push({ q: text, left: 2 });
-    if (b.length > 12) b.shift();
-  }
-
-  function openRepeats(topicId) { return bucket(topic(topicId).id).length; }
-
-  function resetRepeats(topicId) {
-    if (topicId) missed[topic(topicId).id] = [];
-    else Object.keys(missed).forEach(k => { missed[k] = []; });
-  }
-
-  /* Eine Frage ziehen. uid macht die Antwortwerte eindeutig, damit zwei
-     Aufgaben auf dem Feld sich nicht gegenseitig abschießen. */
-  /* Welche Antwortarten passen zu dieser Frage? Nicht jede Antwort lässt
-     sich eintippen oder aus Buchstaben zusammensetzen. */
-  function formsFor(q) {
-    const a = String(q.a).trim();
-    const out = ['choice', 'truefalse'];
-    if (/^\d{1,6}$/.test(a)) out.push('number');
-    if (/^[A-Za-zÄÖÜäöüß-]{3,14}$/.test(a)) out.push('letters');
-    if (a.length <= 22) out.push('text');
-    return out;
-  }
-
-  /* Wie viele Jahreszahl-Ereignisse hat das Thema? (für den Zeitstrahl) */
-  function events(topicId) {
-    return topic(topicId).questions
-      .filter(q => q.ev && /^\d{3,4}$/.test(String(q.a)))
-      .map(q => ({ label: q.ev, year: parseInt(q.a, 10), note: q.n || '' }));
-  }
-
-  /* Eine Zeitstrahl-Aufgabe: n Ereignisse, die in die richtige Reihenfolge
-     gebracht werden müssen. Gleiche Jahre werden ausgelassen, sonst gäbe es
-     mehr als eine richtige Lösung. */
-  function timeline(topicId, n) {
-    const all = events(topicId);
-    if (all.length < 3) return null;
-    n = Math.min(Math.max(n || 3, 3), 4);
-
-    let pick_, guard = 0;
-    do {
-      pick_ = shuffle(all.slice()).slice(0, n);
-      guard++;
-    } while (guard < 30 && new Set(pick_.map(e => e.year)).size !== pick_.length);
-    if (new Set(pick_.map(e => e.year)).size !== pick_.length) return null;
-
-    const sorted = pick_.slice().sort((a, b) => a.year - b.year);
-    return {
-      items: shuffle(pick_.slice()).map(e => ({ label: e.label, year: e.year })),
-      order: sorted.map(e => e.year),
-      answerLabel: sorted.map(e => e.year + ' ' + e.label).join('  ·  ')
-    };
-  }
-
-  function create(topicId, uid) {
-    const t = topic(topicId);
-    const all = t.questions;
-    const b = bucket(t.id);
-
-    let q = null;
-    /* mit etwas Glück eine Frage, die vorhin danebenging */
-    if (b.length && Math.random() < REPEAT_CHANCE) {
-      const cand = b.map(x => all.find(a => a.q === x.q)).filter(Boolean)
-        .filter(a => a.q !== lastQ);
-      if (cand.length) q = cand[Math.floor(Math.random() * cand.length)];
-    }
-    let guard = 0;
-    while (!q || (q.q === lastQ && guard < 12)) {
-      q = all[Math.floor(Math.random() * all.length)];
-      guard++;
-    }
-    lastQ = q.q;
-
-    const base = (uid || 1) * 10;
-    const labels = shuffle([q.a].concat(q.w.slice(0, 3)));
-    const choices = labels.map((label, i) => ({ v: base + i, label }));
-    const correct = choices[labels.indexOf(q.a)];
-
-    return {
-      text: q.q,
-      answer: correct.v,
-      answerLabel: q.a,
-      note: q.n || '',
-      group: q.g || '',
-      choices: choices,
-      forms: formsFor(q),
-      /* für Wahr/Falsch: ein Vorschlag, der stimmen kann oder nicht */
-      wrongOne: q.w[Math.floor(Math.random() * q.w.length)]
-    };
-  }
-
-  global.HSU = { TOPICS, list, topic, groups, create, markResult, openRepeats, resetRepeats,
-    formsFor, events, timeline };
+  global.HSU = Bank.make('hsu', TOPICS);
 })(window);

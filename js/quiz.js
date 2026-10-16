@@ -23,7 +23,8 @@
 
   const SUBJECTS = [
     { id: 'mathe', name: 'Mathe', icon: '📐', desc: 'Rechnen von Klasse 1 bis 6' },
-    { id: 'hsu', name: 'HSU', icon: '🌍', desc: 'Heimat- und Sachunterricht' }
+    { id: 'hsu', name: 'HSU', icon: '🌍', desc: 'Heimat- und Sachunterricht' },
+    { id: 'deutsch', name: 'Deutsch', icon: '✍️', desc: 'Sprache und Rechtschreibung' }
   ];
 
   /* Antwortarten. "mixed" wechselt pro Aufgabe durch, was gerade passt. */
@@ -38,6 +39,12 @@
   const FORM_INFO = {};
   FORMS.forEach(f => { FORM_INFO[f.id] = f; });
 
+  /* Fächer mit festem Fragenkatalog (HSU, Deutsch, ...) laufen alle über
+     denselben Unterbau aus js/bank.js. bankOf() liefert ihn - oder null,
+     dann wird gerechnet. */
+  function bankOf(s) { return Bank.of((s && s.subject) || 'mathe'); }
+  function isBank(s) { return !!bankOf(s); }
+  /* alter Name, wird an ein paar Stellen noch gebraucht */
   function isHsu(s) { return (s && s.subject) === 'hsu'; }
 
   function shuffle(a) {
@@ -76,11 +83,14 @@
     return prev[n];
   }
 
-  function sameText(given, wanted) {
+  function sameText(given, wanted, exact) {
     const a = norm(given), b = norm(wanted);
     if (!a) return false;
     if (a === b) return true;
-    /* ein Tippfehler darf sein, wenn das Wort lang genug ist */
+    /* Bei Rechtschreibung und Zeitformen zählt nur die genaue Schreibweise -
+       "ich spiele" und "ich spielte" trennt sonst nur ein Buchstabe. */
+    if (exact) return false;
+    /* sonst: ein Tippfehler darf sein, wenn das Wort lang genug ist */
     return b.length >= 5 && distance(a, b) <= 1;
   }
 
@@ -98,7 +108,7 @@
       const v = typeof given === 'number' ? given : parseInt(String(given).replace(/[^\-0-9]/g, ''), 10);
       return isFinite(v) && v === q.solutionNumber;
     }
-    return sameText(given, q.solution);
+    return sameText(given, q.solution, q.exact);
   }
 
   /* ---------- Antwortart wählen ---------- */
@@ -141,9 +151,11 @@
     s = s || {};
     const wanted = s.answerMode || 'choice';
 
+    const bank = bankOf(s);
+
     /* ---- Zeitstrahl wird gelegentlich eingestreut ---- */
-    if (isHsu(s) && s.timeline && s.timelineDue) {
-      const t = HSU.timeline(s.topic, 3);
+    if (bank && s.timeline && s.timelineDue) {
+      const t = bank.timeline(s.topic, 3);
       if (t) {
         return {
           form: 'timeline',
@@ -158,12 +170,12 @@
       }
     }
 
-    if (isHsu(s)) {
-      const q = HSU.create(s.topic, uid);
+    if (bank) {
+      const q = bank.create(s.topic, uid);
       const form = pickForm(wanted, q.forms);
       const out = {
         form: form, text: q.q || q.text, answer: q.answer, answerLabel: q.answerLabel,
-        note: q.note, group: q.group, choices: q.choices,
+        note: q.note, group: q.group, choices: q.choices, exact: !!q.exact,
         solution: q.answerLabel, solutionNumber: parseInt(q.answerLabel, 10)
       };
       if (form === 'truefalse') {
@@ -210,27 +222,46 @@
   /* Ergebnis zurückmelden. Bei HSU landet eine falsch beantwortete Frage
      im Wiederholungs-Stapel und kommt in dieser Runde noch einmal dran. */
   function markResult(s, text, correct) {
-    if (isHsu(s)) HSU.markResult(s.topic, text, correct);
+    const b = bankOf(s);
+    if (b) b.markResult(s.topic, text, correct);
   }
 
-  function openRepeats(s) { return isHsu(s) ? HSU.openRepeats(s.topic) : 0; }
-  function resetRepeats(s) { if (isHsu(s)) HSU.resetRepeats(s.topic); }
+  function openRepeats(s) { const b = bankOf(s); return b ? b.openRepeats(s.topic) : 0; }
+  function resetRepeats(s) { const b = bankOf(s); if (b) b.resetRepeats(s.topic); }
 
   /* Welche Antwortarten stehen in diesem Fach zur Auswahl? */
   function formsFor(s) {
-    if (isHsu(s)) return FORMS;
+    if (isBank(s)) return FORMS;
     return FORMS.filter(f => f.id !== 'letters');
   }
 
   /* Hat das Thema genug Jahreszahlen für einen Zeitstrahl? */
   function hasTimeline(s) {
-    return isHsu(s) && HSU.events(s && s.topic).length >= 3;
+    const b = bankOf(s);
+    return !!b && b.events(s && s.topic).length >= 3;
+  }
+
+  /* Themen eines Fachs - für die Auswahl in den Einstellungen */
+  function topics(subject) {
+    const b = Bank.of(subject);
+    return b ? b.list() : [];
+  }
+
+  function topicOf(s) {
+    const b = bankOf(s);
+    return b ? b.topic(s && s.topic) : null;
+  }
+
+  function groupsOf(s) {
+    const b = bankOf(s);
+    return b ? b.groups(s && s.topic) : [];
   }
 
   /* Kurzer Text für Menü und Einstellungen */
   function info(s) {
-    if (isHsu(s)) {
-      const t = HSU.topic(s && s.topic);
+    const b = bankOf(s);
+    if (b) {
+      const t = b.topic(s && s.topic);
       return { icon: t.icon, name: t.name, detail: t.questions.length + ' Fragen' };
     }
     const g = (s && s.grade) || 1;
@@ -240,6 +271,7 @@
   global.Quiz = {
     SUBJECTS, FORMS, FORM_INFO,
     create, check, markResult, openRepeats, resetRepeats,
-    formsFor, hasTimeline, info, isHsu, sameText
+    formsFor, hasTimeline, info, isHsu, isBank, sameText,
+    topics, topicOf, groupsOf
   };
 })(window);
