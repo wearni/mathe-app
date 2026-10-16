@@ -1961,7 +1961,7 @@
     }
   }
 
-  const APP_FALLBACK_VERSION = '2.4.0';
+  const APP_FALLBACK_VERSION = '2.4.1';
 
   function pwa() {
     $('#appVersion').textContent = APP_FALLBACK_VERSION;

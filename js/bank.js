@@ -61,7 +61,19 @@
       return seen;
     }
 
-    let lastQ = '';
+    /* ---------- Abstand ----------
+       Die zuletzt gestellten Fragen sind für eine Weile gesperrt. Ohne das
+       kann eine Frage, die auf dem Wiederholungs-Stapel liegt, dreimal
+       unter den ersten fünf auftauchen - das nervt mehr, als es hilft. */
+    const recent = [];
+    const COOLDOWN = 5;
+
+    function cooldown(all) { return Math.min(COOLDOWN, Math.max(0, all.length - 2)); }
+    function fresh(q) { return recent.indexOf(q.q) < 0; }
+    function remember(q, all) {
+      recent.push(q.q);
+      while (recent.length > cooldown(all)) recent.shift();
+    }
 
     /* ---------- Wiederholung ----------
        Was einmal danebenging, kommt in dieser Runde noch einmal dran - und
@@ -91,6 +103,7 @@
     function openRepeats(topicId) { return bucket(topic(topicId).id).length; }
 
     function resetRepeats(topicId) {
+      recent.length = 0;
       if (topicId) missed[topic(topicId).id] = [];
       else Object.keys(missed).forEach(k => { missed[k] = []; });
     }
@@ -135,16 +148,15 @@
       let q = null;
       /* mit etwas Glück eine Frage, die vorhin danebenging */
       if (b.length && Math.random() < REPEAT_CHANCE) {
-        const cand = b.map(x => all.find(a => a.q === x.q)).filter(Boolean)
-          .filter(a => a.q !== lastQ);
+        const cand = b.map(x => all.find(a => a.q === x.q)).filter(Boolean).filter(fresh);
         if (cand.length) q = cand[Math.floor(Math.random() * cand.length)];
       }
-      let guard = 0;
-      while (!q || (q.q === lastQ && guard < 12)) {
-        q = all[Math.floor(Math.random() * all.length)];
-        guard++;
+      if (!q) {
+        const pool = all.filter(fresh);
+        const src = pool.length ? pool : all;
+        q = src[Math.floor(Math.random() * src.length)];
       }
-      lastQ = q.q;
+      remember(q, all);
 
       const base = (uid || 1) * 10;
       const labels = shuffle([q.a].concat(q.w.slice(0, 3)));

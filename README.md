@@ -21,7 +21,7 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | 📐🌍✍️ **Drei Fächer** | **Mathe** mit erzeugten Rechenaufgaben, **HSU** und **Deutsch** mit je einem Fragenkatalog zum Thema |
 | 🎯 **Klasse 1–6** | Aufgabentypen passen sich der gewählten Klassenstufe an – von „3 + 4“ bis „3/4 von 24“ und „(−7) · (−4)“ |
 | 🏰 **HSU-Themen** | erstes Thema: **Stadtgeschichte Traunstein** mit 87 Fragen aus sieben Bereichen |
-| ✍️ **Deutsch-Themen** | erstes Thema: **Deutschprobe 21.10.** mit 100 Fragen aus fünf Bereichen |
+| ✍️ **Deutsch-Themen** | erstes Thema: **Deutschprobe 21.10.** mit 102 Fragen aus fünf Bereichen |
 | 💡 **Lösung zum Lernen** | nach zwei Fehlversuchen erscheint die richtige Antwort – im Safari so lange, bis man weitertippt |
 | 🔁 **Wiederholung** | was danebenging, kommt in derselben Runde noch einmal dran |
 | ✅ **Rechenarten wählbar** | Plus, Minus, Mal, Geteilt … einzeln per Haken an- und abschalten – **pro Klassenstufe** gespeichert, von Haus aus ist alles an |
@@ -188,6 +188,11 @@ in derselben Runde noch einmal dran – sie fliegt erst wieder herunter, wenn si
 richtig beantwortet wurde. Der Stapel gilt für die laufende Runde und wird beim Schließen
 der App nicht gespeichert.
 
+Damit daraus keine Dauerschleife wird, sind die **zuletzt gestellten fünf Fragen gesperrt**:
+Eine Frage vom Stapel kommt frühestens als sechste wieder – auch dann, wenn sie mehrfach
+danebenging. Die Sperre steht als `COOLDOWN` in `js/bank.js`, die Rückkehr-Wahrscheinlichkeit
+daneben als `REPEAT_CHANCE`.
+
 ### Erstes Thema: Stadtgeschichte Traunstein
 
 87 Fragen aus sieben Bereichen:
@@ -244,7 +249,7 @@ hier gibt es die halbe Wertung – das Lernen zählt, nicht das Punktesammeln.
 
 ### Erstes Thema: Deutschprobe 21.10.
 
-100 Fragen aus fünf Bereichen:
+102 Fragen aus fünf Bereichen:
 
 | Bereich | Inhalt |
 |---|---|
@@ -709,7 +714,8 @@ schul-app/
 * **Sperre nach einer Antwort:** `ANSWER_LOCK` in `js/game.js` (Sekunden)
 * **Wertung der Lernfächer:** `CONFIG.hsuScore`, `CONFIG.hsuStarEvery` und `CONFIG.hsuMaxCombo`
   in `js/game.js`; wie lange die Lösung im Arcade stehen bleibt: `CONFIG.solutionHold`
-* **Wiederholung falscher Fragen:** `REPEAT_CHANCE` in `js/bank.js`
+* **Wiederholung falscher Fragen:** `REPEAT_CHANCE` in `js/bank.js`; wie lange eine
+  gestellte Frage danach gesperrt bleibt: `COOLDOWN` ebenda
 * **Antwortarten:** die Liste `FORMS` in `js/quiz.js`; welche Art zu welcher Frage passt,
   entscheidet `formsFor()` in `js/bank.js`. Wie großzügig Freitext verglichen wird,
   steht in `sameText()` in `js/quiz.js` – mit `x: 1` an einer Frage zählt dort nur die
