@@ -21,7 +21,7 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | 📐🌍✍️ **Drei Fächer** | **Mathe** mit erzeugten Rechenaufgaben, **HSU** und **Deutsch** mit je einem Fragenkatalog zum Thema |
 | 🎯 **Klasse 1–6** | Aufgabentypen passen sich der gewählten Klassenstufe an – von „3 + 4“ bis „3/4 von 24“ und „(−7) · (−4)“ |
 | 🏰 **HSU-Themen** | erstes Thema: **Stadtgeschichte Traunstein** mit 87 Fragen aus sieben Bereichen |
-| ✍️ **Deutsch-Themen** | erstes Thema: **Deutschprobe 21.10.** mit 102 Fragen aus fünf Bereichen |
+| ✍️ **Deutsch-Themen** | erstes Thema: **Deutschprobe 21.10.** mit 133 Fragen aus fünf Bereichen |
 | 💡 **Lösung zum Lernen** | nach zwei Fehlversuchen erscheint die richtige Antwort – im Safari so lange, bis man weitertippt |
 | 🔁 **Wiederholung** | was danebenging, kommt in derselben Runde noch einmal dran |
 | ✅ **Rechenarten wählbar** | Plus, Minus, Mal, Geteilt … einzeln per Haken an- und abschalten – **pro Klassenstufe** gespeichert, von Haus aus ist alles an |
@@ -159,19 +159,24 @@ Zeilen umbrochen, lange Antworten bekommen kleinere Knöpfe.
 
 ### Lernen statt Punkte sammeln
 
-HSU ist zum Üben da, nicht zum Punktejagen. Deshalb fällt die Belohnung kleiner aus:
+Gelernt wird hier, gespielt aber auch – deshalb gibt es für eine richtige Antwort
+**dieselben Punkte wie beim Rechnen**, und die Combo zählt genauso. Ruhiger bleibt es
+trotzdem an zwei Stellen:
 
 | | Mathe | HSU und Deutsch |
 |---|---|---|
-| Punkte je Aufgabe | voll | **halb** |
+| Punkte je Aufgabe | voll | **voll** |
+| Combo-Multiplikator | bis x4 | **bis x4** |
 | Sternchen | eines je richtige Aufgabe | **eines je zweite** |
-| Combo-Multiplikator | bis x4 | **höchstens x2** |
 | Goldene Aufgaben (x3) | ja | **nein** |
 
-Im Safari kommt dessen halbe Wertung noch dazu – im gemütlichen HSU-Safari gibt es also
-am wenigsten Punkte. Die Sternchen bleiben davon unberührt: Nach 20 richtigen Antworten
-sind 10 ★ zusammen, ein Bonusspiel kostet 8 ★. Die Bonus-Station bleibt also in
-Reichweite, nur eben über das Lernen und nicht über schnelles Klicken.
+Nach 20 richtigen Antworten sind 10 ★ zusammen, ein Bonusspiel kostet 8 ★ – die
+Bonus-Station bleibt also in Reichweite, nur eben über das Lernen und nicht über
+schnelles Klicken.
+
+Die **halbe Safari-Wertung** gilt davon unabhängig und in jedem Fach: Dort fällt nichts
+herunter, also gibt es für dieselbe Aufgabe halb so viele Punkte. Einstellbar ist beides
+in `js/game.js` unter `CONFIG.safariScore` und `CONFIG.hsuScore`.
 
 ### Die Lösung sehen – und die Frage wiederbekommen
 
@@ -249,15 +254,21 @@ hier gibt es die halbe Wertung – das Lernen zählt, nicht das Punktesammeln.
 
 ### Erstes Thema: Deutschprobe 21.10.
 
-102 Fragen aus fünf Bereichen:
+133 Fragen aus fünf Bereichen. Die ersten drei folgen den Hefteinträgen
+(Wortarten, wörtliche Rede vom 7.10. und 8.10.) – Begriffe, Reihenfolge und
+Beispiele sind von dort übernommen:
 
-| Bereich | Inhalt |
-|---|---|
-| **Wörtliche Rede** | Begleitsatz vorangestellt (Doppelpunkt) und nachgestellt (Komma), Anführungszeichen, was mit dem Punkt passiert, Frage- und Ausrufezeichen |
-| **Wortarten** | Nomen, Verb, Adjektiv, Artikel, Pronomen – samt Merkfragen („Wer oder was?“) und Grundform |
-| **1. Vergangenheit** | Präteritum regelmäßiger und unregelmäßiger Verben, 20 Beispiele zum Umformen |
-| **Rechtschreiben** | die Strategien Schwingen, Verlängern, Ableiten, Merkwörter und Nachschlagen |
-| **Abschreiben** | die Schritte der Abschreibtechnik: lesen, einprägen, abdecken, schreiben, vergleichen |
+| Bereich | Fragen | Inhalt |
+|---|---|---|
+| **Wörtliche Rede** | 26 | Redesatz und Begleitsatz, Begleitsatz vorne (Doppelpunkt) und hinten (Komma), Anführungszeichen, der Punkt fällt vor dem Komma weg, Frage- und Ausrufezeichen bleiben – mit Strubbel und dem Ballonverkäufer |
+| **Wortarten** | 43 | Nomen/Namenwörter, Verben/Tunwörter, Adjektive/Wiewörter, Artikel/Begleiter, Pronomen/Fürwörter – je deutscher Name, Groß- oder Kleinschreibung und was man damit machen kann (Mehrzahl, Person, Zeitformen, Steigern, Gegenteil, Stellvertreter) |
+| **1. Vergangenheit** | 27 | Gegenwart / 1. Vergangenheit / 2. Vergangenheit auseinanderhalten, Präteritum regelmäßiger und unregelmäßiger Verben, 20 Beispiele zum Umformen |
+| **Rechtschreiben** | 24 | die Strategien Schwingen, Verlängern, Ableiten, Merkwörter und Nachschlagen |
+| **Abschreiben** | 13 | die Schritte der Abschreibtechnik: lesen, einprägen, abdecken, schreiben, vergleichen |
+
+> Für **Rechtschreiben** und **Abschreiben** lagen keine Hefteinträge vor – diese
+> Fragen sind nach dem üblichen Stoff der 4. Klasse gebaut. Kommt ein Blatt dazu,
+> lassen sich die Begriffe genauso angleichen wie bei den anderen drei Bereichen.
 
 ### Genau schreiben, wo es darauf ankommt
 
@@ -712,7 +723,8 @@ schul-app/
 * **Safari-Welten:** die Tabelle `WORLDS` in `js/safari.js` – Farben, Landschaftsarten
   (`kinds`, `rare`), Ziel (`goal`) und Fahrzeug (`vehicle`, `paint`) je Hintergrund
 * **Sperre nach einer Antwort:** `ANSWER_LOCK` in `js/game.js` (Sekunden)
-* **Wertung der Lernfächer:** `CONFIG.hsuScore`, `CONFIG.hsuStarEvery` und `CONFIG.hsuMaxCombo`
+* **Wertung der Lernfächer:** `CONFIG.hsuScore` (1 = volle Punkte), `CONFIG.hsuStarEvery`
+  und `CONFIG.hsuMaxCombo` (4 = kein Deckel)
   in `js/game.js`; wie lange die Lösung im Arcade stehen bleibt: `CONFIG.solutionHold`
 * **Wiederholung falscher Fragen:** `REPEAT_CHANCE` in `js/bank.js`; wie lange eine
   gestellte Frage danach gesperrt bleibt: `COOLDOWN` ebenda

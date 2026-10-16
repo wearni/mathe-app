@@ -29,12 +29,13 @@
     safariScore: 0.5,    /* Safari ist gemütlich - dafür weniger Punkte ... */
     safariStarEvery: 2,  /* ... und nur jede zweite Aufgabe bringt ein ★ */
 
-    /* HSU ist zum Lernen da, nicht zum Punktesammeln: halbe Punkte,
-       Sternchen nur für jede zweite richtige Antwort, gedeckelte Combo
-       und keine goldenen Aufgaben. */
-    hsuScore: 0.5,
+    /* Lernfächer (HSU, Deutsch): volle Punkte wie beim Rechnen und die
+       Combo zählt genauso. Ruhiger bleibt es trotzdem - Sternchen gibt es
+       nur für jede zweite richtige Antwort und goldene Aufgaben fallen
+       dort nicht. */
+    hsuScore: 1,
     hsuStarEvery: 2,
-    hsuMaxCombo: 2,
+    hsuMaxCombo: 4,
     solutionHold: 3.4,   /* Sekunden, die die Lösung im Arcade stehen bleibt */
     timelineEvery: 6     /* nach so vielen Aufgaben ein Zeitstrahl */
   };
@@ -467,10 +468,9 @@
      Dort geht es ums Lernen: weniger Punkte, ruhigeres Feld. */
   function isHsu() { return Quiz.isBank(G.settings); }
 
-  /* Punkte-Faktor. Beides zusammen zählt: Safari ist gemütlich, HSU ist zum
-     Lernen da - im gemütlichen HSU-Safari gibt es also am wenigsten Punkte.
-     Die Sternchen bleiben davon unberührt, damit die Bonus-Station in
-     Reichweite bleibt. */
+  /* Punkte-Faktor. Gezählt wird nur noch der Safari: dort fällt nichts
+     herunter, deshalb gibt es die halbe Wertung - in jedem Fach gleich.
+     Die Lernfächer zahlen seit v2.4.3 voll (CONFIG.hsuScore = 1). */
   function scoreFactor() {
     let f = 1;
     if (G.mode === 'safari') f *= CONFIG.safariScore;
@@ -486,6 +486,8 @@
     return n;
   }
 
+  /* Combo-Multiplikator: x2 ab 5, x3 ab 10, x4 ab 15 richtigen Antworten
+     in Folge - in den Lernfächern genauso wie beim Rechnen. */
   function comboMult() {
     const m = G.combo >= 15 ? 4 : G.combo >= 10 ? 3 : G.combo >= 5 ? 2 : 1;
     return isHsu() ? Math.min(m, CONFIG.hsuMaxCombo) : m;
