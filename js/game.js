@@ -26,7 +26,7 @@
     maxTries: 2,         /* so oft darf pro Aufgabe daneben geraten werden */
     levelEvery: 10,      /* Level-Up nach je 10 richtigen Aufgaben */
     safariStations: 20,  /* Stationen bis zum Camp */
-    safariScore: 0.5,    /* Safari ist gemütlich - dafür weniger Punkte ... */
+    safariScore: 0.5,    /* Mathe-Safari: gemütlich, dafür halbe Punkte ... */
     safariStarEvery: 2,  /* ... und nur jede zweite Aufgabe bringt ein ★ */
 
     /* Lernfächer (HSU, Deutsch): volle Punkte wie beim Rechnen und die
@@ -465,17 +465,17 @@
   }
 
   /* "Lernfach" = ein Fach mit festem Fragenkatalog (HSU, Deutsch, ...).
-     Dort geht es ums Lernen: weniger Punkte, ruhigeres Feld. */
+     Dort geht es ums Lernen: ruhigeres Feld, volle Punkte. */
   function isHsu() { return Quiz.isBank(G.settings); }
 
-  /* Punkte-Faktor. Gezählt wird nur noch der Safari: dort fällt nichts
-     herunter, deshalb gibt es die halbe Wertung - in jedem Fach gleich.
-     Die Lernfächer zahlen seit v2.4.3 voll (CONFIG.hsuScore = 1). */
+  /* Punkte-Faktor.
+     Lernfächer (HSU, Deutsch): immer volle Punkte - in beiden Spielarten.
+     Mathe-Safari: halbe Punkte, denn dort fällt nichts herunter und man
+     kann beliebig lange überlegen.
+     Beide Werte stehen in CONFIG und lassen sich dort einzeln drehen. */
   function scoreFactor() {
-    let f = 1;
-    if (G.mode === 'safari') f *= CONFIG.safariScore;
-    if (isHsu()) f *= CONFIG.hsuScore;
-    return f;
+    if (isHsu()) return CONFIG.hsuScore;
+    return G.mode === 'safari' ? CONFIG.safariScore : 1;
   }
 
   /* Nach wie vielen richtigen Antworten gibt es ein Sternchen? */

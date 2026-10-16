@@ -28,6 +28,7 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | 🔟 **Zahlenraum wählbar** | 1er, 10er, 100er, 1000er einzeln an- und abschalten – ebenfalls pro Klassenstufe gespeichert |
 | 🐌 **Start-Tempo** | fünf Stufen von *Schnecke* bis *Rakete*, **pro Klassenstufe** gespeichert – Klasse 1 startet automatisch auf *Schnecke* |
 | 🕹️ **Zwei Spielarten** | **Arcade** mit fallenden Aufgaben und **Safari**: das Fahrzeug fährt ohne Zeitdruck von Station zu Station – je vier Kulissen |
+| 💯 **Volle Punkte beim Lernen** | HSU und Deutsch zählen wie Mathe, in beiden Spielarten – nur der Mathe-Safari gibt die halbe Wertung |
 | ⏱ **15 Minuten Bildschirmzeit** | gilt für das ganze Gerät, über alle Runden und beide Spielarten hinweg – danach 30 Minuten Pause |
 | 🔒 **Eltern-Einstellungen** | Zeitlimit, Pausenlänge und Reststand hinter einem vierstelligen Code |
 | ✈️ **Fahrzeug passt zum Ort** | Arcade: Flugzeug, Hubschrauber, Rakete, U-Boot · Safari: Jeep, Neon-Buggy, Mondrover, U-Boot |
@@ -174,9 +175,10 @@ Nach 20 richtigen Antworten sind 10 ★ zusammen, ein Bonusspiel kostet 8 ★ �
 Bonus-Station bleibt also in Reichweite, nur eben über das Lernen und nicht über
 schnelles Klicken.
 
-Die **halbe Safari-Wertung** gilt davon unabhängig und in jedem Fach: Dort fällt nichts
-herunter, also gibt es für dieselbe Aufgabe halb so viele Punkte. Einstellbar ist beides
-in `js/game.js` unter `CONFIG.safariScore` und `CONFIG.hsuScore`.
+In HSU und Deutsch gibt es die vollen Punkte **in beiden Spielarten** – der Safari
+halbiert dort nicht. Nur im **Mathe-Safari** bleibt die halbe Wertung, weil dort nichts
+herunterfällt und man beliebig lange überlegen kann. Beide Werte stehen in `js/game.js`
+unter `CONFIG.safariScore` und `CONFIG.hsuScore`.
 
 ### Die Lösung sehen – und die Frage wiederbekommen
 
@@ -715,6 +717,8 @@ schul-app/
 * **Bildschirmzeit und Pause:** beides in den Eltern-Einstellungen; die Auswahllisten
   dafür sind `LIMITS` und `PAUSES` in `js/main.js`, die Voreinstellung steht in
   `DEFAULTS.time`
+* **Wer halbe Punkte bekommt:** `scoreFactor()` in `js/game.js` – dort entscheidet sich,
+  dass die Lernfächer immer voll zählen und nur der Mathe-Safari halbiert
 * **Safari:** Stationen bis zum Camp und die Belohnung stehen in `js/game.js` unter
   `CONFIG.safariStations`, `CONFIG.safariScore` und `CONFIG.safariStarEvery`;
   Streckenlänge, Fahrtempo und Pistenbreite oben in `js/safari.js` (`SEG`, `DRIVE`, `ROAD`)
