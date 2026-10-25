@@ -208,6 +208,16 @@
         <div id="thinkGrid" class="speed-grid"></div>
         <p class="hint" id="thinkHint"></p>
 
+        <div id="sheetRow">
+          <label class="switch"><input type="checkbox" id="swSheets"><span></span> 📓 Hefteinträge einstreuen</label>
+          <p class="hint" id="sheetRowHint"></p>
+        </div>
+
+        <div id="yearRow">
+          <label class="switch"><input type="checkbox" id="swYears"><span></span> 📅 Jahreszahlen abfragen</label>
+          <p class="hint" id="yearHint"></p>
+        </div>
+
         <div id="timelineRow">
           <div class="switch-row">
             <label class="switch"><input type="checkbox" id="swTimeline"><span></span> 🕰️ Zeitstrahl einstreuen</label>
@@ -395,6 +405,16 @@
   </section>
 
   <!-- ================= Lösung nach zwei Fehlversuchen ================= -->
+  <div id="sheet" hidden>
+    <div class="sheet-card">
+      <h3 id="sheetTitle"></h3>
+      <p class="sheet-hint">Tippe die Wörter an und setze sie in die Lücken.</p>
+      <div id="sheetText"></div>
+      <div id="sheetTray"></div>
+      <button id="sheetUndo" class="mini-btn wide">⌫ Letztes Wort zurück</button>
+    </div>
+  </div>
+
   <div id="solution" hidden>
     <div class="sol-card">
       <p class="sol-q" id="solQuestion"></p>

@@ -731,3 +731,63 @@ html, body {
   padding: 5px 7px; min-width: 28px; cursor: pointer;
 }
 #letterWord .wchip:active { transform: translateY(2px); background: rgba(255,209,102,.3); }
+
+/* ===================== Hefteintrag zum Ausfüllen =====================
+   Erscheint im Safari an jeder fünften Station über der Landkarte:
+   der Heftauszug mit Lücken, darunter die Wörter zum Antippen. */
+#sheet {
+  position: fixed; inset: 0; z-index: 70;
+  display: flex; align-items: center; justify-content: center;
+  padding: 14px; background: rgba(8, 10, 20, .82);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+}
+#sheet[hidden] { display: none; }
+
+.sheet-card {
+  width: min(560px, 100%); max-height: 94vh; overflow-y: auto;
+  background: linear-gradient(180deg, #fffdf3, #fdf6e0);
+  border: 3px solid #d8c48a; border-radius: 16px;
+  box-shadow: 0 14px 0 rgba(0, 0, 0, .35); padding: 16px 15px 14px;
+  color: #241f12;
+}
+.sheet-card h3 {
+  margin: 0 0 4px; font-size: 1.12rem; color: #2a4a86;
+  text-align: center; text-decoration: underline;
+}
+.sheet-hint { margin: 0 0 11px; text-align: center; font-size: .82rem; color: #6b6450; }
+
+#sheetText {
+  font-size: 1.02rem; line-height: 2.05; letter-spacing: .1px;
+  /* Linien wie im Heft */
+  background-image: repeating-linear-gradient(
+    to bottom, transparent 0 calc(2.05em - 1px), rgba(90, 120, 170, .22) calc(2.05em - 1px) 2.05em);
+  padding-bottom: 2px; margin-bottom: 13px;
+}
+
+#sheetText .gap {
+  display: inline-block; min-width: 92px; margin: 0 2px;
+  padding: 1px 8px; font: inherit; color: #1b3f8f;
+  background: rgba(42, 74, 134, .07);
+  border: 0; border-bottom: 2px solid #2a4a86; border-radius: 5px 5px 0 0;
+  cursor: pointer; text-align: center;
+}
+#sheetText .gap.filled { background: rgba(124, 200, 107, .26); border-bottom-color: #3f8f3a; font-weight: 700; }
+#sheetText .gap.next { background: rgba(255, 209, 102, .4); }
+#sheetText .gap:active { transform: translateY(1px); }
+
+#sheetTray { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-bottom: 11px; }
+#sheetTray button {
+  padding: 9px 13px; font-size: .97rem; font-weight: 700;
+  color: #241f12; background: linear-gradient(180deg, #ffd166, #f0a93c);
+  border: 0; border-radius: 10px; box-shadow: 0 3px 0 #8e6400; cursor: pointer;
+}
+#sheetTray button:active { transform: translateY(3px); box-shadow: 0 1px 0 #8e6400; }
+#sheetTray button.used { visibility: hidden; }
+
+.sheet-card #sheetUndo { color: #241f12; background: #e8dcb8; border-color: #c9b584; }
+
+@media (max-width: 380px) {
+  #sheetText { font-size: .95rem; }
+  #sheetText .gap { min-width: 76px; }
+  #sheetTray button { padding: 8px 11px; font-size: .9rem; }
+}

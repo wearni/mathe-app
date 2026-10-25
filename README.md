@@ -20,7 +20,9 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 |---|---|
 | 📐🌍✍️ **Drei Fächer** | **Mathe** mit erzeugten Rechenaufgaben, **HSU** und **Deutsch** mit je einem Fragenkatalog zum Thema |
 | 🎯 **Klasse 1–6** | Aufgabentypen passen sich der gewählten Klassenstufe an – von „3 + 4“ bis „3/4 von 24“ und „(−7) · (−4)“ |
-| 🏰 **HSU-Themen** | erstes Thema: **Stadtgeschichte Traunstein** mit 87 Fragen aus sieben Bereichen |
+| 🏛️ **HSU-Themen** | erstes Thema: **Die Gemeinde** mit 126 Fragen aus neun Bereichen |
+| 📅 **Jahreszahlen abschaltbar** | von Haus aus aus – wer sie üben will, schaltet sie in den Einstellungen dazu |
+| 📓 **Hefteinträge zum Ausfüllen** | im Safari legt sich an jeder fünften Station eine Heftseite mit Lücken über die Karte |
 | ✍️ **Deutsch-Themen** | **Deutschprobe 21.10.** (133 Fragen) und **Bildergeschichte** (62 Fragen) |
 | 💡 **Lösung zum Lernen** | nach zwei Fehlversuchen erscheint die richtige Antwort – im Safari so lange, bis man weitertippt |
 | 🔁 **Wiederholung** | was danebenging, kommt in derselben Runde noch einmal dran |
@@ -200,9 +202,50 @@ Eine Frage vom Stapel kommt frühestens als sechste wieder – auch dann, wenn s
 danebenging. Die Sperre steht als `COOLDOWN` in `js/bank.js`, die Rückkehr-Wahrscheinlichkeit
 daneben als `REPEAT_CHANCE`.
 
-### Erstes Thema: Stadtgeschichte Traunstein
+### Hefteinträge zum Ausfüllen
 
-87 Fragen aus sieben Bereichen:
+**Einstellungen → Hefteinträge einstreuen** (nur im Safari, von Haus aus an). An jeder
+fünften Station legt sich eine Seite aus dem Heft über die Landkarte – mit Lücken, wie im
+Original. Die Wörter liegen darunter: antippen, und sie rutschen der Reihe nach in die
+Lücken. Ein gesetztes Wort lässt sich durch Antippen wieder herausnehmen, `⌫` nimmt das
+letzte zurück. Sind alle Lücken voll, wird von selbst abgegeben.
+
+Im Wörtervorrat liegen **mehr Wörter als Lücken** – sonst wäre die letzte geschenkt.
+Falsch belegt zählt wie ein Fehlversuch: Die Seite bleibt stehen und die Lücken sind
+wieder frei. Weil mehrere Lücken mehr Arbeit sind, gibt es auch entsprechend mehr Punkte
+(Faktor = Zahl der Lücken, höchstens 6).
+
+Eine neue Seite steht in `js/hsu.js` in `BLAETTER`. Was im Heft auf der Linie steht, kommt
+in geschweifte Klammern:
+
+```js
+{ id: 'gemeinde-1', titel: 'Was ist eine Gemeinde?',
+  text: 'Eine Gemeinde ist ein Ort, an dem Menschen leben. Sie wird auch {Kommune} '
+      + 'genannt. Wahlberechtigte Einwohner werden als {Bürger} bezeichnet.',
+  extra: ['Verwaltung', 'Gäste'] }   // Wörter, die NICHT gebraucht werden
+```
+
+Höchstens sechs Lücken pro Seite, und kein Wort zweimal – sonst gäbe es mehr als eine
+richtige Belegung. Wie oft eine Seite kommt, steht in `CONFIG.sheetEvery` in `js/game.js`.
+
+### Jahreszahlen an- und abschalten
+
+**Einstellungen → Jahreszahlen abfragen.** Von Haus aus **aus**: Fragen, deren Antwort
+eine Jahreszahl ist, kommen dann nicht dran – im Unterricht sind sie oft nicht Teil der
+Probe. Alles andere zum Thema bleibt im Spiel. Der Schalter erscheint nur bei Themen,
+die überhaupt Jahreszahlen haben, und die Themenkarte zeigt die Zahl der aktiven Fragen
+(115 statt 126).
+
+Da der Zeitstrahl aus nichts anderem als Jahreszahlen besteht, ist er mit abgeschaltet
+und sein Schalter ausgeblendet.
+
+Im Fragenkatalog zählt eine Frage als Jahreszahl-Frage, wenn sie `y: 1` trägt oder ein
+`ev`-Label mit drei- bis vierstelliger Antwort hat – also genau die Ereignisse, aus denen
+auch der Zeitstrahl gebaut wird.
+
+### Erstes Thema: Die Gemeinde
+
+126 Fragen aus neun Bereichen (115 ohne Jahreszahlen):
 
 | Bereich | Inhalt |
 |---|---|
@@ -213,6 +256,8 @@ daneben als `REPEAT_CHANCE`.
 | **Geld** | Steuern, Gebühren, sonstige Einnahmen, Haushaltsplan |
 | **Ämter** | Einwohnermelde-, Fund-, Standes-, Pass-, Steuer-, Gewerbe-, Ordnungs- und Ausländeramt, dazu Kämmerei, Bauamt, Kulturamt, Jugendamt |
 | **Entscheiden** | Bürgermeister und Gemeinderat, Stadtrat, Kommunalwahl, Vorsitz und Kontrolle |
+| **Wahl** | die fünf Grundsätze (gleich, frei, geheim, unmittelbar, allgemein), Abstimmung, Mehrheitsbeschluss, Beispiele für demokratische Wahlen |
+| **Fachbegriffe** | die Wörter aus dem Merkkasten, genau geschrieben – `x: 1`, also ohne Tippfehler-Bonus |
 
 Vier Angaben aus dem Arbeitsblatt waren nicht richtig und wurden nach den Angaben der
 Stadt Traunstein korrigiert:

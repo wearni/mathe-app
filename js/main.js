@@ -29,6 +29,10 @@
       /* wie geantwortet wird: choice | number | truefalse | letters | text | mixed */
       answerMode: 'choice',
       thinkTime: 0,        /* Sekunden, in denen nur die Frage zu sehen ist */
+      /* Jahreszahlen sind von Haus aus AUS - sie kommen in der Probe nicht
+         dran. Wer sie üben will, schaltet sie in den Einstellungen dazu. */
+      years: false,
+      sheets: true,        /* Hefteinträge zum Ausfüllen im Safari */
       timeline: true,      /* ab und zu eine Reihenfolge-Aufgabe einstreuen */
       nick: '', avatar: ''
     },
@@ -236,6 +240,7 @@
   /* Die Engine meldet, wie die aktuelle Aufgabe beantwortet wird.
      info = { form, choices, letters, items, solutionLength } oder null. */
   function onChoices(info) {
+    if (!info) hideSheet();
     clearInterval(thinkTimer);
     if (!info) {
       curAsk = null; lastChoices = '';
@@ -274,6 +279,8 @@
 
   /* ---------- die einzelnen Eingabefelder ---------- */
   function buildPad(info) {
+    if (info.form !== 'sheet') hideSheet();
+    if (info.form === 'sheet') { buildSheet(info); return; }
     if (info.form === 'number') { answer = ''; negative = false; renderAnswer(); showPad('#padWrap'); return; }
     if (info.form === 'letters') { buildLetters(info); return; }
     if (info.form === 'text') { buildText(info); return; }
@@ -287,6 +294,105 @@
     clearInterval(thinkTimer);
     if (info) curAsk = info;
     if (curAsk) buildPad(curAsk);
+  }
+
+  /* ---------- Hefteintrag zum Ausfüllen ----------
+     Der Heftauszug legt sich über die Landkarte. Wörter antippen, sie
+     rutschen der Reihe nach in die Lücken; ein gesetztes Wort lässt sich
+     durch Antippen wieder herausnehmen. Sind alle Lücken voll, geht die
+     Antwort von selbst raus - wie beim Buchstabensalat. */
+  let sheetGaps = [], sheetChips = [], sheetFilled = [];
+
+  function hideSheet() {
+    const el = $('#sheet');
+    if (el && !el.hidden) { el.hidden = true; syncInset(); }
+  }
+
+  function buildSheet(info) {
+    showPad(null);
+    sheetFilled = [];
+    sheetGaps = [];
+    sheetChips = [];
+
+    $('#sheetTitle').textContent = info.title || 'Hefteintrag';
+    const box = $('#sheetText');
+    box.innerHTML = '';
+    (info.parts || []).forEach(part => {
+      if (part.t !== undefined) {
+        box.appendChild(document.createTextNode(part.t));
+        return;
+      }
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'gap';
+      b.dataset.gap = part.gap;
+      b.textContent = '\u00a0';
+      b.addEventListener('click', () => takeOut(part.gap));
+      box.appendChild(b);
+      sheetGaps[part.gap] = b;
+    });
+
+    const tray = $('#sheetTray');
+    tray.innerHTML = '';
+    (info.tray || []).forEach(chip => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = chip.w;
+      b.addEventListener('click', () => putIn(chip));
+      tray.appendChild(b);
+      sheetChips[chip.i] = { btn: b, w: chip.w };
+    });
+
+    $('#sheet').hidden = false;
+    paintSheet();
+    syncInset();
+  }
+
+  function paintSheet() {
+    sheetGaps.forEach((g, i) => {
+      if (!g) return;
+      const f = sheetFilled[i];
+      g.textContent = f ? f.w : '\u00a0';
+      g.classList.toggle('filled', !!f);
+      g.classList.toggle('next', !f && i === firstFree());
+    });
+    sheetChips.forEach((c, i) => {
+      if (!c) return;
+      c.btn.classList.toggle('used', sheetFilled.some(f => f && f.i === i));
+    });
+    $('#sheetUndo').disabled = !sheetFilled.some(Boolean);
+  }
+
+  function firstFree() {
+    for (let i = 0; i < sheetGaps.length; i++) if (!sheetFilled[i]) return i;
+    return -1;
+  }
+
+  function putIn(chip) {
+    if (sheetFilled.some(f => f && f.i === chip.i)) return;
+    const slot = firstFree();
+    if (slot < 0) return;
+    sheetFilled[slot] = { i: chip.i, w: chip.w };
+    Sound.play('type');
+    paintSheet();
+    if (firstFree() < 0) sendSheet();
+  }
+
+  function takeOut(i) {
+    if (!sheetFilled[i]) return;
+    sheetFilled[i] = null;
+    Sound.play('type');
+    paintSheet();
+  }
+
+  function undoSheet() {
+    for (let i = sheetGaps.length - 1; i >= 0; i--) {
+      if (sheetFilled[i]) { takeOut(i); return; }
+    }
+  }
+
+  function sendSheet() {
+    send(sheetFilled.map(f => (f ? f.w : '')));
   }
 
   function send(value) {
@@ -453,6 +559,8 @@
 
   /* ===================== Pause und Zurück-Knopf ===================== */
   function openPause(asked) {
+    /* Die Heftseite liegt über allem - sonst verdeckt sie die Pause. */
+    hideSheet();
     $('#pauseTitle').textContent = asked ? 'Zurück?' : 'Pause';
     $('#pauseHint').textContent = asked
       ? 'Möchtest du weiterspielen oder zum Menü zurück?'
@@ -462,6 +570,7 @@
 
   function quitToMenu() {
     hideSolution();
+    hideSheet();
     Game.quit();
     inGameChrome(false);
     save();                /* verbrauchte Bildschirmzeit sicher wegschreiben */
@@ -554,7 +663,9 @@
         inputMode: inputMode(), speed: curSpeed(),
         subject: DB.settings.subject, topic: DB.settings.topic,
         answerMode: DB.settings.answerMode,
-        timeline: !!DB.settings.timeline && Quiz.hasTimeline({ subject: DB.settings.subject, topic: DB.settings.topic }),
+        years: !!DB.settings.years,
+        sheets: !!DB.settings.sheets,
+        timeline: !!DB.settings.timeline && Quiz.hasTimeline(quizCtx()),
         ops: curOps(), ranges: curRanges(),
         mode: DB.settings.playMode, timeLeft: leftSec()
       });
@@ -994,6 +1105,11 @@
 
   function curForms() { return Quiz.formsFor({ subject: DB.settings.subject }); }
 
+  /* Alles, was Quiz braucht, um zu wissen, welche Fragen gerade gelten. */
+  function quizCtx() {
+    return { subject: DB.settings.subject, topic: DB.settings.topic, years: !!DB.settings.years };
+  }
+
   function buildForms() {
     const grid = $('#formGrid');
     if (!grid) return;
@@ -1045,7 +1161,24 @@
       ? 'Die Antworten erscheinen erst nach ' + t + ' Sekunden \u2013 so wird nicht einfach wiedererkannt.'
       : 'Die Antworten stehen sofort da.';
 
-    const canTime = Quiz.hasTimeline({ subject: DB.settings.subject, topic: DB.settings.topic });
+    /* Hefteinträge: gibt es nur im Safari und nur, wo welche hinterlegt sind */
+    const canSheets = isSafari() && Quiz.hasSheets(quizCtx());
+    $('#sheetRow').hidden = !canSheets;
+    $('#swSheets').checked = !!DB.settings.sheets;
+    $('#sheetRowHint').textContent = DB.settings.sheets
+      ? 'An jeder f\u00fcnften Station kommt eine Heftseite zum Ausf\u00fcllen \u2013 '
+        + 'daf\u00fcr gibt es auch mehr Punkte.'
+      : 'Es kommen nur einzelne Fragen, keine Heftseiten.';
+
+    /* Jahreszahlen: nur zeigen, wo es welche gibt */
+    const canYears = Quiz.hasYears(quizCtx());
+    $('#yearRow').hidden = !canYears;
+    $('#swYears').checked = !!DB.settings.years;
+    $('#yearHint').textContent = DB.settings.years
+      ? 'Jahreszahlen sind dabei \u2013 erste Erw\u00e4hnung, Stadtrecht, Saline, Br\u00e4nde, Eingemeindungen.'
+      : 'Jahreszahlen bleiben drau\u00dfen. Alles andere zum Thema kommt weiter dran.';
+
+    const canTime = Quiz.hasTimeline(quizCtx());
     $('#timelineRow').hidden = !canTime;
     $('#swTimeline').checked = !!DB.settings.timeline;
     $('#timelineHint').textContent =
@@ -1057,7 +1190,7 @@
     const grid = $('#topicGrid');
     if (!grid) return;
     grid.innerHTML = '';
-    Quiz.topics(DB.settings.subject).forEach(t => {
+    Quiz.topics(DB.settings.subject, { years: !!DB.settings.years }).forEach(t => {
       const b = document.createElement('button');
       b.className = 'topic-card';
       b.dataset.topic = t.id;
@@ -1082,12 +1215,16 @@
     $$('#topicGrid .topic-card').forEach(b => b.classList.toggle('active', b.dataset.topic === cur));
     const t = Quiz.topicOf(DB.settings);
     if (!t) return;
-    $('#topicHint').textContent = t.questions.length + ' Fragen aus den Bereichen: '
-      + Quiz.groupsOf(DB.settings).join(', ') + '.';
+    const info = Quiz.topics(DB.settings.subject, { years: !!DB.settings.years })
+      .filter(x => x.id === t.id)[0] || { count: t.questions.length, all: t.questions.length };
+    $('#topicHint').textContent = info.count + ' Fragen aus den Bereichen: '
+      + Quiz.groupsOf(quizCtx()).join(', ')
+      + (info.count < info.all ? '. ' + (info.all - info.count) + ' Jahreszahl-Fragen sind ausgeschaltet.' : '.');
   }
 
   function syncPlayMode() {
     const m = isSafari() ? 'safari' : 'arcade';
+    if ($('#sheetRow')) syncForms();
     $$('#playMode button, #playModeSet button').forEach(b => b.classList.toggle('active', b.dataset.play === m));
     $('#modeDesc').textContent = PLAY_MODES[m];
     $('#modeDescSet').textContent = PLAY_MODES[m];
@@ -1787,11 +1924,22 @@
     }));
 
     /* Buchstabensalat, Freitext, Zeitstrahl */
+    $('#sheetUndo').addEventListener('click', undoSheet);
     $('#letterDel').addEventListener('click', undoLetter);
     $('#textSend').addEventListener('click', sendText);
     $('#textInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') { e.preventDefault(); sendText(); }
       e.stopPropagation();
+    });
+    $('#swSheets').addEventListener('change', e => {
+      DB.settings.sheets = !!e.target.checked; save();
+      Sound.play('click');
+      syncForms();
+    });
+    $('#swYears').addEventListener('change', e => {
+      DB.settings.years = !!e.target.checked; save();
+      Sound.play('click');
+      buildTopics(); syncForms(); renderMenuInfo();
     });
     $('#swTimeline').addEventListener('change', e => {
       DB.settings.timeline = e.target.checked; save();
@@ -1855,6 +2003,7 @@
       DB.settings.rangeByGrade = {};
       DB.settings.subject = 'mathe';
       DB.settings.topic = 'traunstein';
+      DB.settings.years = false;
       DB.settings.topicBySubject = JSON.parse(JSON.stringify(DEFAULTS.settings.topicBySubject));
       DB.settings.answerMode = 'choice';
       DB.settings.thinkTime = 0;
@@ -1874,6 +2023,8 @@
       /* kurzer Countdown, danach stehen neue Aufgaben da. Im Safari wartet
          die Aufgabe ohnehin geduldig - da geht es direkt weiter. */
       if (Game.mode === 'safari') Game.resume(); else countdown(() => Game.resume());
+      /* War eine Heftseite offen, kommt sie zurück - frisch zum Ausfüllen. */
+      if (curAsk && curAsk.form === 'sheet' && inRound()) buildSheet(curAsk);
     });
     $('#btnQuit').addEventListener('click', () => { Sound.play('back'); quitToMenu(); });
 
@@ -1919,8 +2070,11 @@
     window.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         if (Game.state === 'solution') { hideSolution(); Game.continueAfterSolution(); }
-        else if (inRound() || Game.state === 'mini') { Game.pause(); show('pause'); }
-        else if (openScreen === 'pause') { show(null); Game.resume(); }
+        else if (inRound() || Game.state === 'mini') { hideSheet(); Game.pause(); show('pause'); }
+        else if (openScreen === 'pause') {
+          show(null); Game.resume();
+          if (curAsk && curAsk.form === 'sheet' && inRound()) buildSheet(curAsk);
+        }
         return;
       }
       if (!inRound() || inputMode() !== 'keypad') return;
@@ -2006,7 +2160,7 @@
     }
   }
 
-  const APP_FALLBACK_VERSION = '2.5.1';
+  const APP_FALLBACK_VERSION = '2.7.0';
 
   function pwa() {
     $('#appVersion').textContent = APP_FALLBACK_VERSION;

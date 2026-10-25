@@ -97,6 +97,10 @@
   /* Hat die Spielerin die Aufgabe richtig beantwortet? */
   function check(q, given) {
     if (!q) return false;
+    if (q.form === 'sheet') {
+      if (!Array.isArray(given) || given.length !== q.order.length) return false;
+      return given.every((w, i) => String(w) === String(q.order[i]));
+    }
     if (q.form === 'timeline') {
       if (!Array.isArray(given) || given.length !== q.order.length) return false;
       return given.every((y, i) => y === q.order[i]);
@@ -153,8 +157,32 @@
 
     const bank = bankOf(s);
 
+    /* ---- Hefteintrag zum Ausfüllen (nur im Safari) ---- */
+    if (bank && s.sheets && s.sheetDue && bank.hasSheets(s.topic)) {
+      const sh = bank.sheet(s.topic);
+      if (sh) {
+        const tray = shuffle(sh.words.concat(sh.extra).map((w, i) => ({ i: i, w: w })));
+        return {
+          form: 'sheet',
+          text: sh.title,
+          title: sh.title,
+          parts: sh.parts,
+          tray: tray,
+          order: sh.words.slice(),
+          answer: 0,
+          answerLabel: sh.words.join(' · '),
+          note: 'So steht es im Heft.',
+          choices: [],
+          /* Mehrere Lücken sind mehr Arbeit - und zählen deshalb mehr. */
+          weight: Math.min(sh.words.length, 6)
+        };
+      }
+    }
+
+    /* Ohne Jahreszahlen gibt es auch keinen Zeitstrahl - der besteht ja
+       aus nichts anderem. */
     /* ---- Zeitstrahl wird gelegentlich eingestreut ---- */
-    if (bank && s.timeline && s.timelineDue) {
+    if (bank && s.timeline && s.timelineDue && s.years) {
       const t = bank.timeline(s.topic, 3);
       if (t) {
         return {
@@ -171,7 +199,7 @@
     }
 
     if (bank) {
-      const q = bank.create(s.topic, uid);
+      const q = bank.create(s.topic, uid, { years: !!s.years });
       const form = pickForm(wanted, q.forms);
       const out = {
         form: form, text: q.q || q.text, answer: q.answer, answerLabel: q.answerLabel,
@@ -238,13 +266,25 @@
   /* Hat das Thema genug Jahreszahlen für einen Zeitstrahl? */
   function hasTimeline(s) {
     const b = bankOf(s);
-    return !!b && b.events(s && s.topic).length >= 3;
+    return !!b && !!(s && s.years) && b.events(s && s.topic).length >= 3;
+  }
+
+  /* Hat das Thema Hefteinträge zum Ausfüllen? */
+  function hasSheets(s) {
+    const b = bankOf(s);
+    return !!b && b.hasSheets(s && s.topic);
+  }
+
+  /* Hat das Thema Jahreszahl-Fragen, die man abschalten könnte? */
+  function hasYears(s) {
+    const b = bankOf(s);
+    return !!b && b.hasYears(s && s.topic);
   }
 
   /* Themen eines Fachs - für die Auswahl in den Einstellungen */
-  function topics(subject) {
+  function topics(subject, opts) {
     const b = Bank.of(subject);
-    return b ? b.list() : [];
+    return b ? b.list(opts) : [];
   }
 
   function topicOf(s) {
@@ -254,7 +294,7 @@
 
   function groupsOf(s) {
     const b = bankOf(s);
-    return b ? b.groups(s && s.topic) : [];
+    return b ? b.groups(s && s.topic, { years: !!(s && s.years) }) : [];
   }
 
   /* Kurzer Text für Menü und Einstellungen */
@@ -262,7 +302,8 @@
     const b = bankOf(s);
     if (b) {
       const t = b.topic(s && s.topic);
-      return { icon: t.icon, name: t.name, detail: t.questions.length + ' Fragen' };
+      const n = b.list({ years: !!(s && s.years) }).filter(x => x.id === t.id)[0];
+      return { icon: t.icon, name: t.name, detail: (n ? n.count : t.questions.length) + ' Fragen' };
     }
     const g = (s && s.grade) || 1;
     return { icon: '📐', name: MathGen.GRADE_INFO[g].name, detail: MathGen.GRADE_INFO[g].desc };
@@ -271,7 +312,7 @@
   global.Quiz = {
     SUBJECTS, FORMS, FORM_INFO,
     create, check, markResult, openRepeats, resetRepeats,
-    formsFor, hasTimeline, info, isHsu, isBank, sameText,
+    formsFor, hasTimeline, hasYears, hasSheets, info, isHsu, isBank, sameText,
     topics, topicOf, groupsOf
   };
 })(window);

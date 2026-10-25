@@ -40,6 +40,14 @@
     return out;
   }
 
+  /* Jahreszahl-Frage? Entweder ausdrücklich mit y: 1 markiert oder eine
+     Frage, deren Antwort eine Jahreszahl ist (die haben auch ein ev fürs
+     Zeitstrahl-Label). Solche Fragen lassen sich abschalten, wenn im
+     Unterricht gerade keine Jahreszahlen drankommen. */
+  function isYear(q) {
+    return !!q.y || (!!q.ev && /^\d{3,4}$/.test(String(q.a)));
+  }
+
   const ALL = {};          /* subjectId -> Fach-Objekt */
 
   function make(subjectId, TOPICS) {
@@ -48,16 +56,59 @@
 
     function topic(id) { return BY_ID[id] || TOPICS[0]; }
 
-    function list() {
+    function list(opts) {
       return TOPICS.map(t => ({
-        id: t.id, name: t.name, icon: t.icon, desc: t.desc, count: t.questions.length
+        id: t.id, name: t.name, icon: t.icon, desc: t.desc,
+        count: pool(t, opts).length, all: t.questions.length
       }));
     }
 
+    /* Welche Fragen sind gerade im Spiel? */
+    function pool(t, opts) {
+      if (opts && opts.years === false) return t.questions.filter(q => !isYear(q));
+      return t.questions;
+    }
+
+    /* Hat das Thema überhaupt Jahreszahl-Fragen? Nur dann lohnt der Schalter. */
+    function hasYears(topicId) { return topic(topicId).questions.some(isYear); }
+
+    /* ---------- Hefteinträge ----------
+       Aus 'Sie wird auch {Kommune} genannt.' wird eine Folge aus Text und
+       Lücken plus die Liste der Wörter, die hineingehören. */
+    function parseSheet(sh) {
+      const parts = [], words = [];
+      const re = /\{([^}]+)\}/g;
+      let last = 0, m;
+      while ((m = re.exec(sh.text)) !== null) {
+        if (m.index > last) parts.push({ t: sh.text.slice(last, m.index) });
+        parts.push({ gap: words.length });
+        words.push(m[1]);
+        last = m.index + m[0].length;
+      }
+      if (last < sh.text.length) parts.push({ t: sh.text.slice(last) });
+      return { id: sh.id, title: sh.titel, parts: parts, words: words, extra: (sh.extra || []).slice() };
+    }
+
+    function sheets(topicId) { return (topic(topicId).sheets || []).map(parseSheet); }
+    function hasSheets(topicId) { return sheets(topicId).length > 0; }
+
+    let lastSheet = '';
+
+    /* Einen Hefteintrag ziehen - nicht zweimal denselben hintereinander. */
+    function sheet(topicId) {
+      const all = sheets(topicId);
+      if (!all.length) return null;
+      const frei = all.filter(x => x.id !== lastSheet);
+      const pool = frei.length ? frei : all;
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      lastSheet = pick.id;
+      return pick;
+    }
+
     /* Welche Themenbereiche stecken drin? Nur für die Anzeige. */
-    function groups(id) {
+    function groups(id, opts) {
       const seen = [];
-      topic(id).questions.forEach(q => { if (seen.indexOf(q.g) < 0) seen.push(q.g); });
+      pool(topic(id), opts).forEach(q => { if (seen.indexOf(q.g) < 0) seen.push(q.g); });
       return seen;
     }
 
@@ -140,9 +191,9 @@
 
     /* Eine Frage ziehen. uid macht die Antwortwerte eindeutig, damit zwei
        Aufgaben auf dem Feld sich nicht gegenseitig abschießen. */
-    function create(topicId, uid) {
+    function create(topicId, uid, opts) {
       const t = topic(topicId);
-      const all = t.questions;
+      const all = pool(t, opts);
       const b = bucket(t.id);
 
       let q = null;
@@ -179,7 +230,8 @@
     }
 
     const api = {
-      id: subjectId, TOPICS, list, topic, groups, create,
+      id: subjectId, TOPICS, list, topic, groups, create, hasYears,
+      sheets, sheet, hasSheets,
       markResult, openRepeats, resetRepeats, formsFor, events, timeline
     };
     ALL[subjectId] = api;
@@ -188,5 +240,5 @@
 
   function of(subjectId) { return ALL[subjectId] || null; }
 
-  global.Bank = { make, of, formsFor, shuffle };
+  global.Bank = { make, of, formsFor, shuffle, isYear };
 })(window);

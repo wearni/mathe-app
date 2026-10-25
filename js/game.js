@@ -37,7 +37,8 @@
     hsuStarEvery: 2,
     hsuMaxCombo: 4,
     solutionHold: 3.4,   /* Sekunden, die die Lösung im Arcade stehen bleibt */
-    timelineEvery: 6     /* nach so vielen Aufgaben ein Zeitstrahl */
+    timelineEvery: 6,    /* nach so vielen Aufgaben ein Zeitstrahl */
+    sheetEvery: 5        /* nach so vielen Stationen ein Hefteintrag (nur Safari) */
   };
 
   /* Fahrzeug je Hintergrund - mit passendem Antrieb */
@@ -245,15 +246,28 @@
     return { w: Math.min(maxBox, Math.max(w + 44, 92)), h, fs, lines };
   }
 
-  function quizSettings(due) {
+  function quizSettings(due, sheetDue) {
     return {
       subject: G.settings.subject, topic: G.settings.topic,
       grade: G.settings.grade, level: G.level,
       ops: G.settings.ops, ranges: G.settings.ranges,
       answerMode: G.settings.answerMode || 'choice',
       timeline: !!G.settings.timeline,
-      timelineDue: !!due
+      timelineDue: !!due,
+      years: !!G.settings.years,
+      sheets: !!G.settings.sheets,
+      sheetDue: !!sheetDue
     };
+  }
+
+  /* Hefteinträge gibt es nur im Safari: Im Arcade fallen weiter Aufgaben
+     herunter, da wäre eine Textseite über dem Bild nicht zu schaffen. */
+  function sheetDueNow() {
+    if (G.mode !== 'safari' || !G.settings.sheets) return false;
+    G.sinceSheet = (G.sinceSheet || 0) + 1;
+    if (G.sinceSheet < CONFIG.sheetEvery) return false;
+    G.sinceSheet = 0;
+    return true;
   }
 
   /* Der Zeitstrahl wird nur ab und zu eingestreut - sonst wäre er kein
@@ -273,6 +287,9 @@
       choices: q.choices || [],
       letters: q.letters || null,
       items: q.items || null,
+      parts: q.parts || null,
+      tray: q.tray || null,
+      title: q.title || '',
       solutionLength: q.solution ? String(q.solution).length : 0
     };
   }
@@ -494,9 +511,10 @@
   }
 
   /* Eine richtige Antwort verbuchen: Punkte, Combo, Sternchen. */
-  function reward(gold) {
+  function reward(gold, weight) {
     const mult = comboMult();
-    const pts = Math.max(1, Math.round((10 + G.level * 2) * mult * (gold ? 3 : 1) * scoreFactor()));
+    const pts = Math.max(1, Math.round((10 + G.level * 2) * mult * (gold ? 3 : 1)
+      * (weight || 1) * scoreFactor()));
     G.score += pts;
     G.combo++;
     G.bestCombo = Math.max(G.bestCombo, G.combo);
@@ -571,12 +589,13 @@
 
   /* ================= Safari ================= */
   function safariTask() {
-    const p = Quiz.create(quizSettings(timelineDue()), ++G.idc);
+    const p = Quiz.create(quizSettings(timelineDue(), sheetDueNow()), ++G.idc);
     G.task = {
       q: p, text: p.text, answer: p.answer, answerLabel: p.answerLabel, note: p.note,
       tries: 0, choices: p.choices
     };
-    G.safari.setTask(p.form === 'timeline' ? 'Reihenfolge?' : p.text);
+    G.safari.setTask(p.form === 'timeline' ? 'Reihenfolge?'
+      : p.form === 'sheet' ? '📓 Hefteintrag' : p.text);
     ask(p);
     pushHud();
   }
@@ -586,7 +605,7 @@
     if (!t || G.safari.driving) return;
 
     if (Quiz.check(t.q, value)) {
-      const r = reward(false);
+      const r = reward(false, t.q.weight);
       const pts = r.pts, gained = r.gained;
       Quiz.markResult(quizSettings(), t.text, true);
 

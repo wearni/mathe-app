@@ -27,8 +27,18 @@
     { g: 'Steckbrief', q: 'Welche Farben hat die Stadt Traunstein?', a: 'schwarz, gelb, grün',
       w: ['blau, weiß, rot', 'rot, gelb, schwarz', 'grün, weiß, blau'],
       n: 'Im Wappen: schwarzer Schild, grüner Dreiberg, goldene Lilien.' },
-    { g: 'Steckbrief', q: 'Wie viele Einwohner hat Traunstein?', a: 'rund 22.600',
-      w: ['rund 12.600', 'rund 42.600', 'rund 2.600'] },
+    { g: 'Steckbrief', q: 'Wie viele Einwohner hat Traunstein?', a: '22.698',
+      w: ['12.698', '32.698', '2.698'], n: 'Stand Januar 2026 – so steht es im Heft.' },
+    { g: 'Steckbrief', q: 'Wie heißt Traunstein auf Oberbayerisch?', a: 'Traunstoa',
+      w: ['Traunstoan', 'Traunsta', 'Staunstoa'] },
+    { g: 'Steckbrief', q: 'Welcher Sportler kommt aus Traunstein?', a: 'Tobias Angerer',
+      w: ['Felix Neureuther', 'Markus Wasmeier', 'Thomas Müller'], n: 'Langläufer, zweimal Olympia-Silber.' },
+    { g: 'Steckbrief', q: 'Welches Reiterfest gibt es in Traunstein?', a: 'der Georgiritt',
+      w: ['das Oktoberfest', 'das Gäubodenfest', 'der Almabtrieb'], n: 'Jedes Jahr am Ostermontag.' },
+    { g: 'Steckbrief', q: 'Wie heißt das Kulturfest im Sommer?', a: 'Kultursommer',
+      w: ['Salzfest', 'Traunfest', 'Stadtsommer'] },
+    { g: 'Steckbrief', q: 'Welche Sehenswürdigkeit gehört zum Salz?', a: 'die Saline',
+      w: ['der Jacklturm', 'der Lindlbrunnen', 'die Stadtpfarrkirche'] },
     { g: 'Steckbrief', q: 'Wo liegt Traunstein?', a: 'im Südosten von Bayern',
       w: ['im Norden von Bayern', 'im Westen von Bayern', 'in Baden-Württemberg'] },
     { g: 'Steckbrief', q: 'Wie groß ist Traunstein?', a: '48,57 km²',
@@ -52,31 +62,31 @@
       w: ['Thomas Mann', 'Erich Kästner', 'Wilhelm Busch'] },
 
     /* ---------- Geschichte ---------- */
-    { g: 'Geschichte', q: 'Wann wurde Traunstein erstmals urkundlich erwähnt?', a: '1245', ev: 'erste urkundliche Erwähnung',
+    { g: 'Geschichte', q: 'Wann wurde Traunstein erstmals urkundlich erwähnt?', a: '1245', y: 1, ev: 'erste urkundliche Erwähnung',
       w: ['1145', '1345', '1445'], n: 'Als Gericht und Amt des Klosters Baumburg.' },
     { g: 'Geschichte', q: 'Wie hieß Traunstein in der ersten Urkunde?', a: 'Trauwenstain',
       w: ['Traunburg', 'Trunstat', 'Traunfels'] },
-    { g: 'Geschichte', q: 'Wann bekam Traunstein das Stadtrecht?', a: '1375', ev: 'Stadtrecht',
+    { g: 'Geschichte', q: 'Wann bekam Traunstein das Stadtrecht?', a: '1375', y: 1, ev: 'Stadtrecht',
       w: ['1275', '1475', '1575'], n: 'Verliehen von Herzog Friedrich.' },
-    { g: 'Geschichte', q: 'Wann wurde ein Rathaus erstmals erwähnt?', a: '1486', ev: 'erstes Rathaus erwähnt',
+    { g: 'Geschichte', q: 'Wann wurde ein Rathaus erstmals erwähnt?', a: '1486', y: 1, ev: 'erstes Rathaus erwähnt',
       w: ['1286', '1686', '1886'], n: 'Das Rathaus am Stadtplatz wurde 1576 vollendet.' },
-    { g: 'Geschichte', q: 'Wann begann die Salzproduktion in der Saline?', a: '1619', ev: 'Saline beginnt',
+    { g: 'Geschichte', q: 'Wann begann die Salzproduktion in der Saline?', a: '1619', y: 1, ev: 'Saline beginnt',
       w: ['1519', '1719', '1819'] },
-    { g: 'Geschichte', q: 'Wann endete die Salzproduktion in der Saline?', a: '1912', ev: 'Saline endet',
+    { g: 'Geschichte', q: 'Wann endete die Salzproduktion in der Saline?', a: '1912', y: 1, ev: 'Saline endet',
       w: ['1972', '1812', '1862'], n: 'Geprüft bei der Stadt Traunstein: 1912.' },
     { g: 'Geschichte', q: 'Wer legte 1704 die Stadt in Brand?', a: 'ungarische Panduren',
       w: ['französische Soldaten', 'schwedische Reiter', 'bayerische Truppen'] },
-    { g: 'Geschichte', q: 'Wann brannte die Altstadt von Traunstein?', a: '1851', ev: 'Altstadtbrand',
+    { g: 'Geschichte', q: 'Wann brannte die Altstadt von Traunstein?', a: '1851', y: 1, ev: 'Altstadtbrand',
       w: ['1751', '1801', '1901'], n: 'In der Nacht vom 25. auf den 26. April.' },
-    { g: 'Geschichte', q: 'Wann wurde die Freiwillige Feuerwehr gegründet?', a: '1859', ev: 'Feuerwehr gegründet',
+    { g: 'Geschichte', q: 'Wann wurde die Freiwillige Feuerwehr gegründet?', a: '1859', y: 1, ev: 'Feuerwehr gegründet',
       w: ['1759', '1889', '1919'] },
-    { g: 'Geschichte', q: 'Wann wurde Traunstein Große Kreisstadt?', a: '1972', ev: 'Große Kreisstadt',
+    { g: 'Geschichte', q: 'Wann wurde Traunstein Große Kreisstadt?', a: '1972', y: 1, ev: 'Große Kreisstadt',
       w: ['1922', '1952', '1992'], n: 'Bei der Gebietsreform 1972.' },
-    { g: 'Geschichte', q: 'Wann wurden Kammer und Hochberg eingemeindet?', a: '1972', ev: 'Kammer und Hochberg dazu',
+    { g: 'Geschichte', q: 'Wann wurden Kammer und Hochberg eingemeindet?', a: '1972', y: 1, ev: 'Kammer und Hochberg dazu',
       w: ['1952', '1914', '1978'] },
-    { g: 'Geschichte', q: 'Wann wurden Haslach und Wolkersdorf eingemeindet?', a: '1978', ev: 'Haslach und Wolkersdorf dazu',
+    { g: 'Geschichte', q: 'Wann wurden Haslach und Wolkersdorf eingemeindet?', a: '1978', y: 1, ev: 'Haslach und Wolkersdorf dazu',
       w: ['1972', '1914', '1952'] },
-    { g: 'Geschichte', q: 'Wann wurde Au eingemeindet?', a: '1914', ev: 'Au dazu',
+    { g: 'Geschichte', q: 'Wann wurde Au eingemeindet?', a: '1914', y: 1, ev: 'Au dazu',
       w: ['1972', '1978', '1851'] },
     { g: 'Geschichte', q: 'Wie heißt die Stadtpfarrkirche?', a: 'St. Oswald',
       w: ['St. Michael', 'St. Georg', 'St. Martin'] },
@@ -86,6 +96,8 @@
       w: ['Salzturm', 'Georgsturm', 'Pulverturm'] },
 
     /* ---------- Was ist eine Gemeinde? ---------- */
+    { g: 'Gemeinde', q: 'Was ist eine Gemeinde?', a: 'ein Ort, an dem Menschen leben',
+      w: ['ein Amt im Rathaus', 'eine Gruppe von Firmen', 'ein Teil vom Landkreis'] },
     { g: 'Gemeinde', q: 'Wie nennt man eine Gemeinde auch?', a: 'Kommune',
       w: ['Kolonie', 'Kommission', 'Kantine'] },
     { g: 'Gemeinde', q: 'Wie nennt man wahlberechtigte Einwohner?', a: 'Bürger',
@@ -126,6 +138,20 @@
       w: ['Trinkwasser', 'Müllabfuhr', 'Feuerwehr'] },
     { g: 'Aufgaben', q: 'Welchen Bau muss die Gemeinde nicht machen?', a: 'Bau eines Schwimmbads',
       w: ['Bau einer Schule', 'Bau einer Straße', 'Bau eines Friedhofs'] },
+    { g: 'Aufgaben', q: 'Welche Pflichtaufgabe betrifft die Straßen?', a: 'Straßenbau',
+      w: ['Bücherei', 'Museum', 'Sportanlage'] },
+    { g: 'Aufgaben', q: 'Welche Pflichtaufgabe plant den Ort?', a: 'Ortsplanung',
+      w: ['Kultursommer', 'Spielplatzbau', 'Schwimmbad'] },
+    { g: 'Aufgaben', q: 'Welche Pflichtaufgabe liefert Strom und Gas?', a: 'Strom- und Gasversorgung',
+      w: ['Bücherei', 'Museum', 'Sportanlage'] },
+    { g: 'Aufgaben', q: 'Wohin bringt die Gemeinde das Abwasser?', a: 'Abwasserbeseitigung',
+      w: ['Trinkwasserversorgung', 'Müllbeseitigung', 'Ortsplanung'] },
+    { g: 'Aufgaben', q: 'Welche Pflichtaufgabe gibt es für Verstorbene?', a: 'Friedhöfe',
+      w: ['Museen', 'Büchereien', 'Schwimmbäder'] },
+    { g: 'Aufgaben', q: 'Welche freiwillige Aufgabe ist zum Sport?', a: 'Bau von Sportanlagen',
+      w: ['Straßenbau', 'Müllabfuhr', 'Feuerwehr'] },
+    { g: 'Aufgaben', q: 'Welche freiwillige Aufgabe ist zum Feiern?', a: 'kulturelle Veranstaltungen',
+      w: ['Abwasserbeseitigung', 'Ortsplanung', 'Friedhöfe'] },
     { g: 'Aufgaben', q: 'Was braucht die Gemeinde für ihre Aufgaben?', a: 'Geld',
       w: ['Ferien', 'Gäste', 'Glück'] },
 
@@ -148,6 +174,12 @@
       w: ['Hundesteuer', 'Müllgebühren', 'Grundsteuer'] },
     { g: 'Geld', q: 'Wer gibt der Gemeinde Zuschüsse?', a: 'der Staat',
       w: ['die Nachbargemeinde', 'die Kirche', 'die Schule'] },
+    { g: 'Geld', q: 'Wofür zahlt man eine Gebühr beim Parken?', a: 'für den Parkplatz',
+      w: ['für die Straße', 'für das Auto', 'für den Führerschein'] },
+    { g: 'Geld', q: 'Was bekommt die Gemeinde für ein Grundstück?', a: 'Pacht oder Miete',
+      w: ['Hundesteuer', 'Bußgeld', 'Zuschüsse'] },
+    { g: 'Geld', q: 'Wofür zahlt man Gebühren?', a: 'Strom, Müll, Wasser',
+      w: ['Hunde, Firmen, Grund', 'Schule, Kirche, Verein', 'Straße, Brücke, Platz'] },
     { g: 'Geld', q: 'Wie heißt der Plan für Einnahmen und Ausgaben?', a: 'Haushaltsplan',
       w: ['Stadtplan', 'Bebauungsplan', 'Stundenplan'] },
     { g: 'Geld', q: 'Wie hoch dürfen die Ausgaben sein?', a: 'nicht höher als die Einnahmen',
@@ -211,16 +243,154 @@
     { g: 'Entscheiden', q: 'Worüber entscheiden sie gemeinsam?', a: 'über Anträge',
       w: ['über Hausaufgaben', 'über Gesetze', 'über Steuersätze im Bund'] },
     { g: 'Entscheiden', q: 'Was machen Bürgermeister und Gemeinderat?', a: 'Aufgaben für uns alle übernehmen',
-      w: ['nur Geld verteilen', 'Gesetze für Bayern machen', 'die Schule leiten'] }
+      w: ['nur Geld verteilen', 'Gesetze für Bayern machen', 'die Schule leiten'] },
+
+    /* ---------- Die demokratische Wahl ---------- */
+    { g: 'Wahl', q: 'Wie muss eine demokratische Wahl sein?', a: 'gleich, frei, geheim, unmittelbar, allgemein',
+      w: ['laut, schnell, öffentlich', 'nur für Erwachsene mit Haus', 'einfach, billig, kurz'],
+      n: 'Die fünf Wahlgrundsätze aus dem Hefteintrag.' },
+    { g: 'Wahl', q: 'Was heißt „geheim“ bei einer Wahl?', a: 'niemand sieht, was du wählst',
+      w: ['niemand weiß, dass gewählt wird', 'nur der Bürgermeister weiß es', 'man wählt im Dunkeln'] },
+    { g: 'Wahl', q: 'Was heißt „frei“ bei einer Wahl?', a: 'niemand darf dich zwingen',
+      w: ['die Wahl kostet nichts', 'man darf mehrmals wählen', 'man wählt im Freien'] },
+    { g: 'Wahl', q: 'Was heißt „gleich“ bei einer Wahl?', a: 'jede Stimme zählt gleich viel',
+      w: ['alle wählen dasselbe', 'alle sind gleich alt', 'alle Kandidaten sind gleich'] },
+    { g: 'Wahl', q: 'Was heißt „allgemein“ bei einer Wahl?', a: 'alle Wahlberechtigten dürfen wählen',
+      w: ['alle Menschen der Welt dürfen', 'nur Allgemeinwissen zählt', 'alle wählen gemeinsam'] },
+    { g: 'Wahl', q: 'Was heißt „unmittelbar“ bei einer Wahl?', a: 'man wählt direkt, ohne Vertreter',
+      w: ['man wählt sofort', 'man wählt in der Mitte', 'man wählt per Hand'] },
+    { g: 'Wahl', q: 'Welche ist eine demokratische Wahl?', a: 'die Klassensprecherwahl',
+      w: ['der Mathetest', 'die Hausaufgabe', 'das Schulfest'] },
+    { g: 'Wahl', q: 'Welche Wahl gibt es an der Schule?', a: 'die Elternbeiratswahl',
+      w: ['die Gemeinderatswahl', 'die Bundestagswahl', 'die Bürgermeisterwahl'] },
+    { g: 'Wahl', q: 'Welche Wahl ist keine Kommunalwahl?', a: 'die Bundestagswahl',
+      w: ['die Bürgermeisterwahl', 'die Gemeinderatswahl', 'die Stadtratswahl'] },
+    { g: 'Wahl', q: 'Wie heißt es, wenn der Rat entscheidet?', a: 'Abstimmung',
+      w: ['Ansprache', 'Aufstellung', 'Anmeldung'] },
+    { g: 'Wahl', q: 'Was ist ein Mehrheitsbeschluss?', a: 'die Mehrheit entscheidet',
+      w: ['alle müssen zustimmen', 'einer entscheidet allein', 'das Los entscheidet'] },
+    { g: 'Wahl', q: 'Wer darf bei der Kommunalwahl wählen?', a: 'die Bürger ab 18 Jahren',
+      w: ['alle Einwohner', 'alle ab 14 Jahren', 'nur der Gemeinderat'] },
+
+    /* ---------- Fachbegriffe richtig schreiben ----------
+       Aus dem Kasten im Heft: "Fachbegriffe, die du richtig schreiben musst".
+       x: 1 heißt, dass hier wirklich genau geschrieben werden muss - ein
+       Tippfehler wird sonst verziehen, und genau darum geht es ja. */
+    { g: 'Fachbegriffe', q: 'Wie schreibt man den Ort, an dem man lebt?', a: 'Gemeinde', x: 1,
+      w: ['Gemeine', 'Gemeinede', 'Gemeindte'] },
+    { g: 'Fachbegriffe', q: 'Wie schreibt man den Rat einer Gemeinde?', a: 'Gemeinderat', x: 1,
+      w: ['Gemeinderath', 'Gemeinerat', 'Gemeindrat'] },
+    { g: 'Fachbegriffe', q: 'Wie schreibt man den Rat einer Stadt?', a: 'Stadtrat', x: 1,
+      w: ['Statrat', 'Stadrat', 'Stadtradt'] },
+    { g: 'Fachbegriffe', q: 'Wie schreibt man die Mehrzahl von Amt?', a: 'Ämter', x: 1,
+      w: ['Ämmter', 'Emter', 'Ämtter'] },
+    { g: 'Fachbegriffe', q: 'Wie schreibt man das Haus der Verwaltung?', a: 'Rathaus', x: 1,
+      w: ['Rathhaus', 'Radhaus', 'Rathauss'] },
+    { g: 'Fachbegriffe', q: 'Wie schreibt man den Leiter der Gemeinde?', a: 'Bürgermeister', x: 1,
+      w: ['Bürgermeißter', 'Burgermeister', 'Bürgermaister'] },
+    { g: 'Fachbegriffe', q: 'Wie schreibt man das Geld vom Verdienst?', a: 'Steuern', x: 1,
+      w: ['Steuren', 'Steiern', 'Stäuern'] },
+    { g: 'Fachbegriffe', q: 'Wie schreibt man das Geld für eine Leistung?', a: 'Gebühren', x: 1,
+      w: ['Gebüren', 'Gebührn', 'Gebueren'] },
+    { g: 'Fachbegriffe', q: 'Wie schreibt man das Abstimmen im Rat?', a: 'Abstimmung', x: 1,
+      w: ['Abstimung', 'Abstimmumg', 'Apstimmung'] },
+    { g: 'Fachbegriffe', q: 'Wie schreibt man den Beschluss der Mehrheit?', a: 'Mehrheitsbeschluss', x: 1,
+      w: ['Mehrheitsbeschluß', 'Merheitsbeschluss', 'Mehrheitsbescluss'] },
+    { g: 'Fachbegriffe', q: 'Wie schreibt man eine Wahl nach Regeln?', a: 'demokratische Wahl', x: 1,
+      w: ['demokratiesche Wahl', 'demogratische Wahl', 'demokratische Waal'] }
+  ];
+
+
+  /* ===================== Hefteinträge zum Ausfüllen =====================
+     Die Seiten aus Idas Heft, so wie sie dort stehen. Was im Heft auf der
+     Linie steht, kommt hier in geschweifte Klammern: {Kommune}. Die App
+     macht daraus Lücken und legt die Wörter daneben.
+
+     extra = zusätzliche Wörter, die NICHT gebraucht werden. Ohne sie wäre
+     die letzte Lücke geschenkt. */
+  const BLAETTER = [
+    { id: 'gemeinde-1', titel: 'Was ist eine Gemeinde?',
+      text: 'Eine Gemeinde ist ein Ort, an dem Menschen leben. Sie wird auch {Kommune} '
+          + 'genannt. Wahlberechtigte Einwohner werden als {Bürger} bezeichnet. Sie können '
+          + 'den {Gemeinderat} wählen, der die {Regierung} einer Gemeinde bildet.',
+      extra: ['Verwaltung', 'Gäste'] },
+
+    { id: 'gemeinde-2', titel: 'Stadt oder Dorf?',
+      text: 'Eine Gemeinde hat oft verschiedene {Ortsteile}. Sie ist entweder eine {Stadt} '
+          + 'oder ein {Dorf}. Die Gemeinde übernimmt viele wichtige {Aufgaben} für die '
+          + 'Gemeinschaft.',
+      extra: ['Bezirke', 'Ferien'] },
+
+    { id: 'verwaltung', titel: 'Die Verwaltung',
+      text: 'Viele Aufgaben werden in der {Verwaltung} der Gemeinde erledigt. Ihr Sitz ist '
+          + 'im {Rathaus}. Eine Verwaltung besteht aus verschiedenen {Ämtern}, zum Beispiel '
+          + 'dem Einwohnermeldeamt. Der {Bürgermeister} ist der Leiter der Verwaltung.',
+      extra: ['Schule', 'Vereinen'] },
+
+    { id: 'aufgaben', titel: 'Die Aufgaben der Gemeinde',
+      text: 'Aufgaben, die jede Gemeinde erfüllen muss, heißen {Pflichtaufgaben}. Dazu '
+          + 'gehören Müllbeseitigung, {Abwasserbeseitigung}, Straßenbau und '
+          + '{Trinkwasserversorgung}. Aufgaben, die eine Gemeinde erfüllen kann, heißen '
+          + '{freiwillige} Aufgaben. Dazu gehören Bücherei, Museen und {Schwimmbäder}.',
+      extra: ['Hausaufgaben'] },
+
+    { id: 'geld-1', titel: 'Woher kommt das Geld?',
+      text: 'Die Gemeinde bekommt ihr Geld aus {Steuern}, {Gebühren} und sonstigen '
+          + 'Einnahmen. Zu den Steuern gehören die Einkommensteuer, die Grundsteuer, die '
+          + '{Gewerbesteuer} und die {Hundesteuer}.',
+      extra: ['Bußgeldern', 'Pacht'] },
+
+    { id: 'geld-2', titel: 'Der Haushaltsplan',
+      text: 'Gebühren zahlt man für Strom, Müll, Wasser und {Parkplätze}. Zu den sonstigen '
+          + 'Einnahmen zählen Zuschüsse vom {Staat}, Pacht oder Miete und {Bußgelder}. Im '
+          + '{Haushaltsplan} stehen die Einnahmen und Ausgaben. Die Ausgaben sollen nicht '
+          + 'höher sein als die {Einnahmen}.',
+      extra: ['Stundenplan'] },
+
+    { id: 'aemter', titel: 'Ämter einer Gemeinde',
+      text: '„Ich bin umgezogen.“ → {Einwohnermeldeamt}. „Ich habe meinen Schirm '
+          + 'verloren.“ → {Fundamt}. „Wir möchten heiraten.“ → {Standesamt}. „Ich möchte '
+          + 'ein Obstgeschäft eröffnen.“ → {Gewerbeamt}.',
+      extra: ['Bauamt', 'Kämmerei'] },
+
+    { id: 'entscheiden-1', titel: 'Wer entscheidet in einer Gemeinde?',
+      text: 'Alle wichtigen Entscheidungen werden vom {Bürgermeister} und dem {Gemeinderat} '
+          + 'getroffen. In einer Stadt heißt der Gemeinderat {Stadtrat}. In großen Städten '
+          + 'heißt der Bürgermeister oft {Oberbürgermeister}.',
+      extra: ['Landrat', 'Kreistag'] },
+
+    { id: 'entscheiden-2', titel: 'Die Kommunalwahl',
+      text: 'Der Bürgermeister und der Gemeinderat werden alle {6} Jahre von den {Bürgern} '
+          + 'einer Gemeinde gewählt. Man nennt die Wahl auch {Kommunalwahl}. Wählen darf '
+          + 'man ab {18} Jahren.',
+      extra: ['4', '14', 'Beamten'] },
+
+    { id: 'entscheiden-3', titel: 'Vorsitz und Kontrolle',
+      text: 'Der Bürgermeister hat den {Vorsitz} des Gemeinderates. Er {leitet} den '
+          + 'Gemeinderat. Der Gemeinderat {kontrolliert} den Bürgermeister. Zusammen '
+          + 'vertreten sie die {Interessen} der Einwohner und entscheiden über {Anträge}.',
+      extra: ['bezahlt'] },
+
+    { id: 'wahl', titel: 'Die demokratische Wahl',
+      text: 'Eine demokratische Wahl ist {gleich}, {frei}, {geheim}, {unmittelbar} und '
+          + '{allgemein}. Im Gemeinderat wird abgestimmt – es gilt der {Mehrheitsbeschluss}.',
+      extra: ['laut', 'öffentlich'] },
+
+    { id: 'steckbrief', titel: 'Steckbrief Traunstein',
+      text: 'Traunstein liegt im {Südosten} von Bayern und hat rund {22.698} Einwohner. '
+          + 'Die Stadt ist {48,57} km² groß. Der Oberbürgermeister heißt Dr. Christian '
+          + '{Hümmer}. Das Autokennzeichen ist {TS}.',
+      extra: ['Norden', 'LF'] }
   ];
 
   const TOPICS = [
     {
       id: 'traunstein',
-      name: 'Stadtgeschichte Traunstein',
-      icon: '🏰',
-      desc: 'Steckbrief, Geschichte, Gemeinde, Aufgaben und Geld',
-      questions: TRAUNSTEIN
+      name: 'Die Gemeinde',
+      icon: '🏛️',
+      desc: 'Gemeinde, Aufgaben, Geld, Ämter, Wahl – mit Steckbrief Traunstein',
+      questions: TRAUNSTEIN,
+      sheets: BLAETTER
     }
   ];
 
