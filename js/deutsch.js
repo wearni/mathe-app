@@ -318,6 +318,157 @@
       w: ['das Komma', 'den Doppelpunkt', 'den Bindestrich'] }
   ];
 
+  /* ===================== Bildergeschichte =====================
+     Nach dem Erzählrad "Meine Bildergeschichte": sieben Felder mit
+     Satzanfängen. Gefragt wird beides - wohin ein Satzanfang gehört und
+     was der jeweilige Teil überhaupt leisten soll.
+
+     Satzanfänge, die auf dem Rad in zwei Feldern stehen (Schließlich,
+     Erleichtert, Im selben Moment), werden bewusst nicht zum Zuordnen
+     benutzt - sonst gäbe es zwei richtige Antworten. */
+  const BILDERGESCHICHTE = [
+
+    /* ---------- Aufbau ---------- */
+    { g: 'Aufbau', q: 'Aus welchen drei großen Teilen besteht sie?', a: 'Einleitung, Hauptteil, Schluss',
+      w: ['Titel, Text, Bild', 'Frage, Antwort, Ende', 'Anfang, Anfang, Ende'] },
+    { g: 'Aufbau', q: 'Womit beginnt die Geschichte?', a: 'mit der Einleitung',
+      w: ['mit dem Hauptteil', 'mit dem Schluss', 'mit den Gefühlen'] },
+    { g: 'Aufbau', q: 'Welcher Teil erzählt, was passiert?', a: 'der Hauptteil',
+      w: ['die Einleitung', 'der Schluss', 'die Überschrift'] },
+    { g: 'Aufbau', q: 'Welcher Teil sagt, wie es ausgeht?', a: 'der Schluss',
+      w: ['die Einleitung', 'der Hauptteil', 'der Ortswechsel'] },
+    { g: 'Aufbau', q: 'Wie viele Felder hat das Erzählrad?', a: '7',
+      w: ['5', '6', '8'], n: 'Einleitung, Hauptteil, Gefühle, Ortswechsel, Zeitabstände, Gedanken, Schluss.' },
+    { g: 'Aufbau', q: 'Wozu sind die Satzanfänge gut?', a: 'die Geschichte wird lebendig',
+      w: ['der Text wird länger', 'man braucht keine Bilder', 'man spart Satzzeichen'] },
+    { g: 'Aufbau', q: 'Warum nicht immer „dann“ schreiben?', a: 'das klingt langweilig',
+      w: ['das ist falsch geschrieben', '„dann“ ist kein Wort', 'das darf man nie schreiben'] },
+    { g: 'Aufbau', q: 'In welcher Zeit erzählt man eine Geschichte?', a: 'in der Vergangenheit',
+      w: ['in der Gegenwart', 'in der Zukunft', 'mal so, mal so'], n: 'Ich ging, ich sah, ich rief.' },
+    { g: 'Aufbau', q: 'Welche Frage beantwortet ein Ortswechsel?', a: 'Wo?',
+      w: ['Wann?', 'Wer?', 'Wie?'] },
+    { g: 'Aufbau', q: 'Welche Frage beantworten die Zeitabstände?', a: 'Wann?',
+      w: ['Wo?', 'Wer?', 'Warum?'] },
+    { g: 'Aufbau', q: 'Welche Frage stellt das Feld „Gefühle“?', a: 'Wie geht es mir?',
+      w: ['Wo bin ich?', 'Wann war das?', 'Wer ist das?'] },
+    { g: 'Aufbau', q: 'Was schaust du dir vor dem Schreiben an?', a: 'alle Bilder der Reihe nach',
+      w: ['nur das erste Bild', 'nur das letzte Bild', 'die Überschrift'] },
+
+    /* ---------- Einleitung ---------- */
+    { g: 'Einleitung', q: 'Wohin gehört „Eines Tages …“?', a: 'Einleitung',
+      w: ['Hauptteil', 'Schluss', 'Ortswechsel'] },
+    { g: 'Einleitung', q: 'Wohin gehört „An einem sonnigen Morgen …“?', a: 'Einleitung',
+      w: ['Hauptteil', 'Schluss', 'Zeitabstand'] },
+    { g: 'Einleitung', q: 'Wohin gehört „Plötzlich bemerkte ich …“?', a: 'Einleitung',
+      w: ['Schluss', 'Ortswechsel', 'Gefühl'], n: 'Damit kommt die Geschichte ins Rollen.' },
+    { g: 'Einleitung', q: 'Welcher Satzanfang eröffnet die Geschichte?', a: 'Eines Tages …',
+      w: ['Seit diesem Tag …', 'Kurz darauf …', 'Am Ende …'] },
+    { g: 'Einleitung', q: 'Welcher Anfang passt in die Einleitung?', a: 'Als ich unterwegs war, …',
+      w: ['Zum Glück …', 'Endlich …', 'Nach einer Weile …'] },
+    { g: 'Einleitung', q: 'Was sagt die Einleitung?', a: 'wer, wo und wann',
+      w: ['wie es ausgeht', 'was jemand denkt', 'warum es spannend war'] },
+
+    /* ---------- Hauptteil ---------- */
+    { g: 'Hauptteil', q: 'Wohin gehört „Auf einmal …“?', a: 'Hauptteil',
+      w: ['Einleitung', 'Schluss', 'Ortswechsel'] },
+    { g: 'Hauptteil', q: 'Wohin gehört „Doch dann …“?', a: 'Hauptteil',
+      w: ['Einleitung', 'Schluss', 'Zeitabstand'] },
+    { g: 'Hauptteil', q: 'Wohin gehört „Zum Glück …“?', a: 'Hauptteil',
+      w: ['Einleitung', 'Schluss', 'Ortswechsel'] },
+    { g: 'Hauptteil', q: 'Wohin gehört „Währenddessen …“?', a: 'Hauptteil',
+      w: ['Einleitung', 'Schluss', 'Gefühl'] },
+    { g: 'Hauptteil', q: 'Wohin gehört „Ohne lange zu überlegen, …“?', a: 'Hauptteil',
+      w: ['Einleitung', 'Schluss', 'Zeitabstand'] },
+    { g: 'Hauptteil', q: 'Welcher Satzanfang macht es spannend?', a: 'Im nächsten Augenblick …',
+      w: ['Eines Tages …', 'Seit diesem Tag …', 'Am Ende …'] },
+    { g: 'Hauptteil', q: 'Welcher Anfang passt in den Hauptteil?', a: 'Plötzlich hörte ich …',
+      w: ['Endlich …', 'Eines Tages …', 'Seit diesem Tag …'] },
+    { g: 'Hauptteil', q: 'Was erzählt der Hauptteil?', a: 'was passiert',
+      w: ['wie es ausgeht', 'wer die Personen sind', 'wo man wohnt'] },
+    { g: 'Hauptteil', q: 'Welcher Teil ist der längste?', a: 'der Hauptteil',
+      w: ['die Einleitung', 'der Schluss', 'alle gleich lang'] },
+
+    /* ---------- Gefühle & Reaktionen ---------- */
+    { g: 'Gefühle', q: 'Welcher Anfang zeigt ein Gefühl?', a: 'Mit klopfendem Herzen …',
+      w: ['Gleich um die Ecke …', 'Kurz darauf …', 'Eines Tages …'] },
+    { g: 'Gefühle', q: 'Was heißt „mit klopfendem Herzen“?', a: 'aufgeregt und ängstlich',
+      w: ['sehr fröhlich', 'sehr müde', 'sehr wütend'] },
+    { g: 'Gefühle', q: 'Welches Wort zeigt Freude?', a: 'laut lachend',
+      w: ['ängstlich', 'wütend', 'erschrocken'] },
+    { g: 'Gefühle', q: 'Welches Wort zeigt Angst?', a: 'ängstlich',
+      w: ['laut lachend', 'wütend', 'überrascht'] },
+    { g: 'Gefühle', q: 'Welches Wort zeigt Ärger?', a: 'wütend',
+      w: ['laut lachend', 'vorsichtig', 'überrascht'] },
+    { g: 'Gefühle', q: 'Was heißt „erleichtert“?', a: 'die Angst ist vorbei',
+      w: ['sehr wütend', 'sehr müde', 'sehr neugierig'] },
+    { g: 'Gefühle', q: 'Was heißt „vorsichtig“?', a: 'ganz behutsam',
+      w: ['sehr schnell', 'sehr laut', 'sehr lustig'] },
+    { g: 'Gefühle', q: 'Was heißt „erschrocken“?', a: 'jemand ist erschreckt worden',
+      w: ['jemand freut sich', 'jemand ist müde', 'jemand ist stolz'] },
+    { g: 'Gefühle', q: 'Wozu schreibst du Gefühle hinein?', a: 'man fühlt mit',
+      w: ['der Text wird länger', 'man braucht keine Bilder', 'man spart Kommas'] },
+
+    /* ---------- Ortswechsel ---------- */
+    { g: 'Ortswechsel', q: 'Wohin gehört „Hinter dem Haus …“?', a: 'Ortswechsel',
+      w: ['Zeitabstand', 'Schluss', 'Gefühl'] },
+    { g: 'Ortswechsel', q: 'Wohin gehört „Gleich um die Ecke …“?', a: 'Ortswechsel',
+      w: ['Zeitabstand', 'Einleitung', 'Gefühl'] },
+    { g: 'Ortswechsel', q: 'Wohin gehört „Dort drüben …“?', a: 'Ortswechsel',
+      w: ['Zeitabstand', 'Schluss', 'Gefühl'] },
+    { g: 'Ortswechsel', q: 'Wohin gehört „Auf dem Weg …“?', a: 'Ortswechsel',
+      w: ['Zeitabstand', 'Schluss', 'Gefühl'] },
+    { g: 'Ortswechsel', q: 'Welcher Anfang zeigt einen Ort?', a: 'Ein Stück weiter …',
+      w: ['Nach einer Weile …', 'Am Ende …', 'Wütend …'] },
+    { g: 'Ortswechsel', q: 'Was sagt dir ein Ortswechsel?', a: 'wo es weitergeht',
+      w: ['wann es weitergeht', 'wer spricht', 'wie es ausgeht'] },
+
+    /* ---------- Zeitabstände ---------- */
+    { g: 'Zeitabstände', q: 'Wohin gehört „Kurz darauf …“?', a: 'Zeitabstand',
+      w: ['Ortswechsel', 'Gefühl', 'Einleitung'] },
+    { g: 'Zeitabstände', q: 'Wohin gehört „Am nächsten Morgen …“?', a: 'Zeitabstand',
+      w: ['Ortswechsel', 'Gefühl', 'Schluss'] },
+    { g: 'Zeitabstände', q: 'Wohin gehört „Nach einer Weile …“?', a: 'Zeitabstand',
+      w: ['Ortswechsel', 'Gefühl', 'Einleitung'] },
+    { g: 'Zeitabstände', q: 'Wohin gehört „Wenig später …“?', a: 'Zeitabstand',
+      w: ['Ortswechsel', 'Gefühl', 'Schluss'] },
+    { g: 'Zeitabstände', q: 'Was zeigt „Nach einiger Zeit …“ an?', a: 'dass Zeit vergangen ist',
+      w: ['dass der Ort wechselt', 'dass jemand spricht', 'dass es vorbei ist'] },
+    { g: 'Zeitabstände', q: 'Welcher Anfang zeigt einen Zeitsprung?', a: 'Als kurze Zeit später …',
+      w: ['Hinter dem Haus …', 'Ängstlich …', 'Dort drüben …'] },
+
+    /* ---------- Gedanken & wörtliche Rede ---------- */
+    { g: 'Gedanken & Rede', q: 'Wohin gehört „Oh nein!“, rief …?', a: 'wörtliche Rede',
+      w: ['Ortswechsel', 'Zeitabstand', 'Schluss'] },
+    { g: 'Gedanken & Rede', q: 'Wie schreibt man, was jemand sagt?', a: 'in Anführungszeichen',
+      w: ['in Klammern', 'groß und fett', 'mit Bindestrich'] },
+    { g: 'Gedanken & Rede', q: 'Welcher Anfang zeigt einen Gedanken?', a: '„Was soll ich tun?“, dachte …',
+      w: ['Kurz darauf …', 'Hinter dem Haus …', 'Endlich …'] },
+    { g: 'Gedanken & Rede', q: 'Welches Verb passt zu Gedanken?', a: 'dachte',
+      w: ['rief', 'rannte', 'sprang'] },
+    { g: 'Gedanken & Rede', q: 'Welches Verb passt zur wörtlichen Rede?', a: 'rief',
+      w: ['dachte', 'überlegte', 'träumte'] },
+    { g: 'Gedanken & Rede', q: 'Was heißt „ohne lange nachzudenken“?', a: 'sofort',
+      w: ['sehr langsam', 'nach einer Woche', 'gar nicht'] },
+    { g: 'Gedanken & Rede', q: 'Was heißt „mutig entschied ich mich“?', a: 'er hat sich getraut',
+      w: ['er hatte Angst', 'er lief weg', 'er schlief ein'] },
+    { g: 'Gedanken & Rede', q: 'Wozu schreibst du Gedanken hinein?', a: 'man erfährt, was im Kopf vorgeht',
+      w: ['der Text wird kürzer', 'man braucht keine Bilder', 'man spart Kommas'] },
+
+    /* ---------- Schluss ---------- */
+    { g: 'Schluss', q: 'Wohin gehört „Am Ende …“?', a: 'Schluss',
+      w: ['Einleitung', 'Hauptteil', 'Ortswechsel'] },
+    { g: 'Schluss', q: 'Wohin gehört „Seit diesem Tag …“?', a: 'Schluss',
+      w: ['Einleitung', 'Hauptteil', 'Zeitabstand'] },
+    { g: 'Schluss', q: 'Wohin gehört „Endlich …“?', a: 'Schluss',
+      w: ['Einleitung', 'Ortswechsel', 'Gefühl'] },
+    { g: 'Schluss', q: 'Welcher Anfang beendet die Geschichte?', a: 'Das werde ich nie vergessen …',
+      w: ['Eines Tages …', 'Auf einmal …', 'Kurz darauf …'] },
+    { g: 'Schluss', q: 'Was gehört in den Schluss?', a: 'wie es ausgeht',
+      w: ['wie es beginnt', 'der spannendste Moment', 'die Namen der Personen'] },
+    { g: 'Schluss', q: 'Wie lang ist der Schluss meistens?', a: 'kurz',
+      w: ['so lang wie der Hauptteil', 'länger als alles andere', 'gar nicht vorhanden'] }
+  ];
+
   const TOPICS = [
     {
       id: 'probe-2110',
@@ -325,6 +476,13 @@
       icon: '✍️',
       desc: 'Wörtliche Rede, Wortarten, 1. Vergangenheit, Rechtschreiben, Abschreiben',
       questions: PROBE
+    },
+    {
+      id: 'bildergeschichte',
+      name: 'Bildergeschichte',
+      icon: '📖',
+      desc: 'Satzanfänge und Aufbau: Einleitung, Hauptteil, Gefühle, Schluss',
+      questions: BILDERGESCHICHTE
     }
   ];
 

@@ -446,6 +446,37 @@ und für ein Grundschulkind ist die Hürde trotzdem hoch genug.
 
 ---
 
+## Stimmt der hochgeladene Stand?
+
+**Eltern-Einstellungen → Was ist geladen?** Dort steht, was wirklich auf dem Gerät
+angekommen ist:
+
+| Zeile | Woher |
+|---|---|
+| Dateien (js/main.js) | die Versionsnummer **aus der geladenen main.js** |
+| Service Worker | die Nummer, die der laufende `sw.js` selbst meldet |
+| HSU / Deutsch | wie viele Fragen und Themen die Fachdateien gerade mitbringen |
+
+Das ist wichtig, weil die Versionszeile unten im Menü **nur aus `js/main.js`** stammt.
+Wird beim Hochladen eine andere Datei vergessen – etwa `js/deutsch.js` –, zeigt sie
+trotzdem die neue Nummer, während die Fragen die alten bleiben. Hier fällt das sofort
+auf: Stehen bei Deutsch weniger Themen als erwartet, fehlt genau diese Datei.
+
+Direkt nachsehen lässt es sich auch im Browser:
+`https://<benutzer>.github.io/<repo>/js/deutsch.js` öffnen und nach dem Namen des
+Themas suchen.
+
+### js/config.js nicht hochladen – aber auch nicht löschen
+
+Beim Hochladen wird `js/config.js` ausgelassen, damit die eigenen Zugangsdaten der
+Bestenliste nicht von der leeren Vorlage überschrieben werden. **Aus dem Repository
+löschen sollte man sie aber nicht:** Dann fehlt die Datei auf dem Server, und bis
+Version 2.5.0 blieb dadurch der komplette Offline-Cache leer – der Service Worker holte
+seine Dateien mit `addAll()`, und das ist alles-oder-nichts. Seit 2.5.1 wird jede Datei
+einzeln geholt; eine fehlende nimmt den Rest nicht mehr mit.
+
+---
+
 ## Safari-Modus
 
 Die zweite Spielart, im Startmenü und ganz oben in den Einstellungen umschaltbar. Aus

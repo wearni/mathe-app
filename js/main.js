@@ -1375,6 +1375,39 @@
       ['Zustand', lock > 0 ? 'Pause, noch ' + mmssLong(lock) : 'frei']
     ].map(x => '<div class="stat-row"><span>' + x[0] + '</span><b>' + x[1] + '</b></div>').join('');
     $('#btnCodeChange').textContent = hasCode() ? 'Code ändern' : 'Code festlegen';
+    buildStats();
+  }
+
+  /* ---------- Was ist wirklich geladen? ----------
+     Die Versionszeile im Menü kommt aus js/main.js. Wurde beim Hochladen
+     eine Datei vergessen, stimmt sie trotzdem - und man sucht lange.
+     Hier steht deshalb, was die einzelnen Dateien tatsächlich mitbringen. */
+  function buildStats() {
+    const faecher = Quiz.SUBJECTS.filter(x => x.id !== 'mathe').map(x => {
+      const ts = Quiz.topics(x.id);
+      const n = ts.reduce((a, t) => a + t.count, 0);
+      return x.name + ': ' + n + ' Fragen in ' + ts.length +
+        (ts.length === 1 ? ' Thema' : ' Themen');
+    });
+    const rows = [
+      ['Dateien (js/main.js)', APP_FALLBACK_VERSION],
+      ['Service Worker', swVersion || 'meldet sich nicht']
+    ].concat(faecher.map(t => t.split(': ')));
+    $('#buildStats').innerHTML = rows
+      .map(x => '<div class="stat-row"><span>' + x[0] + '</span><b>' + x[1] + '</b></div>').join('');
+
+    if (!swVersion) {
+      $('#buildHint').textContent = 'Der Service Worker hat sich noch nicht gemeldet – '
+        + 'das dauert beim ersten Öffnen einen Moment. Die Fragenzahlen oben stimmen '
+        + 'trotzdem: Sie kommen aus den Dateien, die gerade geladen sind.';
+    } else if (swVersion === APP_FALLBACK_VERSION) {
+      $('#buildHint').textContent = 'Alles aus einem Guss. Fehlen oben Themen oder Fragen, '
+        + 'ist die passende Datei unter js/ beim Hochladen nicht mitgekommen.';
+    } else {
+      $('#buildHint').textContent = 'Achtung: Dateien und Service Worker sind nicht derselbe '
+        + 'Stand. Beim Hochladen ist etwas liegen geblieben – am besten alle Dateien noch '
+        + 'einmal hochladen und die Seite neu laden.';
+    }
   }
 
   /* ===================== Eintrag in die Bestenliste ===================== */
@@ -1946,14 +1979,26 @@
     if (!busy) applyUpdate();
   }
 
-  /* Der laufende Service Worker sagt selbst, welche Version er ist. */
+  /* Der laufende Service Worker sagt selbst, welche Version er ist.
+     Wichtig: Die Zeile im Menü zeigt bis dahin die Nummer aus DIESER Datei.
+     Beide Werte stehen in den Eltern-Einstellungen unter "Was ist geladen?"
+     nebeneinander - weichen sie ab, fehlt beim Hochladen etwas. */
+  let swVersion = '';
+
   function showVersion() {
     const el = $('#appVersion');
     if (!('serviceWorker' in navigator)) { el.textContent = APP_FALLBACK_VERSION; return; }
     const ask = target => {
       if (!target) return false;
       const ch = new MessageChannel();
-      ch.port1.onmessage = e => { if (e.data && e.data.version) el.textContent = e.data.version; };
+      ch.port1.onmessage = e => {
+        if (e.data && e.data.version) {
+          swVersion = e.data.version;
+          el.textContent = e.data.version;
+          /* Meldet er sich erst jetzt, muss die Stand-Anzeige nachziehen. */
+          if ($('#buildStats') && $('#buildStats').innerHTML) buildStats();
+        }
+      };
       try { target.postMessage({ type: 'version' }, [ch.port2]); return true; } catch (e) { return false; }
     };
     if (!ask(navigator.serviceWorker.controller)) {
@@ -1961,7 +2006,7 @@
     }
   }
 
-  const APP_FALLBACK_VERSION = '2.4.5';
+  const APP_FALLBACK_VERSION = '2.5.1';
 
   function pwa() {
     $('#appVersion').textContent = APP_FALLBACK_VERSION;

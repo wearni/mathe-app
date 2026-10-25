@@ -14,7 +14,7 @@
       dem Gerät, wenn das Hochzählen der VERSION mal vergessen wurde.
    ============================================================ */
 
-const VERSION = '2.5.0';
+const VERSION = '2.5.1';
 const CACHE = 'mathe-app-v' + VERSION;
 const NET_TIMEOUT = 2500;   /* ms, danach wird der Cache benutzt */
 
@@ -45,10 +45,16 @@ const ASSETS = [
   './icons/icon-maskable-512.png'
 ];
 
+/* Jede Datei einzeln holen. addAll() ist alles-oder-nichts: fehlt eine
+   einzige Datei auf dem Server (z. B. js/config.js, wenn sie beim Hochladen
+   absichtlich weggelassen wurde), landet sonst GAR NICHTS im Cache - die App
+   funktioniert dann online weiter, offline aber nicht mehr. */
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
-      .then(c => c.addAll(ASSETS.map(u => new Request(u, { cache: 'reload' }))))
+      .then(c => Promise.all(ASSETS.map(u =>
+        c.add(new Request(u, { cache: 'reload' })).catch(() => { })
+      )))
       .catch(() => { })
       .then(() => self.skipWaiting())
   );
@@ -68,6 +74,14 @@ self.addEventListener('message', e => {
     if (e.ports && e.ports[0]) e.ports[0].postMessage({ version: VERSION });
   }
   if (e.data && e.data.type === 'skipWaiting') self.skipWaiting();
+  /* Welche Dateien liegen wirklich im Cache? Für die Stand-Anzeige. */
+  if (e.data && e.data.type === 'cached') {
+    const reply = p => { if (e.ports && e.ports[0]) e.ports[0].postMessage(p); };
+    caches.open(CACHE)
+      .then(c => c.keys())
+      .then(keys => reply({ version: VERSION, files: keys.length, total: ASSETS.length }))
+      .catch(() => reply({ version: VERSION, files: -1, total: ASSETS.length }));
+  }
 });
 
 function fromNetwork(req) {
