@@ -337,6 +337,12 @@ html, body {
 .op-item .txt small { color: var(--muted); font-size: 11px; font-family: var(--pixel); }
 .op-item.locked { opacity: .75; }
 
+/* Antwortarten: wie die Rechenarten zum Anhaken, nur einspaltig und
+   mit dem Symbol der Antwortart davor. */
+#formGrid { display: grid; gap: 7px; }
+.form-item .ic { flex: 0 0 auto; font-size: 20px; width: 26px; text-align: center; }
+.form-item .txt small { font-family: var(--body); font-size: 12px; }
+
 /* Tempo-Auswahl */
 #speedForGrade { font-family: var(--body); font-size: 12px; color: var(--accent); letter-spacing: 0; }
 .speed-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }

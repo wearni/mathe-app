@@ -251,7 +251,7 @@
       subject: G.settings.subject, topic: G.settings.topic,
       grade: G.settings.grade, level: G.level,
       ops: G.settings.ops, ranges: G.settings.ranges,
-      answerMode: G.settings.answerMode || 'choice',
+      answerModes: G.settings.answerModes || [G.settings.answerMode || 'choice'],
       timeline: !!G.settings.timeline,
       timelineDue: !!due,
       years: !!G.settings.years,

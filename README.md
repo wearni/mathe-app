@@ -45,7 +45,7 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | 🔊 **8-Bit Sound** | Effekte und **drei** Chiptune-Stücke mit Bass, Arpeggio, Melodie und Schlagzeug – alles per WebAudio erzeugt, keine Audiodateien |
 | 👾 **Pixel-Art** | Fahrzeuge, Ufos, Jeep und Tiere als echte Pixel-Sprites; die Aufgabenkästen bleiben bewusst rund und gut lesbar |
 | 🏆 **Online-Bestenliste** | mit Spitzname und selbst gewürfeltem Pixel-Avatar (optional, siehe unten) |
-| 🎲 **Sechs Antwortarten** | Auswahl, Zahlenfeld, Wahr/Falsch, Buchstabensalat, Freitext – oder **Gemischt**, das durchwechselt |
+| ☑️ **Antwortarten zum Anhaken** | Auswahl, Zahlenfeld, Wahr/Falsch, Buchstabensalat, Freitext – einzeln an- und abwählbar, beliebig kombinierbar |
 | ⏳ **Denkzeit** | die Antworten erscheinen erst nach ein paar Sekunden – gegen reines Wiedererkennen |
 | 🕰️ **Zeitstrahl** | etwa jede sechste Aufgabe: drei Ereignisse vom ältesten zum jüngsten ordnen |
 | 🏅 **Gamification** | Combo-Multiplikator bis x4, Level, XP-Ränge, 10 Abzeichen, Bestenliste pro Klasse |
@@ -56,7 +56,8 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 
 ## Antwortarten
 
-**Einstellungen → Antwortart.** Sechs Arten, in beiden Fächern und beiden Spielarten:
+**Einstellungen → Antwortart.** Fünf Arten **zum Anhaken** – wie die Rechenarten. Jede
+lässt sich einzeln an- und abschalten, und alle Kombinationen sind erlaubt:
 
 | | | passt zu |
 |---|---|---|
@@ -65,10 +66,15 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | ✓✗ **Wahr oder falsch** | stimmt die vorgeschlagene Antwort? | allem |
 | 🔤 **Buchstabensalat** | Buchstaben der Reihe nach antippen | kurzen Wörtern (3–14 Buchstaben) |
 | ⌨️ **Freitext** | Antwort mit der Tastatur schreiben | Antworten bis 22 Zeichen |
-| 🎲 **Gemischt** | wechselt pro Aufgabe durch | allem |
 
-Passt die eingestellte Art einmal nicht zur Frage – „Woher bekommt die Gemeinde ihr
-Geld?" lässt sich schlecht aus Buchstaben legen – gibt es dort automatisch die Auswahl.
+Sind **mehrere** angehakt, sucht sich jede Aufgabe davon aus, was zu ihr passt – das
+frühere „Gemischt" ist damit einfach „alle fünf angehakt" und als eigener Eintrag
+verschwunden. Die Auswahl kommt dabei etwas seltener dran, weil sie die leichteste Art
+ist und die anderen sonst untergehen. Mindestens eine Art bleibt immer angehakt.
+
+Passt keine der angehakten Arten zur Frage – „Woher bekommt die Gemeinde ihr Geld?"
+lässt sich schlecht aus Buchstaben legen – gibt es dort die Auswahl. Beim Rechnen steht
+der Buchstabensalat gar nicht erst zur Wahl.
 Von den 87 Traunstein-Fragen eignen sich 13 fürs Zahlenfeld (Jahreszahlen und die Zahl
 der Stadträte), 26 für den Buchstabensalat und 74 für Freitext.
 
@@ -830,7 +836,8 @@ schul-app/
   in `js/game.js`; wie lange die Lösung im Arcade stehen bleibt: `CONFIG.solutionHold`
 * **Wiederholung falscher Fragen:** `REPEAT_CHANCE` in `js/bank.js`; wie lange eine
   gestellte Frage danach gesperrt bleibt: `COOLDOWN` ebenda
-* **Antwortarten:** die Liste `FORMS` in `js/quiz.js`; welche Art zu welcher Frage passt,
+* **Antwortarten:** die Liste `FORMS` in `js/quiz.js` (jeder Eintrag wird eine Checkbox);
+  welche Art eine Aufgabe nimmt, entscheidet `pickForm()` ebenda; welche Art zu welcher Frage passt,
   entscheidet `formsFor()` in `js/bank.js`. Wie großzügig Freitext verglichen wird,
   steht in `sameText()` in `js/quiz.js` – mit `x: 1` an einer Frage zählt dort nur die
   exakte Schreibweise

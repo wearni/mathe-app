@@ -33,8 +33,7 @@
     { id: 'number', name: 'Zahlenfeld', icon: '🔢', desc: 'Die Zahl selbst eintippen' },
     { id: 'truefalse', name: 'Wahr oder falsch', icon: '✓✗', desc: 'Stimmt die vorgeschlagene Antwort?' },
     { id: 'letters', name: 'Buchstabensalat', icon: '🔤', desc: 'Buchstaben der Reihe nach antippen' },
-    { id: 'text', name: 'Freitext', icon: '⌨️', desc: 'Antwort mit der Tastatur schreiben' },
-    { id: 'mixed', name: 'Gemischt', icon: '🎲', desc: 'Wechselt durch – man kann sich an nichts gewöhnen' }
+    { id: 'text', name: 'Freitext', icon: '⌨️', desc: 'Antwort mit der Tastatur schreiben' }
   ];
   const FORM_INFO = {};
   FORMS.forEach(f => { FORM_INFO[f.id] = f; });
@@ -115,15 +114,22 @@
     return sameText(given, q.solution, q.exact);
   }
 
-  /* ---------- Antwortart wählen ---------- */
+  /* ---------- Antwortart wählen ----------
+     Angehakt sind eine oder mehrere Arten. Davon kommen nur die infrage,
+     die auch zur Frage passen - eine Jahreszahl lässt sich nicht aus
+     Buchstaben zusammensetzen. Bleibt nichts übrig, gibt es die Auswahl.
+
+     Sind mehrere angehakt, kommt die Auswahl etwas seltener dran: Sie ist
+     die leichteste Art, und die anderen sollen nicht untergehen. */
   function pickForm(wanted, available) {
-    if (wanted === 'mixed') {
-      /* Auswahl etwas seltener, damit die anderen Arten auch drankommen */
-      const pool = available.filter(f => f !== 'choice');
-      if (pool.length && Math.random() < 0.75) return pool[Math.floor(Math.random() * pool.length)];
-      return 'choice';
-    }
-    return available.indexOf(wanted) >= 0 ? wanted : 'choice';
+    const want = (Array.isArray(wanted) ? wanted : [wanted || 'choice'])
+      .filter(f => available.indexOf(f) >= 0);
+    if (!want.length) return 'choice';
+    if (want.length === 1) return want[0];
+    const pool = want.filter(f => f !== 'choice');
+    if (pool.length && want.indexOf('choice') >= 0 && Math.random() >= 0.75) return 'choice';
+    if (pool.length) return pool[Math.floor(Math.random() * pool.length)];
+    return want[0];
   }
 
   /* ---------- Aufbauen ---------- */
@@ -153,7 +159,10 @@
   /* Eine Aufgabe ziehen. uid = laufende Nummer der Aufgabe auf dem Feld. */
   function create(s, uid) {
     s = s || {};
-    const wanted = s.answerMode || 'choice';
+    /* answerModes ist die Liste der angehakten Arten. Ältere Stände haben
+       noch das einzelne answerMode - das gilt weiter. */
+    const wanted = Array.isArray(s.answerModes) && s.answerModes.length
+      ? s.answerModes : [s.answerMode || 'choice'];
 
     const bank = bankOf(s);
 
@@ -225,7 +234,7 @@
     const label = MathGen.sgn(p.answer);
     /* Buchstabensalat gibt es beim Rechnen nicht - dort wird getippt */
     const available = ['choice', 'number', 'truefalse', 'text'];
-    const form = pickForm(wanted === 'letters' ? 'number' : wanted, available);
+    const form = pickForm(wanted.map(f => (f === 'letters' ? 'number' : f)), available);
 
     const out = {
       form: form, text: p.text, answer: p.answer, answerLabel: label, note: '',
@@ -261,6 +270,14 @@
   function formsFor(s) {
     if (isBank(s)) return FORMS;
     return FORMS.filter(f => f.id !== 'letters');
+  }
+
+  /* Die angehakten Arten, auf das beschränkt, was es im Fach gibt.
+     Leer oder unbekannt heißt: Auswahl. */
+  function modesFor(s, chosen) {
+    const avail = formsFor(s).map(f => f.id);
+    const out = (chosen || []).filter(f => avail.indexOf(f) >= 0);
+    return out.length ? out : ['choice'];
   }
 
   /* Hat das Thema genug Jahreszahlen für einen Zeitstrahl? */
@@ -312,7 +329,7 @@
   global.Quiz = {
     SUBJECTS, FORMS, FORM_INFO,
     create, check, markResult, openRepeats, resetRepeats,
-    formsFor, hasTimeline, hasYears, hasSheets, info, isHsu, isBank, sameText,
+    formsFor, modesFor, hasTimeline, hasYears, hasSheets, info, isHsu, isBank, sameText,
     topics, topicOf, groupsOf
   };
 })(window);

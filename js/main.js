@@ -27,7 +27,8 @@
       /* zuletzt gewähltes Thema je Fach - beim Umschalten kommt es zurück */
       topicBySubject: { hsu: 'traunstein', deutsch: 'probe-2110' },
       /* wie geantwortet wird: choice | number | truefalse | letters | text | mixed */
-      answerMode: 'choice',
+      /* Liste der angehakten Antwortarten - mehrere sind erlaubt. */
+      answerModes: ['choice'],
       thinkTime: 0,        /* Sekunden, in denen nur die Frage zu sehen ist */
       /* Jahreszahlen sind von Haus aus AUS - sie kommen in der Probe nicht
          dran. Wer sie üben will, schaltet sie in den Einstellungen dazu. */
@@ -69,12 +70,26 @@
         if (!(p.settings || {}).answerMode && (p.settings || {}).inputMode) {
           DB.settings.answerMode = p.settings.inputMode === 'keypad' ? 'number' : 'choice';
         }
+        /* Früher war genau EINE Antwortart gewählt, "mixed" hieß alle.
+           Daraus wird jetzt die Liste der angehakten Arten. */
+        if (!Array.isArray((p.settings || {}).answerModes)) {
+          const alt = DB.settings.answerMode || 'choice';
+          DB.settings.answerModes = alt === 'mixed'
+            ? Quiz.formsFor({ subject: DB.settings.subject }).map(f => f.id)
+            : [alt];
+        } else {
+          DB.settings.answerModes = p.settings.answerModes.slice();
+        }
+        delete DB.settings.answerMode;
         DB.stats = Object.assign({}, DEFAULTS.stats, p.stats || {});
         DB.scores = Array.isArray(p.scores) ? p.scores : [];
         /* ältere Einträge kennen das Merkmal noch nicht - die gelten als
            "noch nicht online" und werden beim Abgleich nachgereicht */
         DB.scores.forEach(e => { if (typeof e.online !== 'boolean') e.online = false; });
         DB.badges = p.badges || {};
+        /* Umgestellte Felder gleich festschreiben - sonst steht beim
+           nächsten Start wieder der alte Stand da. */
+        save();
       }
     } catch (e) { /* Speicher nicht verfügbar - läuft trotzdem */ }
   }
@@ -546,7 +561,7 @@
     $('#btnFire').textContent = DB.settings.playMode === 'safari' ? 'ANTWORTEN 🚙' : 'ABSCHIESSEN 🚀';
     document.querySelector('.bonus-meter').hidden = false;
     lastChoices = '';
-    showPad(DB.settings.answerMode === 'number' ? '#padWrap' : '#choiceWrap');
+    showPad(onlyMode() === 'number' ? '#padWrap' : '#choiceWrap');
   }
 
   /* Die Schutzlinie muss über der Steuerung liegen - Höhe messen und melden. */
@@ -662,7 +677,7 @@
         grade: DB.settings.grade, theme: DB.settings.theme,
         inputMode: inputMode(), speed: curSpeed(),
         subject: DB.settings.subject, topic: DB.settings.topic,
-        answerMode: DB.settings.answerMode,
+        answerModes: curModes(),
         years: !!DB.settings.years,
         sheets: !!DB.settings.sheets,
         timeline: !!DB.settings.timeline && Quiz.hasTimeline(quizCtx()),
@@ -859,7 +874,10 @@
       : rAll.filter(r => rOn.indexOf(r.id) >= 0).map(r => r.name).join(' + ');
     const sp = Game.speeds[curSpeed() - 1];
     $('#chipSpeed').textContent = sp ? sp.icon + ' ' + sp.name : '';
-    const fm = Quiz.FORM_INFO[DB.settings.answerMode] || Quiz.FORM_INFO.choice;
+    const modes = curModes();
+    const fm = modes.length === 1
+      ? (Quiz.FORM_INFO[modes[0]] || Quiz.FORM_INFO.choice)
+      : { icon: '🎲', name: modes.length + ' Antwortarten' };
     $('#chipMode').textContent = fm.icon + ' ' + fm.name;
     $('#chipMode').hidden = false;
 
@@ -1045,7 +1063,14 @@
   function curSubject() { return Quiz.SUBJECTS.find(x => x.id === DB.settings.subject) || Quiz.SUBJECTS[0]; }
 
   /* Nur noch für die Tastatur: Ziffern zählen bloß im Zahlenfeld. */
-  function inputMode() { return DB.settings.answerMode === 'number' ? 'keypad' : 'choice'; }
+  /* Die angehakten Antwortarten, passend zum gewählten Fach. */
+  function curModes() { return Quiz.modesFor({ subject: DB.settings.subject }, DB.settings.answerModes); }
+
+  /* Ist genau eine Art angehakt, heißt sie so - sonst null. */
+  function onlyMode() { const m = curModes(); return m.length === 1 ? m[0] : null; }
+
+  /* Nur noch für die Tastatur: Ziffern zählen bloß im Zahlenfeld. */
+  function inputMode() { return onlyMode() === 'number' ? 'keypad' : 'choice'; }
 
   const SUBJECT_DESC = {
     mathe: 'Rechnen von Klasse 1 bis 6.',
@@ -1114,19 +1139,34 @@
     const grid = $('#formGrid');
     if (!grid) return;
     grid.innerHTML = '';
+    const aktiv = curModes();
     curForms().forEach(f => {
-      const b = document.createElement('button');
-      b.className = 'topic-card';
-      b.dataset.form = f.id;
-      b.innerHTML = '<span class="ic">' + f.icon + '</span>' +
+      const lab = document.createElement('label');
+      lab.className = 'op-item form-item';
+      lab.innerHTML =
+        '<input type="checkbox" data-form="' + f.id + '">' +
+        '<span class="box"></span>' +
+        '<span class="ic">' + f.icon + '</span>' +
         '<span class="txt"><b>' + f.name + '</b><small>' + f.desc + '</small></span>';
-      b.addEventListener('click', () => {
-        DB.settings.answerMode = f.id; save();
+      const cb = lab.querySelector('input');
+      cb.checked = aktiv.indexOf(f.id) >= 0;
+      lab.classList.toggle('on', cb.checked);
+      cb.addEventListener('change', () => {
+        const chosen = Array.from(grid.querySelectorAll('input:checked')).map(i => i.dataset.form);
+        if (!chosen.length) {
+          /* die letzte Art bleibt an - sonst gäbe es kein Eingabefeld */
+          cb.checked = true;
+          lab.classList.add('on');
+          Sound.play('wrong');
+          $('#inputHint').textContent = 'Mindestens eine Antwortart muss angehakt bleiben.';
+          return;
+        }
         Sound.play('click');
+        DB.settings.answerModes = chosen; save();
         applyInputMode();
         syncForms(); renderMenuInfo();
       });
-      grid.appendChild(b);
+      grid.appendChild(lab);
     });
 
     const tg = $('#thinkGrid');
@@ -1147,15 +1187,22 @@
   }
 
   function syncForms() {
-    const avail = curForms().map(f => f.id);
-    if (avail.indexOf(DB.settings.answerMode) < 0) { DB.settings.answerMode = 'choice'; save(); }
-    $$('#formGrid .topic-card').forEach(b => b.classList.toggle('active', b.dataset.form === DB.settings.answerMode));
+    const aktiv = curModes();
+    if ((DB.settings.answerModes || []).join() !== aktiv.join()) { DB.settings.answerModes = aktiv; save(); }
+    $$('#formGrid input[data-form]').forEach(cb => {
+      cb.checked = aktiv.indexOf(cb.dataset.form) >= 0;
+      cb.parentNode.classList.toggle('on', cb.checked);
+    });
     $$('#thinkGrid button').forEach(b => b.classList.toggle('active', +b.dataset.think === (DB.settings.thinkTime | 0)));
 
-    const f = Quiz.FORM_INFO[DB.settings.answerMode] || Quiz.FORM_INFO.choice;
-    $('#inputHint').textContent = f.id === 'mixed'
-      ? 'Wechselt pro Aufgabe durch alles, was zur Frage passt.'
-      : f.desc + '. Passt die Art einmal nicht zur Frage, gibt es dort die Auswahl.';
+    if (aktiv.length === 1) {
+      const f = Quiz.FORM_INFO[aktiv[0]] || Quiz.FORM_INFO.choice;
+      $('#inputHint').textContent = f.desc
+        + '. Passt die Art einmal nicht zur Frage, gibt es dort die Auswahl.';
+    } else {
+      $('#inputHint').textContent = aktiv.length + ' Arten angehakt \u2013 jede Aufgabe nimmt sich davon, '
+        + 'was zur Frage passt.';
+    }
     const t = DB.settings.thinkTime | 0;
     $('#thinkHint').textContent = t
       ? 'Die Antworten erscheinen erst nach ' + t + ' Sekunden \u2013 so wird nicht einfach wiedererkannt.'
@@ -2005,7 +2052,7 @@
       DB.settings.topic = 'traunstein';
       DB.settings.years = false;
       DB.settings.topicBySubject = JSON.parse(JSON.stringify(DEFAULTS.settings.topicBySubject));
-      DB.settings.answerMode = 'choice';
+      DB.settings.answerModes = ['choice'];
       DB.settings.thinkTime = 0;
       DB.scores = [];
       save(); buildOps(); buildRanges(); buildTopics(); buildForms(); syncSpeeds(); renderMenuInfo(); toast('Fortschritt gelöscht');
@@ -2160,7 +2207,7 @@
     }
   }
 
-  const APP_FALLBACK_VERSION = '2.7.0';
+  const APP_FALLBACK_VERSION = '2.8.0';
 
   function pwa() {
     $('#appVersion').textContent = APP_FALLBACK_VERSION;
