@@ -21,7 +21,7 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | 📐🌍✍️ **Drei Fächer** | **Mathe** mit erzeugten Rechenaufgaben, **HSU** und **Deutsch** mit je einem Fragenkatalog zum Thema |
 | 🎯 **Klasse 1–6** | Aufgabentypen passen sich der gewählten Klassenstufe an – von „3 + 4“ bis „3/4 von 24“ und „(−7) · (−4)“ |
 | 🏰 **HSU-Themen** | erstes Thema: **Stadtgeschichte Traunstein** mit 87 Fragen aus sieben Bereichen |
-| ✍️ **Deutsch-Themen** | erstes Thema: **Deutschprobe 21.10.** mit 133 Fragen aus fünf Bereichen |
+| ✍️ **Deutsch-Themen** | **Deutschprobe 21.10.** (133 Fragen) und **Bildergeschichte** (62 Fragen) |
 | 💡 **Lösung zum Lernen** | nach zwei Fehlversuchen erscheint die richtige Antwort – im Safari so lange, bis man weitertippt |
 | 🔁 **Wiederholung** | was danebenging, kommt in derselben Runde noch einmal dran |
 | ✅ **Rechenarten wählbar** | Plus, Minus, Mal, Geteilt … einzeln per Haken an- und abschalten – **pro Klassenstufe** gespeichert, von Haus aus ist alles an |
@@ -271,6 +271,28 @@ Beispiele sind von dort übernommen:
 > Für **Rechtschreiben** und **Abschreiben** lagen keine Hefteinträge vor – diese
 > Fragen sind nach dem üblichen Stoff der 4. Klasse gebaut. Kommt ein Blatt dazu,
 > lassen sich die Begriffe genauso angleichen wie bei den anderen drei Bereichen.
+
+### Zweites Thema: Bildergeschichte
+
+62 Fragen nach dem Erzählrad *„Meine Bildergeschichte“* – dem Plakat mit den sieben
+Feldern voller Satzanfänge. Gefragt wird beides: **wohin ein Satzanfang gehört** und
+**was der jeweilige Teil leisten soll**.
+
+| Bereich | Fragen | Inhalt |
+|---|---|---|
+| **Aufbau** | 12 | Einleitung – Hauptteil – Schluss, welche Frage jedes Feld beantwortet, warum nicht immer „dann“ |
+| **Einleitung** | 6 | *Eines Tages …*, *An einem sonnigen Morgen …*, *Als ich unterwegs war, …* |
+| **Hauptteil** | 9 | *Auf einmal …*, *Plötzlich hörte ich …*, *Doch dann …*, *Zum Glück …*, *Währenddessen …* |
+| **Gefühle** | 9 | *Mit klopfendem Herzen …*, *erleichtert*, *vorsichtig*, *wütend* – samt Wortbedeutung |
+| **Ortswechsel** | 6 | *Hinter dem Haus …*, *Gleich um die Ecke …*, *Ein Stück weiter …* |
+| **Zeitabstände** | 6 | *Kurz darauf …*, *Am nächsten Morgen …*, *Wenig später …* |
+| **Gedanken & Rede** | 8 | *„Oh nein!“, rief …*, *„Was soll ich tun?“, dachte …*, rufen gegen denken |
+| **Schluss** | 6 | *Am Ende …*, *Seit diesem Tag …*, *Das werde ich nie vergessen …* |
+
+Drei Satzanfänge stehen auf dem Rad in **zwei** Feldern: *Schließlich* (Zeitabstand und
+Schluss), *Erleichtert* (Gefühl und Schluss) und *Im selben Moment* (dort unter
+Ortswechsel, der Sache nach aber eine Zeitangabe). Die werden bewusst **nicht** zum
+Zuordnen benutzt – sonst gäbe es zwei richtige Antworten. Ein Test wacht darüber.
 
 ### Genau schreiben, wo es darauf ankommt
 
