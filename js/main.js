@@ -2207,7 +2207,7 @@
     }
   }
 
-  const APP_FALLBACK_VERSION = '2.8.0';
+  const APP_FALLBACK_VERSION = '2.9.0';
 
   function pwa() {
     $('#appVersion').textContent = APP_FALLBACK_VERSION;

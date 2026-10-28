@@ -466,8 +466,133 @@
     { g: 'Schluss', q: 'Was gehört in den Schluss?', a: 'wie es ausgeht',
       w: ['wie es beginnt', 'der spannendste Moment', 'die Namen der Personen'] },
     { g: 'Schluss', q: 'Wie lang ist der Schluss meistens?', a: 'kurz',
-      w: ['so lang wie der Hauptteil', 'länger als alles andere', 'gar nicht vorhanden'] }
+      w: ['so lang wie der Hauptteil', 'länger als alles andere', 'gar nicht vorhanden'] },
+
+    /* ---------- Wortfeld „sagen" ----------
+       Nach dem Arbeitsblatt vom 5.10.: sieben Felder rund um „sagen".
+       Drei Wörter stehen dort in ZWEI Feldern (schimpfen, meckern, sich
+       beschweren – jeweils böse und unzufrieden). Die werden deshalb nicht
+       zum Zuordnen benutzt, sonst gäbe es zwei richtige Antworten. */
+    { g: 'Wortfeld sagen', q: 'Warum nicht immer „sagte" schreiben?', a: 'das klingt langweilig',
+      w: ['es ist falsch geschrieben', '„sagte" ist zu kurz', 'das Wort gibt es nicht'] },
+    { g: 'Wortfeld sagen', q: 'Was macht die Geschichte lebendiger?', a: 'genaue Wörter für „sagen"',
+      w: ['mehr Kommas', 'längere Sätze', 'mehr Namen'] },
+    { g: 'Wortfeld sagen', q: 'Wie viele Felder hat das Wortfeld „sagen"?', a: '7',
+      w: ['4', '5', '9'], n: 'laut, leise, normal, böse, fehlerhaft, froh, unzufrieden/traurig.' },
+
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „brüllen"?', a: 'laut',
+      w: ['leise', 'froh', 'fehlerhaft'] },
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „kreischen"?', a: 'laut',
+      w: ['leise', 'normal', 'traurig'] },
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „flüstern"?', a: 'leise',
+      w: ['laut', 'böse', 'froh'] },
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „tuscheln"?', a: 'leise',
+      w: ['laut', 'froh', 'fehlerhaft'] },
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „berichten"?', a: 'normal',
+      w: ['laut', 'böse', 'traurig'] },
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „plaudern"?', a: 'normal',
+      w: ['laut', 'böse', 'fehlerhaft'] },
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „fluchen"?', a: 'böse',
+      w: ['froh', 'leise', 'normal'] },
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „lästern"?', a: 'böse',
+      w: ['froh', 'normal', 'fehlerhaft'] },
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „stottern"?', a: 'fehlerhaft',
+      w: ['laut', 'froh', 'böse'] },
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „lallen"?', a: 'fehlerhaft',
+      w: ['leise', 'froh', 'normal'] },
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „jubeln"?', a: 'froh',
+      w: ['traurig', 'böse', 'leise'] },
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „jauchzen"?', a: 'froh',
+      w: ['traurig', 'böse', 'fehlerhaft'] },
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „schluchzen"?', a: 'traurig',
+      w: ['froh', 'laut', 'normal'] },
+    { g: 'Wortfeld sagen', q: 'Wohin gehört „jammern"?', a: 'traurig',
+      w: ['froh', 'normal', 'fehlerhaft'] },
+
+    { g: 'Wortfeld sagen', q: 'Welches Wort heißt „sehr laut sagen"?', a: 'brüllen',
+      w: ['flüstern', 'murmeln', 'plaudern'] },
+    { g: 'Wortfeld sagen', q: 'Welches Wort heißt „ganz leise sagen"?', a: 'wispern',
+      w: ['schreien', 'johlen', 'protestieren'] },
+    { g: 'Wortfeld sagen', q: 'Was heißt „nuscheln"?', a: 'leise und undeutlich sprechen',
+      w: ['laut schreien', 'fröhlich lachen', 'genau erklären'] },
+    { g: 'Wortfeld sagen', q: 'Was heißt „raunen"?', a: 'geheimnisvoll flüstern',
+      w: ['laut brüllen', 'fröhlich lachen', 'falsch sprechen'] },
+    { g: 'Wortfeld sagen', q: 'Was heißt „seufzen"?', a: 'hörbar ausatmen',
+      w: ['laut lachen', 'schnell reden', 'leise singen'] },
+    { g: 'Wortfeld sagen', q: 'Was heißt „wimmern"?', a: 'leise weinen',
+      w: ['laut lachen', 'schnell reden', 'deutlich erklären'] },
+    { g: 'Wortfeld sagen', q: 'Was heißt „quengeln"?', a: 'nörgelnd betteln',
+      w: ['laut jubeln', 'leise flüstern', 'deutlich erklären'] },
+    { g: 'Wortfeld sagen', q: 'Was heißt „murren"?', a: 'leise unzufrieden sein',
+      w: ['laut jubeln', 'genau erklären', 'fröhlich lachen'] },
+    { g: 'Wortfeld sagen', q: 'Was heißt „flehen"?', a: 'dringend bitten',
+      w: ['laut befehlen', 'fröhlich singen', 'leise lachen'] },
+    { g: 'Wortfeld sagen', q: 'Was heißt „johlen"?', a: 'laut und fröhlich rufen',
+      w: ['leise flüstern', 'traurig weinen', 'genau erklären'] },
+    { g: 'Wortfeld sagen', q: 'Was heißt „sich verhaspeln"?', a: 'beim Reden durcheinanderkommen',
+      w: ['sehr laut werden', 'leise weinen', 'jemanden loben'] },
+    { g: 'Wortfeld sagen', q: 'Was heißt „schildern"?', a: 'genau erzählen',
+      w: ['laut rufen', 'böse schimpfen', 'leise flüstern'] },
+    { g: 'Wortfeld sagen', q: 'Was heißt „erläutern"?', a: 'genau erklären',
+      w: ['laut schreien', 'froh jubeln', 'traurig weinen'] },
+    { g: 'Wortfeld sagen', q: 'Was heißt „stammeln"?', a: 'stockend sprechen',
+      w: ['laut rufen', 'fröhlich lachen', 'genau erklären'] },
+
+    { g: 'Wortfeld sagen', q: '„Hilfe!“, ___ Ida. Was passt?', a: 'schrie',
+      w: ['flüsterte', 'murmelte', 'plauderte'] },
+    { g: 'Wortfeld sagen', q: '„Pssst, leise!“, ___ Paul. Was passt?', a: 'flüsterte',
+      w: ['brüllte', 'jubelte', 'schluchzte'] },
+    { g: 'Wortfeld sagen', q: '„Endlich Ferien!“, ___ sie. Was passt?', a: 'jubelte',
+      w: ['seufzte', 'jammerte', 'stotterte'] },
+    { g: 'Wortfeld sagen', q: '„Mein Rad ist weg“, ___ er. Was passt?', a: 'jammerte',
+      w: ['jubelte', 'lachte', 'johlte'] },
+    { g: 'Wortfeld sagen', q: '„Das ist mein Platz!“, ___ er wütend.', a: 'schimpfte',
+      w: ['kicherte', 'wisperte', 'jubelte'] },
+    { g: 'Wortfeld sagen', q: '„I-ich w-weiß nicht“, ___ das Kind.', a: 'stotterte',
+      w: ['brüllte', 'jubelte', 'erläuterte'] },
+    { g: 'Wortfeld sagen', q: '„Gestern war ich im Zoo“, ___ Ida.', a: 'erzählte',
+      w: ['brüllte', 'schluchzte', 'fluchte'] },
+    { g: 'Wortfeld sagen', q: 'Welches Wort passt zu einem Geheimnis?', a: 'tuscheln',
+      w: ['brüllen', 'johlen', 'protestieren'] },
+    { g: 'Wortfeld sagen', q: 'Welches Wort passt zu großer Freude?', a: 'jauchzen',
+      w: ['wimmern', 'fluchen', 'stammeln'] },
+    { g: 'Wortfeld sagen', q: 'Welches Wort passt zu großem Kummer?', a: 'schluchzen',
+      w: ['jauchzen', 'plaudern', 'witzeln'] }
   ];
+
+  /* ===================== Hefteinträge zur Bildergeschichte =====================
+     Dieselbe Mechanik wie bei HSU: {Wort} wird zur Lücke. */
+  const BG_BLAETTER = [
+    { id: 'wortfeld-1', titel: 'Wortfeld „sagen"',
+      text: 'Wer sehr laut ruft, {brüllt}. Wer ganz leise spricht, {flüstert}. Wer sich '
+          + 'freut, {jubelt}. Wer traurig ist, {schluchzt}. Wer wütend ist, {schimpft}.',
+      extra: ['stottert', 'plaudert'] },
+
+    { id: 'wortfeld-2', titel: 'Besser als „sagte"',
+      text: '„Juhu, endlich fliege ich!“, {jubelte} Strubbel. „Pssst, ganz leise!“, '
+          + '{flüsterte} die Mama. „Sofort herkommen!“, {brüllte} der Mann. „Mein Ball '
+          + 'ist weg“, {jammerte} das Kind.',
+      /* Extras, die zu KEINEM der vier Sätze passen - bei „sagen"-Wörtern
+         muss man da aufpassen, sonst wäre auch eine zweite Belegung richtig. */
+      extra: ['lästerte', 'erläuterte'] },
+
+    { id: 'wortfeld-3', titel: 'Wie jemand spricht',
+      text: 'Wer undeutlich spricht, {nuschelt}. Wer beim Reden hängen bleibt, {stottert}. '
+          + 'Wer geheimnisvoll flüstert, {raunt}. Wer ruhig von früher erzählt, {berichtet}.',
+      extra: ['brüllt', 'jauchzt'] },
+
+    { id: 'aufbau', titel: 'Der Aufbau der Geschichte',
+      text: 'Die Geschichte beginnt mit der {Einleitung}. Was passiert, steht im '
+          + '{Hauptteil}. Wie es ausgeht, steht im {Schluss}. Erzählt wird in der '
+          + '{Vergangenheit}.',
+      extra: ['Überschrift', 'Zukunft'] },
+
+    { id: 'satzanfaenge', titel: 'Satzanfänge aus dem Erzählrad',
+      text: 'Die Geschichte beginnt: „{Eines} Tages …“ Es wird spannend: „Auf {einmal} …“ '
+          + 'Die Zeit vergeht: „Kurz {darauf} …“ Am Ende: „Seit diesem {Tag} …“',
+      extra: ['Gestern', 'Niemals'] }
+  ];
+
 
   const TOPICS = [
     {
@@ -481,8 +606,9 @@
       id: 'bildergeschichte',
       name: 'Bildergeschichte',
       icon: '📖',
-      desc: 'Satzanfänge und Aufbau: Einleitung, Hauptteil, Gefühle, Schluss',
-      questions: BILDERGESCHICHTE
+      desc: 'Aufbau, Satzanfänge und das Wortfeld „sagen"',
+      questions: BILDERGESCHICHTE,
+      sheets: BG_BLAETTER
     }
   ];
 

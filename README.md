@@ -23,7 +23,7 @@ keine Datenübertragung. Punkte und Abzeichen bleiben nur lokal auf dem Gerät.
 | 🏛️ **HSU-Themen** | erstes Thema: **Die Gemeinde** mit 126 Fragen aus neun Bereichen |
 | 📅 **Jahreszahlen abschaltbar** | von Haus aus aus – wer sie üben will, schaltet sie in den Einstellungen dazu |
 | 📓 **Hefteinträge zum Ausfüllen** | im Safari legt sich an jeder fünften Station eine Heftseite mit Lücken über die Karte |
-| ✍️ **Deutsch-Themen** | **Deutschprobe 21.10.** (133 Fragen) und **Bildergeschichte** (62 Fragen) |
+| ✍️ **Deutsch-Themen** | **Deutschprobe 21.10.** (133 Fragen) und **Bildergeschichte** (103 Fragen + 5 Heftseiten) |
 | 💡 **Lösung zum Lernen** | nach zwei Fehlversuchen erscheint die richtige Antwort – im Safari so lange, bis man weitertippt |
 | 🔁 **Wiederholung** | was danebenging, kommt in derselben Runde noch einmal dran |
 | ✅ **Rechenarten wählbar** | Plus, Minus, Mal, Geteilt … einzeln per Haken an- und abschalten – **pro Klassenstufe** gespeichert, von Haus aus ist alles an |
@@ -325,7 +325,7 @@ Beispiele sind von dort übernommen:
 
 ### Zweites Thema: Bildergeschichte
 
-62 Fragen nach dem Erzählrad *„Meine Bildergeschichte“* – dem Plakat mit den sieben
+103 Fragen nach dem Erzählrad *„Meine Bildergeschichte“* – dem Plakat mit den sieben
 Feldern voller Satzanfänge. Gefragt wird beides: **wohin ein Satzanfang gehört** und
 **was der jeweilige Teil leisten soll**.
 
@@ -339,6 +339,16 @@ Feldern voller Satzanfänge. Gefragt wird beides: **wohin ein Satzanfang gehört
 | **Zeitabstände** | 6 | *Kurz darauf …*, *Am nächsten Morgen …*, *Wenig später …* |
 | **Gedanken & Rede** | 8 | *„Oh nein!“, rief …*, *„Was soll ich tun?“, dachte …*, rufen gegen denken |
 | **Schluss** | 6 | *Am Ende …*, *Seit diesem Tag …*, *Das werde ich nie vergessen …* |
+| **Wortfeld sagen** | 41 | die sieben Felder rund um „sagen" (laut, leise, normal, böse, fehlerhaft, froh, unzufrieden/traurig), Wortbedeutungen und „Welches Wort passt in diesen Satz?" |
+
+Dazu fünf **Heftseiten zum Ausfüllen** (siehe oben): das Wortfeld, „Besser als *sagte*",
+„Wie jemand spricht", der Aufbau und die Satzanfänge.
+
+Beim Wortfeld gilt dieselbe Vorsicht wie beim Erzählrad: **schimpfen**, **meckern** und
+**sich beschweren** stehen auf dem Blatt in *zwei* Feldern (böse *und*
+unzufrieden/traurig) und werden deshalb nicht zum Zuordnen benutzt. Bei den Heftseiten
+kommt noch dazu, dass die Ablenker zu **keinem** der Sätze passen dürfen – bei
+„sagen"-Wörtern passt sonst schnell auch ein zweites Wort in die Lücke.
 
 Drei Satzanfänge stehen auf dem Rad in **zwei** Feldern: *Schließlich* (Zeitabstand und
 Schluss), *Erleichtert* (Gefühl und Schluss) und *Im selben Moment* (dort unter
